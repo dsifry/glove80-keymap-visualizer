@@ -4,6 +4,7 @@ Generate beautiful PDF visualizations of your Glove80 keyboard layers from ZMK k
 
 ![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
+[![PyPI version](https://img.shields.io/pypi/v/glove80-keymap-visualizer.svg)](https://pypi.org/project/glove80-keymap-visualizer/)
 [![CI](https://github.com/dsifry/glove80-keymap-visualizer/actions/workflows/ci.yml/badge.svg)](https://github.com/dsifry/glove80-keymap-visualizer/actions/workflows/ci.yml)
 [![CodeRabbit](https://img.shields.io/badge/CodeRabbit-AI%20Reviews-blue?logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMTggMTBhNiA2IDAgMCAwLTYtNiA2IDYgMCAwIDAtNiA2djNhNiA2IDAgMCAwIDYgNiA2IDYgMCAwIDAgNi02di0zeiIvPjwvc3ZnPg==)](https://coderabbit.ai)
 ![Test Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen.svg)
@@ -11,6 +12,16 @@ Generate beautiful PDF visualizations of your Glove80 keyboard layers from ZMK k
 ## What It Does
 
 This tool takes your ZMK `.keymap` file (exported from the [MoErgo Glove80 Layout Editor](https://my.glove80.com/)) and generates a PDF document with a visual diagram for each layer—similar to [sunaku's layer diagrams](https://sunaku.github.io/moergo-glove80-keyboard-layers.pdf).
+
+## Example Output
+
+**With `--color` flag** (semantic coloring by key category):
+
+![Example with color coding](docs/images/example-color.png)
+
+**Plain output** (no color coding):
+
+![Example plain output](docs/images/example-plain.png)
 
 ## Getting Started
 
@@ -31,17 +42,16 @@ See [CairoSVG installation docs](https://cairosvg.org/documentation/#installatio
 
 ### Step 2: Install the Tool
 
+**Option A: Install from PyPI (recommended)**
 ```bash
-# Clone the repository
+pip install glove80-keymap-visualizer
+```
+
+**Option B: Install from source**
+```bash
 git clone https://github.com/dsifry/glove80-keymap-visualizer.git
 cd glove80-keymap-visualizer
-
-# Create a virtual environment
-python3 -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-
-# Install the package
-pip install -e .
+pip install .
 ```
 
 ### Step 3: Export Your Keymap
