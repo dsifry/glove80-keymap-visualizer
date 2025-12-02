@@ -6,8 +6,11 @@ representation using keymap-drawer.
 """
 
 from pathlib import Path
-from typing import Optional
 import warnings
+import yaml
+
+from keymap_drawer.parse.zmk import ZmkKeymapParser
+from keymap_drawer.config import ParseConfig
 
 
 class KeymapParseError(Exception):
@@ -27,8 +30,14 @@ def validate_keymap_path(path: Path) -> None:
         FileNotFoundError: If the file does not exist
         UserWarning: If the file has an unexpected extension
     """
-    # TODO: Implement path validation
-    raise NotImplementedError()
+    if not path.exists():
+        raise FileNotFoundError(f"Keymap file not found: {path}")
+
+    if path.suffix != ".keymap":
+        warnings.warn(
+            f"Keymap file has unexpected extension '{path.suffix}', expected '.keymap'",
+            UserWarning,
+        )
 
 
 def parse_zmk_keymap(
@@ -63,8 +72,29 @@ def parse_zmk_keymap(
           QWERTY:
             - [Q, W, E, R, T, ...]
     """
-    # TODO: Implement using keymap-drawer's parse functionality
-    # 1. Validate the path exists
-    # 2. Call keymap-drawer's parser
-    # 3. Return the YAML output
-    raise NotImplementedError()
+    # Validate the path exists
+    validate_keymap_path(keymap_path)
+
+    # Create parser with default config
+    config = ParseConfig()
+    parser = ZmkKeymapParser(config=config, columns=columns)
+
+    try:
+        with open(keymap_path, "r") as f:
+            result = parser.parse(f)
+    except Exception as e:
+        # Wrap any parsing errors in our custom exception
+        error_msg = str(e)
+        if "keymap" in error_msg.lower() or "compatible" in error_msg.lower():
+            raise KeymapParseError(
+                f"No keymap found - is this a valid ZMK file? {error_msg}"
+            ) from e
+        raise KeymapParseError(f"Failed to parse keymap: {error_msg}") from e
+
+    # Override the keyboard type in the result
+    if "layout" not in result:
+        result["layout"] = {}
+    result["layout"]["zmk_keyboard"] = keyboard
+
+    # Convert to YAML string
+    return yaml.dump(result, default_flow_style=False, allow_unicode=True)

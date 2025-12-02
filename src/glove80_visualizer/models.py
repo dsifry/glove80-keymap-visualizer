@@ -8,6 +8,11 @@ from dataclasses import dataclass, field
 from typing import Optional, List
 
 
+# Constants for special key types
+TRANS_MARKERS = ("&trans", "▽", "trans")
+NONE_MARKERS = ("&none", "", "none")
+
+
 @dataclass
 class KeyBinding:
     """
@@ -17,23 +22,27 @@ class KeyBinding:
         position: The physical key position (0-79 for Glove80)
         tap: The tap behavior/key label
         hold: Optional hold behavior (for hold-tap keys)
+        key_type: Optional type marker (e.g., "trans", "held")
     """
 
     position: int
     tap: str
     hold: Optional[str] = None
+    key_type: Optional[str] = None
 
     @property
     def is_transparent(self) -> bool:
         """Check if this is a transparent key (&trans)."""
-        # TODO: Implement transparent key detection
-        raise NotImplementedError()
+        if self.key_type == "trans":
+            return True
+        return self.tap.lower() in TRANS_MARKERS if self.tap else False
 
     @property
     def is_none(self) -> bool:
         """Check if this is a none/blocked key (&none)."""
-        # TODO: Implement none key detection
-        raise NotImplementedError()
+        if self.tap is None or self.tap == "":
+            return True
+        return self.tap.lower() in NONE_MARKERS
 
 
 @dataclass
@@ -54,8 +63,7 @@ class Layer:
     @property
     def is_complete(self) -> bool:
         """Check if this layer has all 80 key bindings for Glove80."""
-        # TODO: Implement completeness check
-        raise NotImplementedError()
+        return len(self.bindings) == 80
 
 
 @dataclass

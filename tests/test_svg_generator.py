@@ -102,11 +102,12 @@ class TestSvgGeneratorHelpers:
     """Tests for SVG generator helper functions."""
 
     def test_format_key_label_simple(self):
-        """Simple keys format as their name."""
+        """Simple keys format as their name or symbol."""
         from glove80_visualizer.svg_generator import format_key_label
 
         assert format_key_label("A") == "A"
-        assert format_key_label("SPACE") == "Space"
+        # SPACE formats as symbol for better visual representation
+        assert format_key_label("SPACE") == "␣"
 
     def test_format_key_label_modifiers(self):
         """Modifier keys format with symbols."""

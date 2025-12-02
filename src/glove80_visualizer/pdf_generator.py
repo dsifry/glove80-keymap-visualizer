@@ -6,6 +6,10 @@ This module converts SVG diagrams to PDF and combines them into a single documen
 
 from pathlib import Path
 from typing import List, Optional
+from io import BytesIO
+
+import cairosvg
+from PyPDF2 import PdfReader, PdfWriter
 
 from glove80_visualizer.models import Layer
 from glove80_visualizer.config import VisualizerConfig
@@ -26,18 +30,18 @@ def svg_to_pdf(
 
     Returns:
         PDF content as bytes
-
-    Example:
-        >>> svg = '<svg>...</svg>'
-        >>> pdf_bytes = svg_to_pdf(svg)
-        >>> pdf_bytes[:4]
-        b'%PDF'
     """
-    # TODO: Implement using CairoSVG
-    # 1. Configure page size from config
-    # 2. Convert SVG to PDF
-    # 3. Optionally add header text
-    raise NotImplementedError()
+    if config is None:
+        config = VisualizerConfig()
+
+    # If header is requested, add it to the SVG before conversion
+    if header:
+        svg_content = _add_header_to_svg(svg_content, header)
+
+    # Convert SVG to PDF using CairoSVG
+    pdf_bytes = cairosvg.svg2pdf(bytestring=svg_content.encode("utf-8"))
+
+    return pdf_bytes
 
 
 def svg_to_pdf_file(
@@ -55,8 +59,13 @@ def svg_to_pdf_file(
         config: Optional configuration for page size/orientation
         create_parents: Whether to create parent directories if needed
     """
-    # TODO: Implement file output
-    raise NotImplementedError()
+    if create_parents:
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    pdf_bytes = svg_to_pdf(svg_content, config)
+
+    with open(output_path, "wb") as f:
+        f.write(pdf_bytes)
 
 
 def merge_pdfs(pdf_pages: List[bytes]) -> bytes:
@@ -72,8 +81,22 @@ def merge_pdfs(pdf_pages: List[bytes]) -> bytes:
     Raises:
         ValueError: If the input list is empty
     """
-    # TODO: Implement using PyPDF2
-    raise NotImplementedError()
+    if not pdf_pages:
+        raise ValueError("Cannot merge empty list of PDFs")
+
+    if len(pdf_pages) == 1:
+        return pdf_pages[0]
+
+    writer = PdfWriter()
+
+    for pdf_bytes in pdf_pages:
+        reader = PdfReader(BytesIO(pdf_bytes))
+        for page in reader.pages:
+            writer.add_page(page)
+
+    output = BytesIO()
+    writer.write(output)
+    return output.getvalue()
 
 
 def generate_pdf_with_toc(
@@ -94,11 +117,61 @@ def generate_pdf_with_toc(
     Returns:
         Complete PDF content as bytes
     """
-    # TODO: Implement complete PDF generation
-    # 1. Optionally create TOC page
-    # 2. Convert each SVG to PDF with header
-    # 3. Merge all pages
-    raise NotImplementedError()
+    if config is None:
+        config = VisualizerConfig()
+
+    pdf_pages = []
+
+    # Generate TOC page if requested
+    if include_toc and layers:
+        toc_pdf = _generate_toc_page(layers, config)
+        pdf_pages.append(toc_pdf)
+
+    # Convert each SVG to PDF with layer name header
+    for i, (layer, svg) in enumerate(zip(layers, svgs)):
+        header = config.layer_title_format.format(index=layer.index, name=layer.name)
+        pdf_bytes = svg_to_pdf(svg, config, header=header)
+        pdf_pages.append(pdf_bytes)
+
+    # Merge all pages
+    if not pdf_pages:
+        # Return empty PDF if no pages
+        return _create_empty_pdf()
+
+    return merge_pdfs(pdf_pages)
+
+
+def _add_header_to_svg(svg_content: str, header: str) -> str:
+    """
+    Add a header text element to an SVG.
+
+    The header is inserted inside the SVG element, after the opening tag.
+    """
+    header_element = f'<text x="30" y="30" font-size="18" font-weight="bold">{header}</text>\n'
+
+    # Find the opening svg tag and insert after it
+    # Look for the end of <svg ...> tag
+    svg_start = svg_content.find("<svg")
+    if svg_start == -1:
+        return svg_content
+
+    # Find the closing > of the svg tag
+    svg_tag_end = svg_content.find(">", svg_start)
+    if svg_tag_end == -1:
+        return svg_content
+
+    insert_pos = svg_tag_end + 1
+
+    # If there's a style block, insert after it instead
+    style_end = svg_content.find("</style>")
+    if style_end != -1 and style_end > svg_tag_end:
+        insert_pos = style_end + len("</style>")
+
+    svg_content = (
+        svg_content[:insert_pos] + "\n" + header_element + svg_content[insert_pos:]
+    )
+
+    return svg_content
 
 
 def _generate_toc_page(layers: List[Layer], config: VisualizerConfig) -> bytes:
@@ -112,5 +185,48 @@ def _generate_toc_page(layers: List[Layer], config: VisualizerConfig) -> bytes:
     Returns:
         PDF content for the TOC page
     """
-    # TODO: Implement TOC generation
-    raise NotImplementedError()
+    # Create a simple SVG TOC page
+    lines = []
+    lines.append('<?xml version="1.0" encoding="UTF-8"?>')
+    lines.append(
+        '<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600">'
+    )
+    lines.append("<style>")
+    lines.append("  text { font-family: sans-serif; fill: #24292e; }")
+    lines.append("  .title { font-size: 24px; font-weight: bold; }")
+    lines.append("  .entry { font-size: 14px; }")
+    lines.append("</style>")
+
+    # Title
+    lines.append('<text x="40" y="50" class="title">Table of Contents</text>')
+
+    # Layer entries
+    y = 100
+    for i, layer in enumerate(layers):
+        page_num = i + 2 if config.include_toc else i + 1  # +2 because TOC is page 1
+        entry_text = f"{layer.index}: {layer.name}"
+        lines.append(f'<text x="60" y="{y}" class="entry">{entry_text}</text>')
+        lines.append(
+            f'<text x="700" y="{y}" class="entry" text-anchor="end">{page_num}</text>'
+        )
+        y += 25
+
+        # Start new column if needed
+        if y > 550:
+            y = 100
+            # Note: For simplicity, we don't handle multi-page TOC here
+
+    lines.append("</svg>")
+
+    svg_content = "\n".join(lines)
+    return svg_to_pdf(svg_content, config)
+
+
+def _create_empty_pdf() -> bytes:
+    """Create a minimal empty PDF."""
+    writer = PdfWriter()
+    # Add a blank page
+    writer.add_blank_page(width=612, height=792)  # Letter size
+    output = BytesIO()
+    writer.write(output)
+    return output.getvalue()

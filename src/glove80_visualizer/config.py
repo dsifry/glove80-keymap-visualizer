@@ -4,8 +4,9 @@ Configuration handling for the Glove80 keymap visualizer.
 This module defines configuration options and defaults.
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, fields, asdict
 from typing import Optional
+from pathlib import Path
 import yaml
 
 
@@ -64,8 +65,13 @@ class VisualizerConfig:
         Returns:
             VisualizerConfig with values from YAML merged with defaults
         """
-        # TODO: Implement YAML parsing
-        raise NotImplementedError()
+        data = yaml.safe_load(yaml_content) or {}
+
+        # Filter to only valid field names
+        valid_fields = {f.name for f in fields(cls)}
+        filtered_data = {k: v for k, v in data.items() if k in valid_fields}
+
+        return cls(**filtered_data)
 
     @classmethod
     def from_file(cls, path: str) -> "VisualizerConfig":
@@ -78,8 +84,14 @@ class VisualizerConfig:
         Returns:
             VisualizerConfig with values from file merged with defaults
         """
-        # TODO: Implement file loading
-        raise NotImplementedError()
+        file_path = Path(path)
+        if not file_path.exists():
+            raise FileNotFoundError(f"Configuration file not found: {path}")
+
+        with open(file_path, "r") as f:
+            content = f.read()
+
+        return cls.from_yaml(content)
 
     def to_yaml(self) -> str:
         """
@@ -88,5 +100,4 @@ class VisualizerConfig:
         Returns:
             YAML representation of this configuration
         """
-        # TODO: Implement YAML export
-        raise NotImplementedError()
+        return yaml.dump(asdict(self), default_flow_style=False)
