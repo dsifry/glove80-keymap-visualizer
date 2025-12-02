@@ -271,3 +271,115 @@ layers:
         layers = extract_layers(yaml_content)
         binding = layers[0].bindings[0]
         assert binding.key_type == "trans"
+
+
+class TestLayerActivatorExtraction:
+    """Tests for extracting layer activators."""
+
+    def test_extract_layer_activator_from_hold(self):
+        """SPEC-HK-002: Extract activators from hold behaviors."""
+        from glove80_visualizer.extractor import extract_layer_activators
+
+        yaml_content = """
+layers:
+  Base:
+    - [{t: BACKSPACE, h: Cursor}, {t: SPACE, h: Symbol}]
+  Cursor:
+    - [{type: held}, A]
+  Symbol:
+    - [B, {type: held}]
+"""
+        activators = extract_layer_activators(yaml_content)
+
+        assert len(activators) == 2
+        cursor_activator = next(a for a in activators if a.target_layer_name == "Cursor")
+        assert cursor_activator.source_layer_name == "Base"
+        assert cursor_activator.tap_key == "BACKSPACE"
+
+    def test_multiple_activators_same_layer(self):
+        """SPEC-HK-003: Multiple activators for one layer."""
+        from glove80_visualizer.extractor import extract_layer_activators
+
+        yaml_content = """
+layers:
+  Base:
+    - [{t: TAB, h: Mouse}, {t: ENTER, h: Mouse}]
+  Mouse:
+    - [{type: held}, {type: held}]
+"""
+        activators = extract_layer_activators(yaml_content)
+        mouse_activators = [a for a in activators if a.target_layer_name == "Mouse"]
+
+        assert len(mouse_activators) == 2
+
+    def test_layer_without_activator(self):
+        """SPEC-HK-004: Layers without activators handled gracefully."""
+        from glove80_visualizer.extractor import extract_layer_activators
+
+        yaml_content = """
+layers:
+  Base:
+    - [A, B, C]
+  Orphan:
+    - [X, Y, Z]
+"""
+        activators = extract_layer_activators(yaml_content)
+        # Should not raise, just return empty or no activator for Orphan
+        orphan_activators = [a for a in activators if a.target_layer_name == "Orphan"]
+        assert len(orphan_activators) == 0
+
+    def test_extract_activators_empty_yaml(self):
+        """Extract activators returns empty list for empty YAML."""
+        from glove80_visualizer.extractor import extract_layer_activators
+
+        activators = extract_layer_activators("")
+        assert activators == []
+
+    def test_extract_activators_no_hold_behaviors(self):
+        """Extract activators returns empty list when no hold behaviors exist."""
+        from glove80_visualizer.extractor import extract_layer_activators
+
+        yaml_content = """
+layers:
+  Base:
+    - [A, B, C]
+"""
+        activators = extract_layer_activators(yaml_content)
+        assert activators == []
+
+    def test_extract_activators_no_layers_key(self):
+        """Extract activators returns empty list when no layers key exists."""
+        from glove80_visualizer.extractor import extract_layer_activators
+
+        yaml_content = "other_key: value"
+        activators = extract_layer_activators(yaml_content)
+        assert activators == []
+
+    def test_extract_activators_empty_layer(self):
+        """Extract activators handles empty layers gracefully."""
+        from glove80_visualizer.extractor import extract_layer_activators
+
+        yaml_content = """
+layers:
+  Base:
+  Cursor:
+    - [{type: held}]
+"""
+        activators = extract_layer_activators(yaml_content)
+        # Should not raise, Base layer is empty
+        assert activators == []
+
+    def test_extract_activators_null_tap(self):
+        """Extract activators handles null tap key."""
+        from glove80_visualizer.extractor import extract_layer_activators
+
+        yaml_content = """
+layers:
+  Base:
+    - [{t: null, h: Cursor}]
+  Cursor:
+    - [{type: held}]
+"""
+        activators = extract_layer_activators(yaml_content)
+        assert len(activators) == 1
+        assert activators[0].tap_key is None

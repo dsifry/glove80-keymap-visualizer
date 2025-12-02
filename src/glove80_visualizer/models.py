@@ -65,6 +65,26 @@ class Layer:
 
 
 @dataclass
+class LayerActivator:
+    """
+    Tracks which key activates a layer.
+
+    Used to show held key indicators on layer diagrams.
+
+    Attributes:
+        source_layer_name: Name of the layer containing the activator key
+        source_position: Key position (0-79) that activates the target layer
+        target_layer_name: Name of the layer being activated
+        tap_key: For layer-tap: the tap behavior (None for &mo behaviors)
+    """
+
+    source_layer_name: str
+    source_position: int
+    target_layer_name: str
+    tap_key: str | None = None
+
+
+@dataclass
 class VisualizationResult:
     """
     Result of a visualization operation.

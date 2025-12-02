@@ -1788,3 +1788,116 @@ class TestResolveTransparentKeys:
         result = _resolve_transparent_keys(overlay, base_layer)
         assert result.bindings[0].tap == "A"  # Resolved
         assert result.bindings[1].tap == "&trans"  # Kept transparent
+
+
+class TestHeldKeyIndicator:
+    """Tests for held key indicator in layer diagrams."""
+
+    def test_held_key_has_indicator(self):
+        """SPEC-HK-006: Held key position shows indicator."""
+        from glove80_visualizer.svg_generator import generate_layer_svg
+        from glove80_visualizer.models import Layer, KeyBinding, LayerActivator
+        from glove80_visualizer.config import VisualizerConfig
+
+        layer = Layer(name="Cursor", index=1, bindings=[
+            KeyBinding(position=i, tap="A") for i in range(80)
+        ])
+        # Position 69 is the held key
+        activators = [LayerActivator(
+            source_layer_name="QWERTY",
+            source_position=69,
+            target_layer_name="Cursor",
+            tap_key="BACKSPACE"
+        )]
+        config = VisualizerConfig(show_held_indicator=True)
+
+        svg = generate_layer_svg(layer, config=config, activators=activators)
+
+        # TODO: Tighten assertion after implementation is stable
+        # Initial loose check - refine once SVG structure is finalized
+        assert "held" in svg.lower() or "activator" in svg.lower() or "#d699b6" in svg
+
+    def test_held_indicator_disabled(self):
+        """SPEC-HK-007: Held indicator can be disabled."""
+        from glove80_visualizer.svg_generator import generate_layer_svg
+        from glove80_visualizer.models import Layer, KeyBinding, LayerActivator
+        from glove80_visualizer.config import VisualizerConfig
+
+        layer = Layer(name="Cursor", index=1, bindings=[
+            KeyBinding(position=i, tap="A") for i in range(80)
+        ])
+        activators = [LayerActivator(
+            source_layer_name="QWERTY",
+            source_position=69,
+            target_layer_name="Cursor",
+            tap_key="BACKSPACE"
+        )]
+        config = VisualizerConfig(show_held_indicator=False)
+
+        svg = generate_layer_svg(layer, config=config, activators=activators)
+
+        # Should NOT contain held indicator styling
+        assert "held-key" not in svg.lower()
+
+    def test_held_indicator_no_activators(self):
+        """SVG generates without activators parameter."""
+        from glove80_visualizer.svg_generator import generate_layer_svg
+        from glove80_visualizer.models import Layer, KeyBinding
+
+        layer = Layer(name="Test", index=0, bindings=[
+            KeyBinding(position=i, tap="X") for i in range(80)
+        ])
+
+        # Should not raise
+        svg = generate_layer_svg(layer)
+        assert "</svg>" in svg
+
+
+class TestMehHyperCombos:
+    """Tests for MEH and HYPER combo expansion."""
+
+    def test_meh_combo_mac(self):
+        """SPEC-KC-005: MEH(key) expands to Ctrl+Alt+Shift on Mac."""
+        from glove80_visualizer.svg_generator import format_key_label
+
+        result = format_key_label("MEH(K)", os_style="mac")
+        assert result == "⌃⌥⇧K"
+
+    def test_meh_combo_windows(self):
+        """SPEC-KC-005: MEH(key) expands correctly on Windows."""
+        from glove80_visualizer.svg_generator import format_key_label
+
+        result = format_key_label("MEH(K)", os_style="windows")
+        assert "Ctrl" in result and "Alt" in result and "Shift" in result
+
+    def test_hyper_combo_mac(self):
+        """SPEC-KC-006: HYPER(key) expands to all modifiers on Mac."""
+        from glove80_visualizer.svg_generator import format_key_label
+
+        result = format_key_label("HYPER(K)", os_style="mac")
+        assert result == "⌃⌥⇧⌘K"
+
+    def test_hyper_combo_windows(self):
+        """SPEC-KC-006: HYPER(key) expands correctly on Windows."""
+        from glove80_visualizer.svg_generator import format_key_label
+
+        result = format_key_label("HYPER(K)", os_style="windows")
+        assert "Ctrl" in result and "Alt" in result and "Shift" in result and "Win" in result
+
+    def test_meh_with_special_key(self):
+        """SPEC-KC-007: MEH works with special keys."""
+        from glove80_visualizer.svg_generator import format_key_label
+
+        result = format_key_label("MEH(SPACE)", os_style="mac")
+        assert "⌃⌥⇧" in result
+        # SPACE should be formatted as ␣
+        assert "␣" in result
+
+    def test_hyper_with_special_key(self):
+        """SPEC-KC-007: HYPER works with special keys."""
+        from glove80_visualizer.svg_generator import format_key_label
+
+        result = format_key_label("HYPER(ENTER)", os_style="mac")
+        assert "⌃⌥⇧⌘" in result
+        # ENTER should be formatted as ↵
+        assert "↵" in result
