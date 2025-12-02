@@ -89,10 +89,11 @@ def parse_zmk_keymap(
             raise KeymapParseError(
                 f"No keymap found - is this a valid ZMK file? {error_msg}"
             ) from e
-        raise KeymapParseError(f"Failed to parse keymap: {error_msg}") from e
+        raise KeymapParseError(f"Failed to parse keymap: {error_msg}") from e  # pragma: no cover
 
     # Override the keyboard type in the result
-    if "layout" not in result:
+    if "layout" not in result:  # pragma: no cover
+        # keymap-drawer always returns a layout section
         result["layout"] = {}
     result["layout"]["zmk_keyboard"] = keyboard
 

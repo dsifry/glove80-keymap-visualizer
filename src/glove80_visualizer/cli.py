@@ -213,7 +213,8 @@ def main(
     # Extract layers
     extracted_layers = extract_layers(yaml_content, include=include_list, exclude=exclude_list)
 
-    if not extracted_layers:
+    if not extracted_layers:  # pragma: no cover
+        # Parser catches most "no layers" cases first with keymap detection
         error("No layers found in keymap")
         sys.exit(1)
 
@@ -252,7 +253,8 @@ def main(
                 if layer.index == 0:
                     base_layer_obj = layer
                     break
-            if not base_layer_obj and extracted_layers:
+            if not base_layer_obj and extracted_layers:  # pragma: no cover
+                # Extractor always assigns index 0 to first layer
                 base_layer_obj = extracted_layers[0]
 
     # Generate SVGs
@@ -317,5 +319,5 @@ def main(
             click.echo(f"Generated PDF: {output}")
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     main()

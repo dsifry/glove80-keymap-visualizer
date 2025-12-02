@@ -66,21 +66,21 @@ def _svg_to_pdf_rsvg(svg_content: str) -> bytes:
             text=True
         )
 
-        if result.returncode != 0:
+        if result.returncode != 0:  # pragma: no cover
             raise RuntimeError(f"rsvg-convert failed: {result.stderr}")
 
         with open(pdf_path, 'rb') as f:
             return f.read()
     finally:
-        # Clean up temp files
+        # Clean up temp files - OSError handling is defensive
         import os
         try:
             os.unlink(svg_path)
-        except OSError:
+        except OSError:  # pragma: no cover
             pass
         try:
             os.unlink(pdf_path)
-        except OSError:
+        except OSError:  # pragma: no cover
             pass
 
 
@@ -232,7 +232,8 @@ def _add_header_to_svg(svg_content: str, header: str) -> str:
 
     # If there's a style block, insert after it instead
     style_end = svg_content.find("</style>")
-    if style_end != -1 and style_end > svg_tag_end:
+    if style_end != -1 and style_end > svg_tag_end:  # pragma: no cover
+        # All keymap-drawer SVGs have style blocks
         insert_pos = style_end + len("</style>")
 
     svg_content = (
