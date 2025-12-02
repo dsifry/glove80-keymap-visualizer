@@ -143,7 +143,7 @@ def test_cli_entry_point():
 **When** `format_key_label` is called
 **Then** the result expands to all three modifiers + key
 
-**Test:** `tests/test_svg_generator.py` (add to existing file)
+**Test:** `tests/test_svg_generator.py` (add `TestMehHyperCombos` class to existing file)
 ```python
 class TestMehHyperCombos:
     """Tests for MEH and HYPER combo expansion."""
@@ -375,7 +375,8 @@ class TestHeldKeyIndicator:
 
         svg = generate_layer_svg(layer, config=config, activators=activators)
 
-        # Should contain held indicator - could be CSS class or inline style
+        # TODO: Tighten assertion after implementation is stable
+        # Initial loose check - refine once SVG structure is finalized
         assert "held" in svg.lower() or "activator" in svg.lower() or "#d699b6" in svg
 ```
 
@@ -544,6 +545,14 @@ class TestKeyCategorization:
         assert categorize_key("Cursor", is_hold=True) == "layer"
         assert categorize_key("Symbol", is_hold=True) == "layer"
         assert categorize_key("Number", is_hold=True) == "layer"
+
+    def test_categorize_layer_name_without_hold_flag(self):
+        """SPEC-CL-005b: Layer names without is_hold flag are default."""
+        from glove80_visualizer.colors import categorize_key
+
+        # Without is_hold=True, layer names are categorized as default
+        assert categorize_key("Cursor", is_hold=False) == "default"
+        assert categorize_key("Cursor") == "default"  # is_hold defaults to False
 ```
 
 #### SPEC-CL-006: Categorize mouse keys
