@@ -165,3 +165,33 @@ class TestVisualizerConfig:
         config = VisualizerConfig.from_yaml(yaml_content)
         assert config.page_size == "a4"
         assert not hasattr(config, "unknown_field")
+
+
+class TestLayerActivator:
+    """Tests for LayerActivator model."""
+
+    def test_layer_activator_fields(self):
+        """SPEC-HK-001: LayerActivator has required fields."""
+        from glove80_visualizer.models import LayerActivator
+
+        activator = LayerActivator(
+            source_layer_name="QWERTY",
+            source_position=69,
+            target_layer_name="Cursor",
+            tap_key="BACKSPACE"
+        )
+        assert activator.source_layer_name == "QWERTY"
+        assert activator.source_position == 69
+        assert activator.target_layer_name == "Cursor"
+        assert activator.tap_key == "BACKSPACE"
+
+    def test_layer_activator_optional_tap_key(self):
+        """LayerActivator tap_key is optional (for &mo behaviors)."""
+        from glove80_visualizer.models import LayerActivator
+
+        activator = LayerActivator(
+            source_layer_name="QWERTY",
+            source_position=69,
+            target_layer_name="Cursor",
+        )
+        assert activator.tap_key is None

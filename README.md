@@ -1,30 +1,20 @@
 # Glove80 Keymap Visualizer
 
-Generate PDF visualizations of Glove80 keyboard layers from ZMK keymap files.
+Generate beautiful PDF visualizations of your Glove80 keyboard layers from ZMK keymap files.
 
 ![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
+[![CI](https://github.com/dsifry/glove80-keymap-visualizer/actions/workflows/ci.yml/badge.svg)](https://github.com/dsifry/glove80-keymap-visualizer/actions/workflows/ci.yml)
 [![CodeRabbit](https://img.shields.io/badge/CodeRabbit-AI%20Reviews-blue?logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMTggMTBhNiA2IDAgMCAwLTYtNiA2IDYgMCAwIDAtNiA2djNhNiA2IDAgMCAwIDYgNiA2IDYgMCAwIDAgNi02di0zeiIvPjwvc3ZnPg==)](https://coderabbit.ai)
 ![Test Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen.svg)
 
-## Overview
+## What It Does
 
-This tool parses ZMK `.keymap` files (as exported from the MoErgo Glove80 Layout Editor) and generates beautiful PDF documents showing each keyboard layer, similar to [sunaku's layer diagrams](https://sunaku.github.io/moergo-glove80-keyboard-layers.pdf).
+This tool takes your ZMK `.keymap` file (exported from the [MoErgo Glove80 Layout Editor](https://my.glove80.com/)) and generates a PDF document with a visual diagram for each layer—similar to [sunaku's layer diagrams](https://sunaku.github.io/moergo-glove80-keyboard-layers.pdf).
 
-## Features
+## Getting Started
 
-- Parse ZMK keymap files with support for complex behaviors (hold-tap, layer-tap, etc.)
-- Generate SVG diagrams for each layer
-- Combine layers into a single PDF with optional table of contents
-- Customizable styling (colors, fonts, page size)
-- Filter to specific layers or exclude unwanted ones
-
-## Installation
-
-### Prerequisites
-
-- Python 3.10 or higher
-- Cairo graphics library (for PDF generation)
+### Step 1: Install System Dependencies
 
 **macOS:**
 ```bash
@@ -36,121 +26,170 @@ brew install cairo
 sudo apt-get install libcairo2-dev
 ```
 
-### Install from source
+**Windows:**
+See [CairoSVG installation docs](https://cairosvg.org/documentation/#installation) for Windows instructions.
+
+### Step 2: Install the Tool
 
 ```bash
 # Clone the repository
 git clone https://github.com/dsifry/glove80-keymap-visualizer.git
 cd glove80-keymap-visualizer
 
-# Create virtual environment and install
-make install-dev
+# Create a virtual environment
+python3 -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+
+# Install the package
+pip install -e .
 ```
 
-## Usage
+### Step 3: Export Your Keymap
 
-### Basic Usage
+1. Go to [my.glove80.com](https://my.glove80.com/)
+2. Load your layout
+3. Click **Export** → **Download ZMK Keymap**
+4. Save the `.keymap` file
+
+### Step 4: Generate Your PDF
 
 ```bash
-# Generate PDF with all layers
-glove80-viz my-keymap.keymap -o my-layers.pdf
+# Basic usage - generates a PDF with all layers
+glove80-viz your-keymap.keymap -o my-layers.pdf
 
-# Generate SVG files instead
-glove80-viz my-keymap.keymap -o ./svgs --format svg
-
-# List available layers
-glove80-viz my-keymap.keymap --list-layers
+# With color coding (recommended!)
+glove80-viz your-keymap.keymap -o my-layers.pdf --color
 ```
 
-### Advanced Options
+That's it! Open `my-layers.pdf` to see your keyboard layout.
+
+## Common Options
 
 ```bash
-# Generate specific layers only
-glove80-viz my-keymap.keymap -o layers.pdf --layers QWERTY,Symbol,Cursor
+# Color-coded keys by category (modifiers, navigation, etc.)
+glove80-viz keymap.keymap -o output.pdf --color
 
-# Exclude specific layers
-glove80-viz my-keymap.keymap -o layers.pdf --exclude-layers Factory,Magic
+# Color-coded without the legend
+glove80-viz keymap.keymap -o output.pdf --color --no-legend
 
-# Use custom configuration
-glove80-viz my-keymap.keymap -o layers.pdf --config my-config.yaml
+# Windows modifier symbols (Win, Ctrl, Alt, Shift) instead of Mac symbols
+glove80-viz keymap.keymap -o output.pdf --windows
 
-# Verbose output
-glove80-viz my-keymap.keymap -o layers.pdf -v
+# Show what keys do on transparent layers (instead of "trans")
+glove80-viz keymap.keymap -o output.pdf --resolve-trans
+
+# Generate only specific layers
+glove80-viz keymap.keymap -o output.pdf --layers Base,Symbol,Cursor
+
+# Generate SVG files instead of PDF
+glove80-viz keymap.keymap -o ./svg-folder --format svg
+
+# List all available layers in your keymap
+glove80-viz keymap.keymap --list-layers
 ```
 
-### Configuration File
+## Features
 
-Create a YAML configuration file to customize the output:
+- **OS-specific modifier symbols** — Mac (⌘⌥⌃⇧), Windows (Win+Ctrl+Alt+Shift), or Linux (Super+Ctrl+Alt+Shift)
+- **Semantic coloring** — Color-code keys by category: modifiers, navigation, numbers, symbols, media, layers, system
+- **Color legend** — Shows what each color means (can be hidden with `--no-legend`)
+- **Held key indicators** — Shows which key you hold to activate each layer
+- **MEH/HYPER expansion** — `MEH(K)` displays as `⌃⌥⇧K` on Mac
+- **Transparent key resolution** — Optionally show inherited keys instead of "trans" markers
+- **Table of contents** — PDF includes clickable TOC for easy navigation
+- **Layer filtering** — Generate only the layers you want
+
+## All CLI Options
+
+| Option | Description |
+|--------|-------------|
+| `-o, --output` | Output file (PDF) or directory (SVG) |
+| `--format` | Output format: `pdf` (default) or `svg` |
+| `--layers` | Comma-separated list of layers to include |
+| `--exclude-layers` | Comma-separated list of layers to exclude |
+| `--list-layers` | List available layers and exit |
+| `--config` | Path to YAML configuration file |
+| `--mac` | Use Mac modifier symbols (⌘⌥⌃⇧) — default |
+| `--windows` | Use Windows modifier symbols |
+| `--linux` | Use Linux modifier symbols |
+| `--color` | Apply semantic colors to keys |
+| `--no-legend` | Hide color legend (use with `--color`) |
+| `--resolve-trans` | Show inherited keys instead of "trans" |
+| `--base-layer` | Base layer for `--resolve-trans` (default: first layer) |
+| `--no-toc` | Disable table of contents in PDF |
+| `--continue-on-error` | Continue if a layer fails to render |
+| `-v, --verbose` | Show detailed output |
+| `-q, --quiet` | Suppress all output except errors |
+
+## Color Scheme
+
+When using `--color`, keys are colored by category using an Everforest-inspired palette:
+
+| Category | Color | Example Keys |
+|----------|-------|--------------|
+| Modifiers | Teal | ⌘, ⌥, ⌃, ⇧, Shift, Ctrl, Alt |
+| Navigation | Green | ←, →, ↑, ↓, Home, End, PgUp, PgDn |
+| Numbers | Yellow | 0-9, F1-F12 |
+| Symbols | Orange | !@#$%^&*() etc. |
+| Media | Light Green | ⏯, ⏭, 🔊, 🔇, brightness |
+| Layer | Purple | Layer activators (held keys) |
+| System | Red | Reset, Boot, Bluetooth keys |
+| Mouse | Teal | Mouse movement and clicks |
+| Transparent | Gray | Transparent/pass-through keys |
+
+## Configuration File
+
+For persistent settings, create a YAML config file:
 
 ```yaml
-# config.yaml
-page_size: a4          # or "letter"
-orientation: landscape
-font_size: 14
-background_color: "#ffffff"
-key_color: "#f0f0f0"
-text_color: "#000000"
+# my-config.yaml
+os_style: mac          # "mac", "windows", or "linux"
+show_colors: true
+show_legend: true
+resolve_trans: false
 include_toc: true
+page_size: letter      # or "a4"
+orientation: landscape
+```
+
+Then use it:
+```bash
+glove80-viz keymap.keymap -o output.pdf --config my-config.yaml
 ```
 
 ## Development
 
-### Setup
-
 ```bash
-# Install development dependencies
-make install-dev
+# Install with dev dependencies
+pip install -e ".[dev]"
 
 # Run tests
-make test
+pytest
 
 # Run tests with coverage
-make test-cov
+pytest --cov
 
 # Format code
-make format
+ruff format .
 
-# Run linter
-make lint
-
-# Run type checker
-make typecheck
+# Lint
+ruff check .
 ```
 
-### Project Structure
+## How It Works
 
-```
-glove80-keymap-visualizer/
-├── src/glove80_visualizer/
-│   ├── cli.py           # Command-line interface
-│   ├── parser.py        # ZMK keymap parsing
-│   ├── extractor.py     # Layer extraction
-│   ├── svg_generator.py # SVG generation
-│   ├── pdf_generator.py # PDF conversion/merging
-│   ├── config.py        # Configuration handling
-│   └── models.py        # Data models
-├── tests/               # Test files
-├── docs/
-│   ├── PLAN.md         # Project plan
-│   └── SPEC.md         # TDD specifications
-└── ...
-```
-
-### TDD Approach
-
-This project follows test-driven development. See `docs/SPEC.md` for detailed test specifications. The workflow is:
-
-1. Read the specification for a module
-2. Run the failing tests: `make test`
-3. Implement the module to make tests pass
-4. Refactor as needed
+1. **Parse** — Uses [keymap-drawer](https://github.com/caksoylar/keymap-drawer) to parse ZMK keymap files
+2. **Extract** — Extracts layer info, key bindings, hold behaviors, and layer activators
+3. **Generate SVG** — Creates SVG diagrams with keymap-drawer's layout engine
+4. **Convert to PDF** — Combines SVGs into a PDF with TOC using CairoSVG and pikepdf
 
 ## Credits
 
-- [keymap-drawer](https://github.com/caksoylar/keymap-drawer) - ZMK keymap parsing and SVG generation
-- [sunaku's Glove80 keymaps](https://github.com/sunaku/glove80-keymaps) - Inspiration for the visualization format
-- [MoErgo Glove80](https://www.moergo.com/) - The amazing keyboard this is built for
+- [keymap-drawer](https://github.com/caksoylar/keymap-drawer) — ZMK keymap parsing and SVG generation
+- [sunaku's Glove80 keymaps](https://github.com/sunaku/glove80-keymaps) — Inspiration for visualization format
+- [MoErgo Glove80](https://www.moergo.com/) — The keyboard this tool is built for
+- [Everforest](https://github.com/sainnhe/everforest) — Color palette inspiration
 
 ## License
 
-MIT License - see LICENSE file for details.
+MIT License — see [LICENSE](LICENSE) file for details.

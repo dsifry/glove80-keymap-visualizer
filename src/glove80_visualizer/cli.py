@@ -11,7 +11,7 @@ import click
 
 from glove80_visualizer import __version__
 from glove80_visualizer.config import VisualizerConfig
-from glove80_visualizer.extractor import extract_layers
+from glove80_visualizer.extractor import extract_layer_activators, extract_layers
 from glove80_visualizer.parser import KeymapParseError, parse_zmk_keymap
 from glove80_visualizer.pdf_generator import generate_pdf_with_toc
 from glove80_visualizer.svg_generator import generate_layer_svg
@@ -128,6 +128,16 @@ class MutuallyExclusiveOption(click.Option):
     default=None,
     help="Base layer name for --resolve-trans (default: first layer)",
 )
+@click.option(
+    "--color",
+    is_flag=True,
+    help="Apply semantic colors to keys (modifiers, navigation, etc.)",
+)
+@click.option(
+    "--no-legend",
+    is_flag=True,
+    help="Hide color legend when using --color",
+)
 @click.version_option(version=__version__)
 def main(
     keymap: Path,
@@ -146,6 +156,8 @@ def main(
     linux: bool,
     resolve_trans: bool,
     base_layer: str | None,
+    color: bool,
+    no_legend: bool,
 ) -> None:
     """
     Generate PDF/SVG visualizations of Glove80 keyboard layers.
@@ -197,6 +209,8 @@ def main(
     config.continue_on_error = continue_on_error
     config.os_style = os_style
     config.resolve_trans = resolve_trans
+    config.show_colors = color
+    config.show_legend = not no_legend
 
     # Parse keymap file
     log(f"Parsing keymap: {keymap}")
@@ -257,6 +271,11 @@ def main(
                 # Extractor always assigns index 0 to first layer
                 base_layer_obj = extracted_layers[0]
 
+    # Extract layer activators for held key indicators
+    activators = extract_layer_activators(yaml_content)
+    if activators and verbose:
+        log(f"Found {len(activators)} layer activators")
+
     # Generate SVGs
     svgs: list[str] = []
     failed_layers: list[str] = []
@@ -270,6 +289,7 @@ def main(
                 os_style=os_style,
                 resolve_trans=resolve_trans,
                 base_layer=base_layer_obj,
+                activators=activators,
             )
             svgs.append(svg)
         except Exception as e:

@@ -335,6 +335,85 @@ class TestCliResolveTransOption:
         assert output.exists()
 
 
+class TestCliColorOption:
+    """Tests for --color CLI option."""
+
+    def test_cli_color_option(self, runner, simple_keymap_path, tmp_path):
+        """SPEC-CL-012: CLI accepts --color option."""
+        from glove80_visualizer.cli import main
+
+        output = tmp_path / "output.pdf"
+        result = runner.invoke(
+            main, [str(simple_keymap_path), "-o", str(output), "--color"]
+        )
+
+        assert result.exit_code == 0
+        assert output.exists()
+
+
+class TestCliNoLegendOption:
+    """Tests for --no-legend CLI option."""
+
+    def test_cli_no_legend_option_accepted(self, runner, simple_keymap_path, tmp_path):
+        """SPEC-NL-001: CLI accepts --no-legend option."""
+        from glove80_visualizer.cli import main
+
+        output = tmp_path / "output.pdf"
+        result = runner.invoke(
+            main, [str(simple_keymap_path), "-o", str(output), "--color", "--no-legend"]
+        )
+
+        assert result.exit_code == 0
+        assert output.exists()
+
+    def test_cli_no_legend_svg_output(self, runner, simple_keymap_path, tmp_path):
+        """SPEC-NL-002: --no-legend suppresses legend in SVG output."""
+        from glove80_visualizer.cli import main
+
+        output_dir = tmp_path / "svgs"
+        result = runner.invoke(
+            main,
+            [str(simple_keymap_path), "-o", str(output_dir), "--format", "svg", "--color", "--no-legend"],
+        )
+
+        assert result.exit_code == 0
+        svg_files = list(output_dir.glob("*.svg"))
+        assert len(svg_files) > 0
+
+        # Read the SVG and verify no legend
+        svg_content = svg_files[0].read_text()
+        assert "color-legend" not in svg_content
+        assert "Modifiers" not in svg_content
+
+    def test_cli_color_without_no_legend_shows_legend(self, runner, simple_keymap_path, tmp_path):
+        """SPEC-NL-003: --color without --no-legend shows legend by default."""
+        from glove80_visualizer.cli import main
+
+        output_dir = tmp_path / "svgs"
+        result = runner.invoke(
+            main,
+            [str(simple_keymap_path), "-o", str(output_dir), "--format", "svg", "--color"],
+        )
+
+        assert result.exit_code == 0
+        svg_files = list(output_dir.glob("*.svg"))
+        assert len(svg_files) > 0
+
+        # Read the SVG and verify legend is present
+        svg_content = svg_files[0].read_text()
+        assert "color-legend" in svg_content
+        assert "Modifiers" in svg_content
+
+    def test_cli_no_legend_in_help(self, runner):
+        """SPEC-NL-004: --no-legend option appears in help output."""
+        from glove80_visualizer.cli import main
+
+        result = runner.invoke(main, ["--help"])
+
+        assert result.exit_code == 0
+        assert "--no-legend" in result.output
+
+
 class TestCliEdgeCases:
     """Tests for CLI edge cases to achieve full coverage."""
 

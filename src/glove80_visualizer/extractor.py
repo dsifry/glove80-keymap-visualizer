@@ -7,7 +7,7 @@ This module extracts structured layer information from parsed YAML keymap data.
 
 import yaml
 
-from glove80_visualizer.models import KeyBinding, Layer
+from glove80_visualizer.models import KeyBinding, Layer, LayerActivator
 
 
 def extract_layers(
@@ -141,3 +141,75 @@ def _parse_key_binding(position: int, key_data) -> KeyBinding:
 
     # Fallback: convert to string
     return KeyBinding(position=position, tap=str(key_data))
+
+
+def extract_layer_activators(yaml_content: str) -> list[LayerActivator]:
+    """
+    Extract layer activators from parsed keymap YAML.
+
+    Scans the keymap for hold behaviors that reference layer names and
+    creates LayerActivator objects to track which keys activate which layers.
+
+    Args:
+        yaml_content: YAML string from the parser
+
+    Returns:
+        List of LayerActivator objects
+
+    Example:
+        >>> yaml = '''
+        ... layers:
+        ...   Base:
+        ...     - [{t: BACKSPACE, h: Cursor}]
+        ...   Cursor:
+        ...     - [{type: held}]
+        ... '''
+        >>> activators = extract_layer_activators(yaml)
+        >>> print(activators[0].target_layer_name)
+        Cursor
+    """
+    if not yaml_content:
+        return []
+
+    data = yaml.safe_load(yaml_content)
+
+    if not data or "layers" not in data:
+        return []
+
+    layers_data = data["layers"]
+    layer_names = set(layers_data.keys())
+    activators = []
+
+    # Scan each layer for hold behaviors that reference other layer names
+    for layer_name, layer_bindings in layers_data.items():
+        if not layer_bindings:
+            continue
+
+        flat_bindings = _flatten_bindings(layer_bindings)
+
+        for position, key_data in enumerate(flat_bindings):
+            if not isinstance(key_data, dict):
+                continue
+
+            # Check for hold behavior
+            hold = key_data.get("h", key_data.get("hold"))
+            if not hold:
+                continue
+
+            # Check if hold references a layer name
+            if hold in layer_names:
+                tap = key_data.get("t", key_data.get("tap", ""))
+                if tap is None:
+                    tap = ""
+                else:
+                    tap = str(tap)
+
+                activator = LayerActivator(
+                    source_layer_name=layer_name,
+                    source_position=position,
+                    target_layer_name=hold,
+                    tap_key=tap if tap else None,
+                )
+                activators.append(activator)
+
+    return activators
