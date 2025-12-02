@@ -1793,8 +1793,8 @@ class TestResolveTransparentKeys:
 class TestHeldKeyIndicator:
     """Tests for held key indicator in layer diagrams."""
 
-    def test_held_key_has_indicator(self):
-        """SPEC-HK-006: Held key position shows indicator."""
+    def test_held_key_has_fingerprint_glyph(self):
+        """SPEC-HK-006: Held key position shows inlined fingerprint SVG."""
         from glove80_visualizer.svg_generator import generate_layer_svg
         from glove80_visualizer.models import Layer, KeyBinding, LayerActivator
         from glove80_visualizer.config import VisualizerConfig
@@ -1813,31 +1813,103 @@ class TestHeldKeyIndicator:
 
         svg = generate_layer_svg(layer, config=config, activators=activators)
 
-        # TODO: Tighten assertion after implementation is stable
-        # Initial loose check - refine once SVG structure is finalized
-        assert "held" in svg.lower() or "activator" in svg.lower() or "#d699b6" in svg
+        # Should contain inlined fingerprint SVG path (for CairoSVG compatibility)
+        # The path starts with M17.81 from the MDI fingerprint icon
+        assert "M17.81" in svg
+        # Should NOT contain <use> element (replaced with inline)
+        assert '<use href="#mdi:fingerprint"' not in svg
+
+    def test_inline_fingerprint_glyphs_function(self):
+        """SPEC-HK-015: _inline_fingerprint_glyphs replaces use elements with paths."""
+        from glove80_visualizer.svg_generator import _inline_fingerprint_glyphs
+
+        # Simulated SVG with <use> element
+        svg_input = '''<svg>
+<svg id="mdi:fingerprint"><path d="test"/></svg>
+<use href="#mdi:fingerprint" xlink:href="#mdi:fingerprint" x="-16" y="-16" height="32" width="32.0" class="test"/>
+</svg>'''
+
+        result = _inline_fingerprint_glyphs(svg_input)
+
+        # Should have inline path
+        assert "M17.81" in result
+        # Should not have <use> element
+        assert '<use href="#mdi:fingerprint"' not in result
+        # Should not have nested SVG definition
+        assert 'id="mdi:fingerprint"' not in result
+
+    def test_held_key_has_held_type(self):
+        """SPEC-HK-008: Held key gets type='held' for red shading."""
+        from glove80_visualizer.svg_generator import _binding_to_keymap_drawer
+        from glove80_visualizer.models import KeyBinding
+        from glove80_visualizer.config import VisualizerConfig
+
+        binding = KeyBinding(position=69, tap="A")
+        config = VisualizerConfig(show_held_indicator=True)
+        held_positions = {69}
+
+        result = _binding_to_keymap_drawer(binding, "mac", config, held_positions)
+
+        assert isinstance(result, dict)
+        assert result.get("type") == "held"
+
+    def test_held_key_shows_fingerprint_tap_and_layer_hold(self):
+        """SPEC-HK-009: Held key shows fingerprint as tap and 'Layer' as hold."""
+        from glove80_visualizer.svg_generator import _binding_to_keymap_drawer
+        from glove80_visualizer.models import KeyBinding
+        from glove80_visualizer.config import VisualizerConfig
+
+        binding = KeyBinding(position=69, tap="A")
+        config = VisualizerConfig(show_held_indicator=True)
+        held_positions = {69}
+
+        result = _binding_to_keymap_drawer(binding, "mac", config, held_positions)
+
+        assert isinstance(result, dict)
+        # Fingerprint glyph should be the main tap content
+        assert "$$mdi:fingerprint$$" in result.get("t", "")
+        # "Layer" text should be in hold position (below)
+        assert result.get("h") == "Layer"
 
     def test_held_indicator_disabled(self):
         """SPEC-HK-007: Held indicator can be disabled."""
-        from glove80_visualizer.svg_generator import generate_layer_svg
-        from glove80_visualizer.models import Layer, KeyBinding, LayerActivator
+        from glove80_visualizer.svg_generator import _binding_to_keymap_drawer
+        from glove80_visualizer.models import KeyBinding
         from glove80_visualizer.config import VisualizerConfig
 
-        layer = Layer(name="Cursor", index=1, bindings=[
-            KeyBinding(position=i, tap="A") for i in range(80)
-        ])
-        activators = [LayerActivator(
-            source_layer_name="QWERTY",
-            source_position=69,
-            target_layer_name="Cursor",
-            tap_key="BACKSPACE"
-        )]
+        binding = KeyBinding(position=69, tap="A")
         config = VisualizerConfig(show_held_indicator=False)
+        held_positions = {69}
 
-        svg = generate_layer_svg(layer, config=config, activators=activators)
+        result = _binding_to_keymap_drawer(binding, "mac", config, held_positions)
 
-        # Should NOT contain held indicator styling
-        assert "held-key" not in svg.lower()
+        # Should NOT have held type or fingerprint when disabled
+        if isinstance(result, dict):
+            assert result.get("type") != "held"
+            assert "fingerprint" not in result.get("t", "")
+        else:
+            # Simple string without held indicator
+            assert result == "A"
+
+    def test_non_held_key_no_fingerprint(self):
+        """SPEC-HK-010: Non-held keys don't get fingerprint."""
+        from glove80_visualizer.svg_generator import _binding_to_keymap_drawer
+        from glove80_visualizer.models import KeyBinding
+        from glove80_visualizer.config import VisualizerConfig
+
+        binding = KeyBinding(position=10, tap="B")  # Not position 69
+        config = VisualizerConfig(show_held_indicator=True)
+        held_positions = {69}  # Only 69 is held
+
+        result = _binding_to_keymap_drawer(binding, "mac", config, held_positions)
+
+        # Should NOT have held type or fingerprint
+        if isinstance(result, dict):
+            assert result.get("type") != "held"
+            assert "fingerprint" not in result.get("t", "")
+        else:
+            # Simple string is fine for non-held keys
+            assert result == "B"
 
     def test_held_indicator_no_activators(self):
         """SVG generates without activators parameter."""
@@ -1851,6 +1923,277 @@ class TestHeldKeyIndicator:
         # Should not raise
         svg = generate_layer_svg(layer)
         assert "</svg>" in svg
+
+    def test_multiple_held_keys(self):
+        """SPEC-HK-011: Multiple held positions all get indicators."""
+        from glove80_visualizer.svg_generator import _binding_to_keymap_drawer
+        from glove80_visualizer.models import KeyBinding
+        from glove80_visualizer.config import VisualizerConfig
+
+        config = VisualizerConfig(show_held_indicator=True)
+        held_positions = {10, 20, 30}
+
+        # Check each held position
+        for pos in held_positions:
+            binding = KeyBinding(position=pos, tap="X")
+            result = _binding_to_keymap_drawer(binding, "mac", config, held_positions)
+            assert isinstance(result, dict)
+            assert result.get("type") == "held"
+            assert "$$mdi:fingerprint$$" in result.get("t", "")
+            assert result.get("h") == "Layer"
+
+    def test_held_key_with_hold_behavior(self):
+        """SPEC-HK-012: Held key with hold behavior still gets fingerprint."""
+        from glove80_visualizer.svg_generator import _binding_to_keymap_drawer
+        from glove80_visualizer.models import KeyBinding
+        from glove80_visualizer.config import VisualizerConfig
+
+        # Key with both tap and hold, and it's a held position
+        binding = KeyBinding(position=69, tap="BACKSPACE", hold="Cursor")
+        config = VisualizerConfig(show_held_indicator=True)
+        held_positions = {69}
+
+        result = _binding_to_keymap_drawer(binding, "mac", config, held_positions)
+
+        assert isinstance(result, dict)
+        assert result.get("type") == "held"
+        # Fingerprint replaces normal tap content
+        assert "$$mdi:fingerprint$$" in result.get("t", "")
+        # "Layer" replaces original hold content
+        assert result.get("h") == "Layer"
+
+    def test_held_key_transparent_shows_fingerprint(self):
+        """SPEC-HK-013: Held key that is transparent still shows fingerprint."""
+        from glove80_visualizer.svg_generator import _binding_to_keymap_drawer
+        from glove80_visualizer.models import KeyBinding
+        from glove80_visualizer.config import VisualizerConfig
+
+        # Transparent key at held position
+        binding = KeyBinding(position=69, tap="&trans")
+        config = VisualizerConfig(show_held_indicator=True)
+        held_positions = {69}
+
+        result = _binding_to_keymap_drawer(binding, "mac", config, held_positions)
+
+        assert isinstance(result, dict)
+        assert result.get("type") == "held"
+        assert "$$mdi:fingerprint$$" in result.get("t", "")
+        assert result.get("h") == "Layer"
+
+    def test_held_key_none_shows_fingerprint(self):
+        """SPEC-HK-014: Held key that is &none still shows fingerprint."""
+        from glove80_visualizer.svg_generator import _binding_to_keymap_drawer
+        from glove80_visualizer.models import KeyBinding
+        from glove80_visualizer.config import VisualizerConfig
+
+        # &none key at held position
+        binding = KeyBinding(position=69, tap="")
+        config = VisualizerConfig(show_held_indicator=True)
+        held_positions = {69}
+
+        result = _binding_to_keymap_drawer(binding, "mac", config, held_positions)
+
+        assert isinstance(result, dict)
+        assert result.get("type") == "held"
+        assert "$$mdi:fingerprint$$" in result.get("t", "")
+        assert result.get("h") == "Layer"
+
+
+class TestColorLegend:
+    """Tests for color legend in layer diagrams."""
+
+    def test_color_legend_added_when_colors_enabled(self):
+        """SPEC-CL-020: SVG includes color legend when show_colors is True."""
+        from glove80_visualizer.svg_generator import generate_layer_svg
+        from glove80_visualizer.models import Layer, KeyBinding
+        from glove80_visualizer.config import VisualizerConfig
+
+        layer = Layer(name="Test", index=0, bindings=[
+            KeyBinding(position=i, tap="A") for i in range(80)
+        ])
+        config = VisualizerConfig(show_colors=True)
+
+        svg = generate_layer_svg(layer, config=config)
+
+        # Should include legend
+        assert "legend" in svg.lower() or "Modifiers" in svg
+
+    def test_color_legend_shows_categories(self):
+        """SPEC-CL-021: Color legend shows all key categories."""
+        from glove80_visualizer.svg_generator import generate_layer_svg
+        from glove80_visualizer.models import Layer, KeyBinding
+        from glove80_visualizer.config import VisualizerConfig
+
+        layer = Layer(name="Test", index=0, bindings=[
+            KeyBinding(position=i, tap="A") for i in range(80)
+        ])
+        config = VisualizerConfig(show_colors=True)
+
+        svg = generate_layer_svg(layer, config=config)
+
+        # Should show category names
+        assert "Modifiers" in svg
+        assert "Navigation" in svg
+        assert "Layer" in svg
+
+    def test_color_legend_not_shown_when_disabled(self):
+        """SPEC-CL-022: No legend when show_colors is False."""
+        from glove80_visualizer.svg_generator import generate_layer_svg
+        from glove80_visualizer.models import Layer, KeyBinding
+        from glove80_visualizer.config import VisualizerConfig
+
+        layer = Layer(name="Test", index=0, bindings=[
+            KeyBinding(position=i, tap="A") for i in range(80)
+        ])
+        config = VisualizerConfig(show_colors=False)
+
+        svg = generate_layer_svg(layer, config=config)
+
+        # Should NOT have legend elements
+        assert "Modifiers" not in svg
+        assert "Navigation" not in svg
+
+
+class TestCenteredLayerName:
+    """Tests for centered layer name display."""
+
+    def test_layer_name_centered_between_hands(self):
+        """SPEC-LN-001: Layer name appears centered between keyboard halves."""
+        from glove80_visualizer.svg_generator import generate_layer_svg
+        from glove80_visualizer.models import Layer, KeyBinding
+        from glove80_visualizer.config import VisualizerConfig
+
+        layer = Layer(name="Cursor", index=1, bindings=[
+            KeyBinding(position=i, tap="A") for i in range(80)
+        ])
+        config = VisualizerConfig()
+
+        svg = generate_layer_svg(layer, config=config)
+
+        # Should have layer name in center area
+        assert "Cursor" in svg
+        # Should have text-anchor middle for centering
+        assert 'text-anchor' in svg.lower() or 'middle' in svg.lower()
+
+
+class TestColorOutput:
+    """Tests for --color semantic coloring output."""
+
+    def test_color_css_added_when_enabled(self):
+        """SPEC-CL-013: SVG includes color CSS when show_colors is True."""
+        from glove80_visualizer.svg_generator import generate_layer_svg
+        from glove80_visualizer.models import Layer, KeyBinding
+        from glove80_visualizer.config import VisualizerConfig
+
+        layer = Layer(name="Test", index=0, bindings=[
+            KeyBinding(position=i, tap="A") for i in range(80)
+        ])
+        config = VisualizerConfig(show_colors=True)
+
+        svg = generate_layer_svg(layer, config=config)
+
+        # Should include semantic coloring CSS
+        assert "rect.modifier" in svg
+        assert "rect.navigation" in svg
+        assert "rect.symbol" in svg
+        assert "#7fbbb3" in svg  # Modifier color
+
+    def test_color_css_not_added_when_disabled(self):
+        """SPEC-CL-014: SVG does NOT include color CSS when show_colors is False."""
+        from glove80_visualizer.svg_generator import generate_layer_svg
+        from glove80_visualizer.models import Layer, KeyBinding
+        from glove80_visualizer.config import VisualizerConfig
+
+        layer = Layer(name="Test", index=0, bindings=[
+            KeyBinding(position=i, tap="A") for i in range(80)
+        ])
+        config = VisualizerConfig(show_colors=False)
+
+        svg = generate_layer_svg(layer, config=config)
+
+        # Should NOT include semantic coloring CSS
+        assert "rect.modifier" not in svg
+        assert "rect.navigation" not in svg
+
+    def test_modifier_key_gets_modifier_type(self):
+        """SPEC-CL-015: Modifier keys get type='modifier' when colors enabled."""
+        from glove80_visualizer.svg_generator import _binding_to_keymap_drawer
+        from glove80_visualizer.models import KeyBinding
+        from glove80_visualizer.config import VisualizerConfig
+
+        binding = KeyBinding(position=0, tap="LSHIFT")
+        config = VisualizerConfig(show_colors=True)
+
+        result = _binding_to_keymap_drawer(binding, "mac", config)
+
+        # Should have modifier type for shift key (⇧)
+        assert isinstance(result, dict)
+        assert result.get("type") == "modifier"
+
+    def test_navigation_key_gets_navigation_type(self):
+        """SPEC-CL-016: Navigation keys get type='navigation' when colors enabled."""
+        from glove80_visualizer.svg_generator import _binding_to_keymap_drawer
+        from glove80_visualizer.models import KeyBinding
+        from glove80_visualizer.config import VisualizerConfig
+
+        binding = KeyBinding(position=0, tap="LEFT")
+        config = VisualizerConfig(show_colors=True)
+
+        result = _binding_to_keymap_drawer(binding, "mac", config)
+
+        assert isinstance(result, dict)
+        assert result.get("type") == "navigation"
+
+    def test_alpha_key_no_type_when_colors_enabled(self):
+        """SPEC-CL-017: Regular alpha keys don't get a type (default color)."""
+        from glove80_visualizer.svg_generator import _binding_to_keymap_drawer
+        from glove80_visualizer.models import KeyBinding
+        from glove80_visualizer.config import VisualizerConfig
+
+        binding = KeyBinding(position=0, tap="A")
+        config = VisualizerConfig(show_colors=True)
+
+        result = _binding_to_keymap_drawer(binding, "mac", config)
+
+        # Simple string - no type field for default keys
+        assert result == "A"
+
+    def test_layer_hold_gets_layer_type(self):
+        """SPEC-CL-018: Layer activator hold keys get type='layer' when colors enabled."""
+        from glove80_visualizer.svg_generator import _binding_to_keymap_drawer
+        from glove80_visualizer.models import KeyBinding
+        from glove80_visualizer.config import VisualizerConfig
+
+        binding = KeyBinding(position=0, tap="BACKSPACE", hold="Cursor")
+        config = VisualizerConfig(show_colors=True)
+
+        result = _binding_to_keymap_drawer(binding, "mac", config)
+
+        assert isinstance(result, dict)
+        assert result.get("type") == "layer"
+
+    def test_generate_color_css_function(self):
+        """SPEC-CL-019: _generate_color_css creates proper CSS rules."""
+        from glove80_visualizer.svg_generator import _generate_color_css
+        from glove80_visualizer.colors import ColorScheme
+
+        scheme = ColorScheme()
+        css = _generate_color_css(scheme)
+
+        # Should have rules for all categories
+        assert "rect.modifier" in css
+        assert "rect.layer" in css
+        assert "rect.navigation" in css
+        assert "rect.symbol" in css
+        assert "rect.number" in css
+        assert "rect.media" in css
+        assert "rect.mouse" in css
+        assert "rect.system" in css
+        assert "rect.trans" in css
+
+        # Should use scheme colors
+        assert scheme.modifier_color in css
+        assert scheme.navigation_color in css
 
 
 class TestMehHyperCombos:
