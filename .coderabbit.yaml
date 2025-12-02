@@ -1,0 +1,22 @@
+# CodeRabbit Configuration
+# Documentation: https://docs.coderabbit.ai/
+
+language: "en-US"
+
+reviews:
+  # Enable high-level summary of changes
+  high_level_summary: true
+  # Enable poem in review (fun touch)
+  poem: false
+  # Review status (e.g., "LGTM")
+  review_status: true
+  # Collapse walkthrough after certain number of files
+  collapse_walkthrough: 6
+  # Auto-review on PR open
+  auto_review:
+    enabled: true
+    drafts: false
+
+chat:
+  # Enable chat with CodeRabbit in PR comments
+  auto_reply: true
