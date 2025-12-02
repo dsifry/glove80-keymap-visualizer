@@ -11,7 +11,7 @@ import click
 
 from glove80_visualizer import __version__
 from glove80_visualizer.config import VisualizerConfig
-from glove80_visualizer.extractor import extract_layers
+from glove80_visualizer.extractor import extract_layer_activators, extract_layers
 from glove80_visualizer.parser import KeymapParseError, parse_zmk_keymap
 from glove80_visualizer.pdf_generator import generate_pdf_with_toc
 from glove80_visualizer.svg_generator import generate_layer_svg
@@ -264,6 +264,11 @@ def main(
                 # Extractor always assigns index 0 to first layer
                 base_layer_obj = extracted_layers[0]
 
+    # Extract layer activators for held key indicators
+    activators = extract_layer_activators(yaml_content)
+    if activators and verbose:
+        log(f"Found {len(activators)} layer activators")
+
     # Generate SVGs
     svgs: list[str] = []
     failed_layers: list[str] = []
@@ -277,6 +282,7 @@ def main(
                 os_style=os_style,
                 resolve_trans=resolve_trans,
                 base_layer=base_layer_obj,
+                activators=activators,
             )
             svgs.append(svg)
         except Exception as e:
