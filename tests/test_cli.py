@@ -335,6 +335,22 @@ class TestCliResolveTransOption:
         assert output.exists()
 
 
+class TestCliColorOption:
+    """Tests for --color CLI option."""
+
+    def test_cli_color_option(self, runner, simple_keymap_path, tmp_path):
+        """SPEC-CL-012: CLI accepts --color option."""
+        from glove80_visualizer.cli import main
+
+        output = tmp_path / "output.pdf"
+        result = runner.invoke(
+            main, [str(simple_keymap_path), "-o", str(output), "--color"]
+        )
+
+        assert result.exit_code == 0
+        assert output.exists()
+
+
 class TestCliEdgeCases:
     """Tests for CLI edge cases to achieve full coverage."""
 

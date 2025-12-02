@@ -128,6 +128,11 @@ class MutuallyExclusiveOption(click.Option):
     default=None,
     help="Base layer name for --resolve-trans (default: first layer)",
 )
+@click.option(
+    "--color",
+    is_flag=True,
+    help="Apply semantic colors to keys (modifiers, navigation, etc.)",
+)
 @click.version_option(version=__version__)
 def main(
     keymap: Path,
@@ -146,6 +151,7 @@ def main(
     linux: bool,
     resolve_trans: bool,
     base_layer: str | None,
+    color: bool,
 ) -> None:
     """
     Generate PDF/SVG visualizations of Glove80 keyboard layers.
@@ -197,6 +203,7 @@ def main(
     config.continue_on_error = continue_on_error
     config.os_style = os_style
     config.resolve_trans = resolve_trans
+    config.show_colors = color
 
     # Parse keymap file
     log(f"Parsing keymap: {keymap}")

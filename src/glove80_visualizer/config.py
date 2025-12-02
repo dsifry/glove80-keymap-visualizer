@@ -63,6 +63,9 @@ class VisualizerConfig:
     # Held key indicator
     show_held_indicator: bool = True  # Show which key activates current layer
 
+    # Color output
+    show_colors: bool = False  # Apply semantic colors to keys
+
     @classmethod
     def from_yaml(cls, yaml_content: str) -> "VisualizerConfig":
         """
