@@ -4,6 +4,8 @@ Generate PDF visualizations of Glove80 keyboard layers from ZMK keymap files.
 
 ![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
+[![CodeRabbit](https://img.shields.io/badge/CodeRabbit-AI%20Reviews-blue?logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMTggMTBhNiA2IDAgMCAwLTYtNiA2IDYgMCAwIDAtNiA2djNhNiA2IDAgMCAwIDYgNiA2IDYgMCAwIDAgNi02di0zeiIvPjwvc3ZnPg==)](https://coderabbit.ai)
+![Test Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen.svg)
 
 ## Overview
 
