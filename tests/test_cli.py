@@ -118,17 +118,16 @@ class TestCliErrors:
 
         output = tmp_path / "output.pdf"
         # Mock svg_generator to fail on one specific layer
-        original_generate = None
         call_count = [0]
 
-        def mock_generate(layer, **kwargs):
+        def mock_generate(layer, config=None):
             call_count[0] += 1
             if call_count[0] == 2:  # Fail on second layer
                 raise ValueError("Simulated render failure")
-            return "<svg></svg>"
+            return "<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'></svg>"
 
         mocker.patch(
-            "glove80_visualizer.svg_generator.generate_layer_svg",
+            "glove80_visualizer.cli.generate_layer_svg",
             side_effect=mock_generate,
         )
 
@@ -149,7 +148,7 @@ class TestCliErrors:
 
         output = tmp_path / "output.pdf"
         mocker.patch(
-            "glove80_visualizer.svg_generator.generate_layer_svg",
+            "glove80_visualizer.cli.generate_layer_svg",
             side_effect=ValueError("All layers fail"),
         )
 
@@ -167,7 +166,7 @@ class TestCliErrors:
 
         output = tmp_path / "output.pdf"
         mocker.patch(
-            "glove80_visualizer.svg_generator.generate_layer_svg",
+            "glove80_visualizer.cli.generate_layer_svg",
             side_effect=ValueError("Render failed"),
         )
 
