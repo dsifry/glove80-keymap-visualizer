@@ -133,6 +133,11 @@ class MutuallyExclusiveOption(click.Option):
     is_flag=True,
     help="Apply semantic colors to keys (modifiers, navigation, etc.)",
 )
+@click.option(
+    "--no-legend",
+    is_flag=True,
+    help="Hide color legend when using --color",
+)
 @click.version_option(version=__version__)
 def main(
     keymap: Path,
@@ -152,6 +157,7 @@ def main(
     resolve_trans: bool,
     base_layer: str | None,
     color: bool,
+    no_legend: bool,
 ) -> None:
     """
     Generate PDF/SVG visualizations of Glove80 keyboard layers.
@@ -204,6 +210,7 @@ def main(
     config.os_style = os_style
     config.resolve_trans = resolve_trans
     config.show_colors = color
+    config.show_legend = not no_legend
 
     # Parse keymap file
     log(f"Parsing keymap: {keymap}")
