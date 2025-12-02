@@ -5,8 +5,8 @@ These tests define the expected behavior of PDF generation.
 Write these tests FIRST (TDD), then implement the generator to pass them.
 """
 
+
 import pytest
-from pathlib import Path
 
 
 class TestSvgToPdf:
@@ -21,8 +21,8 @@ class TestSvgToPdf:
 
     def test_pdf_page_size(self, sample_svg):
         """SPEC-D002: Generated PDF has specified page size."""
-        from glove80_visualizer.pdf_generator import svg_to_pdf
         from glove80_visualizer.config import VisualizerConfig
+        from glove80_visualizer.pdf_generator import svg_to_pdf
 
         config = VisualizerConfig(page_size="letter", orientation="landscape")
         pdf_bytes = svg_to_pdf(sample_svg, config=config)
@@ -32,8 +32,8 @@ class TestSvgToPdf:
 
     def test_svg_to_pdf_with_a4(self, sample_svg):
         """PDF can be generated with A4 page size."""
-        from glove80_visualizer.pdf_generator import svg_to_pdf
         from glove80_visualizer.config import VisualizerConfig
+        from glove80_visualizer.pdf_generator import svg_to_pdf
 
         config = VisualizerConfig(page_size="a4", orientation="landscape")
         pdf_bytes = svg_to_pdf(sample_svg, config=config)
@@ -45,7 +45,7 @@ class TestMergePdfs:
 
     def test_merge_pdfs_basic(self, sample_svg):
         """SPEC-D003: Generator merges multiple PDF pages into one document."""
-        from glove80_visualizer.pdf_generator import svg_to_pdf, merge_pdfs
+        from glove80_visualizer.pdf_generator import merge_pdfs, svg_to_pdf
 
         # Create multiple PDF pages
         pdf_pages = [svg_to_pdf(sample_svg) for _ in range(3)]
@@ -60,9 +60,11 @@ class TestMergePdfs:
         preserved when multiple PDFs are merged, preventing garbled text
         or missing characters in the output.
         """
-        from glove80_visualizer.pdf_generator import svg_to_pdf, merge_pdfs
-        import pikepdf
         from io import BytesIO
+
+        import pikepdf
+
+        from glove80_visualizer.pdf_generator import merge_pdfs, svg_to_pdf
 
         # Create SVGs with text that requires font embedding
         svg_with_text = '''<?xml version="1.0" encoding="UTF-8"?>
@@ -108,9 +110,11 @@ class TestMergePdfs:
 
     def test_merge_pdfs_page_count(self, sample_svg):
         """Merged PDF has correct number of pages."""
-        from glove80_visualizer.pdf_generator import svg_to_pdf, merge_pdfs
-        import pikepdf
         from io import BytesIO
+
+        import pikepdf
+
+        from glove80_visualizer.pdf_generator import merge_pdfs, svg_to_pdf
 
         pdf_pages = [svg_to_pdf(sample_svg) for _ in range(5)]
         merged = merge_pdfs(pdf_pages)
@@ -127,7 +131,7 @@ class TestMergePdfs:
 
     def test_merge_single_pdf(self, sample_svg):
         """Merging single PDF returns that PDF."""
-        from glove80_visualizer.pdf_generator import svg_to_pdf, merge_pdfs
+        from glove80_visualizer.pdf_generator import merge_pdfs, svg_to_pdf
 
         pdf = svg_to_pdf(sample_svg)
         merged = merge_pdfs([pdf])
@@ -175,8 +179,8 @@ class TestPdfWithToc:
 
     def test_pdf_large_document(self, sample_svg):
         """SPEC-D006: Generator handles documents with 32+ layers."""
-        from glove80_visualizer.pdf_generator import generate_pdf_with_toc
         from glove80_visualizer.models import Layer
+        from glove80_visualizer.pdf_generator import generate_pdf_with_toc
 
         layers = [Layer(name=f"Layer{i}", index=i, bindings=[]) for i in range(32)]
         svgs = [sample_svg] * 32

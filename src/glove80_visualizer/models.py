@@ -5,8 +5,6 @@ This module defines the core data structures used throughout the application.
 """
 
 from dataclasses import dataclass, field
-from typing import Optional, List
-
 
 # Constants for special key types
 TRANS_MARKERS = ("&trans", "▽", "trans")
@@ -27,8 +25,8 @@ class KeyBinding:
 
     position: int
     tap: str
-    hold: Optional[str] = None
-    key_type: Optional[str] = None
+    hold: str | None = None
+    key_type: str | None = None
 
     @property
     def is_transparent(self) -> bool:
@@ -58,7 +56,7 @@ class Layer:
 
     name: str
     index: int
-    bindings: List[KeyBinding] = field(default_factory=list)
+    bindings: list[KeyBinding] = field(default_factory=list)
 
     @property
     def is_complete(self) -> bool:
@@ -81,6 +79,6 @@ class VisualizationResult:
 
     success: bool
     partial_success: bool = False
-    error_message: Optional[str] = None
+    error_message: str | None = None
     layers_processed: int = 0
-    output_path: Optional[str] = None
+    output_path: str | None = None

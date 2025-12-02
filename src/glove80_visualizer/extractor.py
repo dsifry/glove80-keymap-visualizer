@@ -4,17 +4,17 @@ Layer extraction module.
 This module extracts structured layer information from parsed YAML keymap data.
 """
 
-from typing import List, Optional
+
 import yaml
 
-from glove80_visualizer.models import Layer, KeyBinding
+from glove80_visualizer.models import KeyBinding, Layer
 
 
 def extract_layers(
     yaml_content: str,
-    include: Optional[List[str]] = None,
-    exclude: Optional[List[str]] = None,
-) -> List[Layer]:
+    include: list[str] | None = None,
+    exclude: list[str] | None = None,
+) -> list[Layer]:
     """
     Extract Layer objects from parsed keymap YAML.
 
@@ -81,7 +81,7 @@ def extract_layers(
     return result
 
 
-def _flatten_bindings(bindings_data) -> List:
+def _flatten_bindings(bindings_data) -> list:
     """
     Flatten potentially nested binding data into a flat list.
 

@@ -4,9 +4,9 @@ Configuration handling for the Glove80 keymap visualizer.
 This module defines configuration options and defaults.
 """
 
-from dataclasses import dataclass, field, fields, asdict
-from typing import Optional
+from dataclasses import asdict, dataclass, fields
 from pathlib import Path
+
 import yaml
 
 
@@ -54,6 +54,12 @@ class VisualizerConfig:
     output_format: str = "pdf"
     continue_on_error: bool = False
 
+    # OS-specific modifier symbols
+    os_style: str = "mac"  # "mac", "windows", or "linux"
+
+    # Transparent key handling
+    resolve_trans: bool = False  # Show inherited keys instead of "trans"
+
     @classmethod
     def from_yaml(cls, yaml_content: str) -> "VisualizerConfig":
         """
@@ -88,7 +94,7 @@ class VisualizerConfig:
         if not file_path.exists():
             raise FileNotFoundError(f"Configuration file not found: {path}")
 
-        with open(file_path, "r") as f:
+        with open(file_path) as f:
             content = f.read()
 
         return cls.from_yaml(content)

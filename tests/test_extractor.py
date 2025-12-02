@@ -5,7 +5,6 @@ These tests define the expected behavior of extracting layer information.
 Write these tests FIRST (TDD), then implement the extractor to pass them.
 """
 
-import pytest
 
 
 class TestExtractLayers:

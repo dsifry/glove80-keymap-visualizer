@@ -5,7 +5,6 @@ These tests define the expected behavior of our data structures.
 Write these tests FIRST (TDD), then implement the models to pass them.
 """
 
-import pytest
 
 
 class TestKeyBinding:
@@ -79,7 +78,7 @@ class TestLayer:
 
     def test_layer_binding_count(self):
         """SPEC-M011: A Glove80 layer should have exactly 80 key bindings."""
-        from glove80_visualizer.models import Layer, KeyBinding
+        from glove80_visualizer.models import KeyBinding, Layer
 
         bindings = [KeyBinding(position=i, tap="X") for i in range(80)]
         layer = Layer(name="Test", index=0, bindings=bindings)
@@ -94,7 +93,7 @@ class TestLayer:
 
     def test_layer_complete_with_80_bindings(self):
         """A layer with 80 bindings should be marked complete."""
-        from glove80_visualizer.models import Layer, KeyBinding
+        from glove80_visualizer.models import KeyBinding, Layer
 
         bindings = [KeyBinding(position=i, tap="X") for i in range(80)]
         layer = Layer(name="Test", index=0, bindings=bindings)

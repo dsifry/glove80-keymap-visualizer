@@ -4,9 +4,9 @@ Integration tests for the full visualization pipeline.
 These tests verify the complete end-to-end workflow.
 """
 
-import pytest
 import time
-from pathlib import Path
+
+import pytest
 
 
 class TestEndToEnd:
@@ -42,8 +42,9 @@ class TestEndToEnd:
     @pytest.mark.slow
     def test_e2e_all_layers_present(self, daves_keymap_path, tmp_path):
         """SPEC-I003: All 32 layers are included in output PDF."""
-        from glove80_visualizer import generate_visualization
         import pikepdf
+
+        from glove80_visualizer import generate_visualization
 
         if not daves_keymap_path.exists():
             pytest.skip("Dave's keymap file not found")
@@ -78,8 +79,8 @@ class TestPipelineStages:
 
     def test_parse_then_extract(self, simple_keymap_path):
         """Parser output can be consumed by extractor."""
-        from glove80_visualizer.parser import parse_zmk_keymap
         from glove80_visualizer.extractor import extract_layers
+        from glove80_visualizer.parser import parse_zmk_keymap
 
         yaml_content = parse_zmk_keymap(simple_keymap_path)
         layers = extract_layers(yaml_content)
@@ -89,8 +90,8 @@ class TestPipelineStages:
 
     def test_extract_then_generate_svg(self, simple_keymap_path):
         """Extractor output can be consumed by SVG generator."""
-        from glove80_visualizer.parser import parse_zmk_keymap
         from glove80_visualizer.extractor import extract_layers
+        from glove80_visualizer.parser import parse_zmk_keymap
         from glove80_visualizer.svg_generator import generate_layer_svg
 
         yaml_content = parse_zmk_keymap(simple_keymap_path)
@@ -101,10 +102,10 @@ class TestPipelineStages:
 
     def test_svg_then_pdf(self, simple_keymap_path):
         """SVG output can be converted to PDF."""
-        from glove80_visualizer.parser import parse_zmk_keymap
         from glove80_visualizer.extractor import extract_layers
-        from glove80_visualizer.svg_generator import generate_layer_svg
+        from glove80_visualizer.parser import parse_zmk_keymap
         from glove80_visualizer.pdf_generator import svg_to_pdf
+        from glove80_visualizer.svg_generator import generate_layer_svg
 
         yaml_content = parse_zmk_keymap(simple_keymap_path)
         layers = extract_layers(yaml_content)
@@ -163,9 +164,10 @@ class TestOutputFormats:
 
     def test_pdf_with_toc(self, multi_layer_keymap_path, tmp_path):
         """Pipeline can include table of contents in PDF."""
+        import pikepdf
+
         from glove80_visualizer import generate_visualization
         from glove80_visualizer.config import VisualizerConfig
-        import pikepdf
 
         output = tmp_path / "output.pdf"
         config = VisualizerConfig(include_toc=True)

@@ -5,12 +5,12 @@ This module handles parsing ZMK .keymap files into intermediate YAML
 representation using keymap-drawer.
 """
 
-from pathlib import Path
 import warnings
-import yaml
+from pathlib import Path
 
-from keymap_drawer.parse.zmk import ZmkKeymapParser
+import yaml
 from keymap_drawer.config import ParseConfig
+from keymap_drawer.parse.zmk import ZmkKeymapParser
 
 
 class KeymapParseError(Exception):
@@ -80,7 +80,7 @@ def parse_zmk_keymap(
     parser = ZmkKeymapParser(config=config, columns=columns)
 
     try:
-        with open(keymap_path, "r") as f:
+        with open(keymap_path) as f:
             result = parser.parse(f)
     except Exception as e:
         # Wrap any parsing errors in our custom exception

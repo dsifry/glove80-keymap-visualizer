@@ -7,12 +7,12 @@ Generate PDF visualizations of Glove80 keyboard layers from ZMK keymap files.
 from pathlib import Path
 from typing import Optional, Union
 
-from glove80_visualizer.models import KeyBinding, Layer, VisualizationResult
 from glove80_visualizer.config import VisualizerConfig
-from glove80_visualizer.parser import parse_zmk_keymap, KeymapParseError
 from glove80_visualizer.extractor import extract_layers
-from glove80_visualizer.svg_generator import generate_layer_svg
+from glove80_visualizer.models import KeyBinding, Layer, VisualizationResult
+from glove80_visualizer.parser import KeymapParseError, parse_zmk_keymap
 from glove80_visualizer.pdf_generator import generate_pdf_with_toc
+from glove80_visualizer.svg_generator import generate_layer_svg
 
 __version__ = "0.1.0"
 __all__ = [
@@ -25,9 +25,9 @@ __all__ = [
 
 
 def generate_visualization(
-    keymap_path: Union[str, Path],
-    output_path: Union[str, Path],
-    config: Optional[VisualizerConfig] = None,
+    keymap_path: str | Path,
+    output_path: str | Path,
+    config: VisualizerConfig | None = None,
 ) -> VisualizationResult:
     """
     Generate a PDF visualization of a Glove80 keymap.

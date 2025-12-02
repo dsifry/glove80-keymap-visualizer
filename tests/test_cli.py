@@ -5,8 +5,8 @@ These tests define the expected behavior of the command-line interface.
 Write these tests FIRST (TDD), then implement the CLI to pass them.
 """
 
+
 import pytest
-from pathlib import Path
 
 
 class TestCliBasic:
@@ -120,7 +120,7 @@ class TestCliErrors:
         # Mock svg_generator to fail on one specific layer
         call_count = [0]
 
-        def mock_generate(layer, config=None):
+        def mock_generate(layer, config=None, **kwargs):
             call_count[0] += 1
             if call_count[0] == 2:  # Fail on second layer
                 raise ValueError("Simulated render failure")
@@ -147,9 +147,13 @@ class TestCliErrors:
         from glove80_visualizer.cli import main
 
         output = tmp_path / "output.pdf"
+
+        def mock_fail(layer, config=None, **kwargs):
+            raise ValueError("All layers fail")
+
         mocker.patch(
             "glove80_visualizer.cli.generate_layer_svg",
-            side_effect=ValueError("All layers fail"),
+            side_effect=mock_fail,
         )
 
         result = runner.invoke(
@@ -165,9 +169,13 @@ class TestCliErrors:
         from glove80_visualizer.cli import main
 
         output = tmp_path / "output.pdf"
+
+        def mock_fail(layer, config=None, **kwargs):
+            raise ValueError("Render failed")
+
         mocker.patch(
             "glove80_visualizer.cli.generate_layer_svg",
-            side_effect=ValueError("Render failed"),
+            side_effect=mock_fail,
         )
 
         result = runner.invoke(
@@ -228,6 +236,103 @@ class TestCliOptions:
         assert result.exit_code == 0
         # Output should be minimal
         assert len(result.output.strip()) == 0 or "error" not in result.output.lower()
+
+
+class TestCliOsStyleOptions:
+    """Tests for OS-specific modifier symbol options."""
+
+    def test_cli_mac_option(self, runner, simple_keymap_path, tmp_path):
+        """SPEC-C010: CLI accepts --mac option for Apple modifier symbols."""
+        from glove80_visualizer.cli import main
+
+        output = tmp_path / "output.pdf"
+        result = runner.invoke(
+            main, [str(simple_keymap_path), "-o", str(output), "--mac"]
+        )
+
+        assert result.exit_code == 0
+        assert output.exists()
+
+    def test_cli_windows_option(self, runner, simple_keymap_path, tmp_path):
+        """SPEC-C011: CLI accepts --windows option for Windows modifier symbols."""
+        from glove80_visualizer.cli import main
+
+        output = tmp_path / "output.pdf"
+        result = runner.invoke(
+            main, [str(simple_keymap_path), "-o", str(output), "--windows"]
+        )
+
+        assert result.exit_code == 0
+        assert output.exists()
+
+    def test_cli_linux_option(self, runner, simple_keymap_path, tmp_path):
+        """SPEC-C012: CLI accepts --linux option for Linux modifier symbols."""
+        from glove80_visualizer.cli import main
+
+        output = tmp_path / "output.pdf"
+        result = runner.invoke(
+            main, [str(simple_keymap_path), "-o", str(output), "--linux"]
+        )
+
+        assert result.exit_code == 0
+        assert output.exists()
+
+    def test_cli_os_options_mutually_exclusive(self, runner, simple_keymap_path, tmp_path):
+        """SPEC-C013: Only one OS style option can be specified at a time."""
+        from glove80_visualizer.cli import main
+
+        output = tmp_path / "output.pdf"
+        result = runner.invoke(
+            main, [str(simple_keymap_path), "-o", str(output), "--mac", "--windows"]
+        )
+
+        # Should fail or warn when multiple OS options are given
+        assert result.exit_code != 0 or "error" in result.output.lower() or "conflict" in result.output.lower()
+
+    def test_cli_default_is_mac(self, runner, simple_keymap_path, tmp_path):
+        """SPEC-C014: Default OS style is Mac when no option specified."""
+        from glove80_visualizer.cli import main
+
+        output = tmp_path / "output.pdf"
+        result = runner.invoke(
+            main, [str(simple_keymap_path), "-o", str(output)]
+        )
+
+        assert result.exit_code == 0
+        # Default should work without any OS flag
+
+
+class TestCliResolveTransOption:
+    """Tests for --resolve-trans CLI option."""
+
+    def test_cli_resolve_trans_option(self, runner, multi_layer_keymap_path, tmp_path):
+        """SPEC-C015: CLI accepts --resolve-trans option."""
+        from glove80_visualizer.cli import main
+
+        output = tmp_path / "output.pdf"
+        result = runner.invoke(
+            main, [str(multi_layer_keymap_path), "-o", str(output), "--resolve-trans"]
+        )
+
+        assert result.exit_code == 0
+        assert output.exists()
+
+    def test_cli_resolve_trans_with_base_layer(self, runner, multi_layer_keymap_path, tmp_path):
+        """SPEC-C016: CLI --resolve-trans can specify base layer name."""
+        from glove80_visualizer.cli import main
+
+        output = tmp_path / "output.pdf"
+        result = runner.invoke(
+            main, [
+                str(multi_layer_keymap_path),
+                "-o", str(output),
+                "--resolve-trans",
+                "--base-layer", "Base"
+            ]
+        )
+
+        assert result.exit_code == 0
+        assert output.exists()
 
 
 class TestCliIntegration:

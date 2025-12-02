@@ -2,8 +2,9 @@
 Pytest fixtures for glove80-keymap-visualizer tests.
 """
 
-import pytest
 from pathlib import Path
+
+import pytest
 
 
 @pytest.fixture
@@ -45,7 +46,7 @@ def daves_keymap_path() -> Path:
 @pytest.fixture
 def sample_layer():
     """Create a sample Layer object for testing."""
-    from glove80_visualizer.models import Layer, KeyBinding
+    from glove80_visualizer.models import KeyBinding, Layer
 
     bindings = [
         KeyBinding(position=i, tap=chr(65 + (i % 26)))  # A-Z cycling
@@ -57,7 +58,7 @@ def sample_layer():
 @pytest.fixture
 def sample_layers():
     """Create multiple sample Layer objects for testing."""
-    from glove80_visualizer.models import Layer, KeyBinding
+    from glove80_visualizer.models import KeyBinding, Layer
 
     layers = []
     for layer_idx in range(4):

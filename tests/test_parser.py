@@ -5,9 +5,10 @@ These tests define the expected behavior of parsing ZMK keymap files.
 Write these tests FIRST (TDD), then implement the parser to pass them.
 """
 
+from pathlib import Path
+
 import pytest
 import yaml
-from pathlib import Path
 
 
 class TestParseZmkKeymap:
@@ -46,7 +47,7 @@ class TestParseZmkKeymap:
 
     def test_parse_invalid_keymap(self, invalid_keymap_path):
         """SPEC-P005: Parser raises KeymapParseError for invalid keymap syntax."""
-        from glove80_visualizer.parser import parse_zmk_keymap, KeymapParseError
+        from glove80_visualizer.parser import KeymapParseError, parse_zmk_keymap
 
         with pytest.raises(KeymapParseError):
             parse_zmk_keymap(invalid_keymap_path)

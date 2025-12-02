@@ -4,23 +4,22 @@ PDF generation module.
 This module converts SVG diagrams to PDF and combines them into a single document.
 """
 
-from pathlib import Path
-from typing import List, Optional
-from io import BytesIO
+import shutil
 import subprocess
 import tempfile
-import shutil
+from io import BytesIO
+from pathlib import Path
 
 import pikepdf
 
-from glove80_visualizer.models import Layer
 from glove80_visualizer.config import VisualizerConfig
+from glove80_visualizer.models import Layer
 
 
 def svg_to_pdf(
     svg_content: str,
-    config: Optional[VisualizerConfig] = None,
-    header: Optional[str] = None,
+    config: VisualizerConfig | None = None,
+    header: str | None = None,
 ) -> bytes:
     """
     Convert an SVG string to PDF bytes.
@@ -94,7 +93,7 @@ def _svg_to_pdf_cairosvg(svg_content: str) -> bytes:
 def svg_to_pdf_file(
     svg_content: str,
     output_path: Path,
-    config: Optional[VisualizerConfig] = None,
+    config: VisualizerConfig | None = None,
     create_parents: bool = False,
 ) -> None:
     """
@@ -115,7 +114,7 @@ def svg_to_pdf_file(
         f.write(pdf_bytes)
 
 
-def merge_pdfs(pdf_pages: List[bytes]) -> bytes:
+def merge_pdfs(pdf_pages: list[bytes]) -> bytes:
     """
     Merge multiple PDF pages into a single document.
 
@@ -150,9 +149,9 @@ def merge_pdfs(pdf_pages: List[bytes]) -> bytes:
 
 
 def generate_pdf_with_toc(
-    layers: List[Layer],
-    svgs: List[str],
-    config: Optional[VisualizerConfig] = None,
+    layers: list[Layer],
+    svgs: list[str],
+    config: VisualizerConfig | None = None,
     include_toc: bool = True,
 ) -> bytes:
     """
@@ -243,7 +242,7 @@ def _add_header_to_svg(svg_content: str, header: str) -> str:
     return svg_content
 
 
-def _generate_toc_pages(layers: List[Layer], config: VisualizerConfig) -> List[bytes]:
+def _generate_toc_pages(layers: list[Layer], config: VisualizerConfig) -> list[bytes]:
     """
     Generate table of contents pages (may be multiple if many layers).
 
