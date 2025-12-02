@@ -10,8 +10,8 @@ reviews:
   poem: false
   # Review status (e.g., "LGTM")
   review_status: true
-  # Collapse walkthrough after certain number of files
-  collapse_walkthrough: 6
+  # Collapse walkthrough
+  collapse_walkthrough: true
   # Auto-review on PR open
   auto_review:
     enabled: true
