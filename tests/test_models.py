@@ -128,3 +128,40 @@ class TestVisualizerConfig:
         config = VisualizerConfig.from_yaml(yaml_content)
         assert config.page_size == "a4"
         assert config.font_size == 16
+
+    def test_config_from_file(self, tmp_path):
+        """VisualizerConfig can be loaded from a YAML file."""
+        from glove80_visualizer.config import VisualizerConfig
+
+        config_file = tmp_path / "config.yaml"
+        config_file.write_text("page_size: a4\nfont_size: 18")
+        config = VisualizerConfig.from_file(str(config_file))
+        assert config.page_size == "a4"
+        assert config.font_size == 18
+
+    def test_config_from_file_not_found(self, tmp_path):
+        """VisualizerConfig raises FileNotFoundError for missing file."""
+        import pytest
+        from glove80_visualizer.config import VisualizerConfig
+
+        with pytest.raises(FileNotFoundError) as exc_info:
+            VisualizerConfig.from_file("/nonexistent/config.yaml")
+        assert "not found" in str(exc_info.value).lower()
+
+    def test_config_to_yaml(self):
+        """VisualizerConfig can be exported to YAML."""
+        from glove80_visualizer.config import VisualizerConfig
+
+        config = VisualizerConfig(page_size="a4", font_size=20)
+        yaml_output = config.to_yaml()
+        assert "page_size: a4" in yaml_output
+        assert "font_size: 20" in yaml_output
+
+    def test_config_from_yaml_ignores_invalid_fields(self):
+        """VisualizerConfig ignores unknown fields in YAML."""
+        from glove80_visualizer.config import VisualizerConfig
+
+        yaml_content = "page_size: a4\nunknown_field: value"
+        config = VisualizerConfig.from_yaml(yaml_content)
+        assert config.page_size == "a4"
+        assert not hasattr(config, "unknown_field")

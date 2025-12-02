@@ -1554,3 +1554,237 @@ class TestMoreEmojiMacros:
 
         result = format_key_label("&emoji_face_fear_scared_macro")
         assert result in ["😨", "😰", "😱"]
+
+
+class TestFallbackBranches:
+    """Tests for fallback/default branches to achieve 100% coverage."""
+
+    def test_emoji_macro_no_match_returns_default(self):
+        """Emoji macro without proper pattern returns default emoji."""
+        from glove80_visualizer.svg_generator import _format_emoji_macro
+
+        # Missing _macro suffix - won't match regex
+        result = _format_emoji_macro("&emoji_heart")
+        assert result == "😀"
+
+    def test_emoji_macro_unknown_name_returns_default(self):
+        """Unknown emoji name returns default emoji."""
+        from glove80_visualizer.svg_generator import _format_emoji_macro
+
+        result = _format_emoji_macro("&emoji_nonexistent_thing_macro")
+        assert result == "😀"
+
+    def test_world_macro_no_match_returns_default(self):
+        """World macro without proper pattern returns ?."""
+        from glove80_visualizer.svg_generator import _format_world_macro
+
+        # Missing _macro suffix
+        result = _format_world_macro("&world_a_acute")
+        assert result == "?"
+
+    def test_world_macro_unknown_name_returns_default(self):
+        """Unknown world character returns ?."""
+        from glove80_visualizer.svg_generator import _format_world_macro
+
+        result = _format_world_macro("&world_nonexistent_char_macro")
+        assert result == "?"
+
+    def test_mouse_scroll_no_args_returns_default(self):
+        """Mouse scroll without direction returns default symbol."""
+        from glove80_visualizer.svg_generator import _format_mouse_scroll
+
+        result = _format_mouse_scroll("&msc")
+        assert result == "⊘"
+
+    def test_mouse_scroll_unknown_direction_returns_default(self):
+        """Mouse scroll with unknown direction returns default."""
+        from glove80_visualizer.svg_generator import _format_mouse_scroll
+
+        result = _format_mouse_scroll("&msc UNKNOWN_DIR")
+        assert result == "⊘"
+
+    def test_mouse_move_no_args_returns_default(self):
+        """Mouse move without direction returns default symbol."""
+        from glove80_visualizer.svg_generator import _format_mouse_move
+
+        result = _format_mouse_move("&mmv")
+        assert result == "🖱"
+
+    def test_mouse_move_unknown_direction_returns_default(self):
+        """Mouse move with unknown direction returns default."""
+        from glove80_visualizer.svg_generator import _format_mouse_move
+
+        result = _format_mouse_move("&mmv UNKNOWN_DIR")
+        assert result == "🖱"
+
+    def test_mouse_click_no_args_returns_default(self):
+        """Mouse click without button returns default symbol."""
+        from glove80_visualizer.svg_generator import _format_mouse_click
+
+        result = _format_mouse_click("&mkp")
+        assert result == "🖱"
+
+    def test_mouse_click_unknown_button_returns_default(self):
+        """Mouse click with unknown button returns default."""
+        from glove80_visualizer.svg_generator import _format_mouse_click
+
+        result = _format_mouse_click("&mkp UNKNOWN_BTN")
+        assert result == "🖱"
+
+    def test_select_behavior_unknown_returns_default(self):
+        """Unknown select behavior returns Sel."""
+        from glove80_visualizer.svg_generator import _format_select_behavior
+
+        result = _format_select_behavior("&select_unknown")
+        assert result == "Sel"
+
+    def test_extend_behavior_unknown_returns_default(self):
+        """Unknown extend behavior returns Ext."""
+        from glove80_visualizer.svg_generator import _format_extend_behavior
+
+        result = _format_extend_behavior("&extend_unknown")
+        assert result == "Ext"
+
+    def test_modifier_combo_single_part_returns_as_is(self):
+        """Modifier combo without + returns as-is."""
+        from glove80_visualizer.svg_generator import _format_modifier_combo
+
+        result = _format_modifier_combo("A", "mac")
+        assert result == "A"
+
+    def test_modifier_combo_meh_in_combo(self):
+        """Modifier combo with Meh works correctly."""
+        from glove80_visualizer.svg_generator import _format_modifier_combo
+
+        result = _format_modifier_combo("Meh+A", "mac")
+        assert result == "⌃⌥⇧A"
+
+    def test_modifier_combo_hyper_in_combo(self):
+        """Modifier combo with Hyper works correctly."""
+        from glove80_visualizer.svg_generator import _format_modifier_combo
+
+        result = _format_modifier_combo("Hyper+A", "mac")
+        assert result == "⌃⌥⇧⌘A"
+
+    def test_modifier_combo_unknown_modifier(self):
+        """Unknown modifier in combo gets truncated."""
+        from glove80_visualizer.svg_generator import _format_modifier_combo
+
+        result = _format_modifier_combo("Unknown+A", "mac")
+        assert result == "UnkA"  # First 3 chars + key
+
+    def test_behavior_with_args_but_empty_abbrev(self):
+        """Behavior with empty abbreviation just shows the arg."""
+        from glove80_visualizer.svg_generator import format_key_label
+
+        # &kp has empty abbrev, so just shows the key
+        result = format_key_label("&kp A")
+        assert result == "A"
+
+    def test_behavior_exact_match_with_args_no_abbrev(self):
+        """Behavior exact match with args but no abbrev returns formatted arg."""
+        from glove80_visualizer.svg_generator import format_key_label
+
+        # &lt has empty abbrev
+        result = format_key_label("&lt 1 A")
+        assert "A" in result or "1" in result
+
+    def test_behavior_exact_match_no_args_no_abbrev(self):
+        """Behavior exact match with no args and no abbrev returns name."""
+        from glove80_visualizer.svg_generator import format_key_label
+
+        result = format_key_label("&kp")
+        assert result == "kp"
+
+    def test_emoji_preset_unknown_returns_default(self):
+        """Unknown emoji preset returns default emoji."""
+        from glove80_visualizer.svg_generator import _format_emoji_preset
+
+        result = _format_emoji_preset("&emoji_unknown_preset")
+        assert result == "😀"
+
+    def test_generate_all_layer_svgs_uses_first_layer_as_base(self):
+        """generate_all_layer_svgs uses first layer as base if no index 0."""
+        from glove80_visualizer.svg_generator import generate_all_layer_svgs
+        from glove80_visualizer.models import Layer, KeyBinding
+
+        # Create layers without index 0
+        layer1 = Layer(name="Layer1", index=1, bindings=[
+            KeyBinding(position=0, tap="A")
+        ])
+        layer2 = Layer(name="Layer2", index=2, bindings=[
+            KeyBinding(position=0, tap="&trans")
+        ])
+
+        # Should not raise, uses layer1 as fallback base
+        result = generate_all_layer_svgs([layer1, layer2], resolve_trans=True)
+        assert len(result) == 2
+
+    def test_generate_all_layer_svgs_finds_index_0_layer(self):
+        """generate_all_layer_svgs finds layer with index 0 as base."""
+        from glove80_visualizer.svg_generator import generate_all_layer_svgs
+        from glove80_visualizer.models import Layer, KeyBinding
+
+        # Create layers with index 0 not first in list
+        layer0 = Layer(name="Base", index=0, bindings=[
+            KeyBinding(position=0, tap="B")
+        ])
+        layer1 = Layer(name="Layer1", index=1, bindings=[
+            KeyBinding(position=0, tap="&trans")
+        ])
+
+        # Should find index 0 even if it's second in list
+        result = generate_all_layer_svgs([layer1, layer0], resolve_trans=True)
+        assert len(result) == 2
+
+    def test_behavior_with_abbrev_and_args(self):
+        """Behavior with abbreviation and args combines them."""
+        from glove80_visualizer.svg_generator import format_key_label
+
+        # &bt with args should show BT prefix
+        result = format_key_label("&bt BT_SEL 0")
+        assert "BT" in result
+
+    def test_behavior_prefix_match_sticky_key(self):
+        """Prefix match for sticky key variations."""
+        from glove80_visualizer.svg_generator import format_key_label
+
+        # sticky_key prefix match
+        result = format_key_label("&sticky_key_variant LSFT", os_style="mac")
+        assert "●" in result or "⇧" in result
+
+
+class TestResolveTransparentKeys:
+    """Tests for transparent key resolution edge cases."""
+
+    def test_resolve_trans_base_layer_also_transparent(self):
+        """When base layer key is also transparent, keep it transparent."""
+        from glove80_visualizer.svg_generator import _resolve_transparent_keys
+        from glove80_visualizer.models import Layer, KeyBinding
+
+        base_layer = Layer(name="Base", index=0, bindings=[
+            KeyBinding(position=0, tap="&trans"),  # Base is also transparent
+        ])
+        overlay = Layer(name="Overlay", index=1, bindings=[
+            KeyBinding(position=0, tap="&trans"),
+        ])
+
+        result = _resolve_transparent_keys(overlay, base_layer)
+        assert result.bindings[0].tap == "&trans"
+
+    def test_resolve_trans_missing_position_in_base(self):
+        """When position doesn't exist in base, keep transparent."""
+        from glove80_visualizer.svg_generator import _resolve_transparent_keys
+        from glove80_visualizer.models import Layer, KeyBinding
+
+        base_layer = Layer(name="Base", index=0, bindings=[
+            KeyBinding(position=0, tap="A"),
+        ])
+        overlay = Layer(name="Overlay", index=1, bindings=[
+            KeyBinding(position=0, tap="&trans"),
+            KeyBinding(position=1, tap="&trans"),  # No position 1 in base
+        ])
+
+        result = _resolve_transparent_keys(overlay, base_layer)
+        assert result.bindings[0].tap == "A"  # Resolved
+        assert result.bindings[1].tap == "&trans"  # Kept transparent

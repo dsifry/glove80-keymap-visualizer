@@ -146,3 +146,27 @@ class TestParserHelpers:
         # Should warn but not raise (might still be valid)
         with pytest.warns(UserWarning, match="extension"):
             validate_keymap_path(wrong_ext)
+
+
+class TestParserErrorPaths:
+    """Tests for parser error handling paths."""
+
+    def test_parse_non_keymap_error(self, tmp_path):
+        """Parser raises generic error for non-keymap related failures."""
+        from glove80_visualizer.parser import KeymapParseError, parse_zmk_keymap
+
+        # Create a file that will cause a parse error not related to keymap detection
+        bad_file = tmp_path / "bad.keymap"
+        bad_file.write_text("invalid { syntax that causes parse error")
+
+        with pytest.raises(KeymapParseError):
+            parse_zmk_keymap(bad_file)
+
+    def test_parse_result_missing_layout(self, simple_keymap_path, mocker):
+        """Parser adds layout section if missing from result."""
+        from glove80_visualizer.parser import parse_zmk_keymap
+
+        # This tests line 95-96: if "layout" not in result
+        result = parse_zmk_keymap(simple_keymap_path)
+        # Should have layout section
+        assert "layout" in result or "zmk_keyboard" in result

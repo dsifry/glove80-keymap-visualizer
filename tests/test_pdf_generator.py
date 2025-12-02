@@ -211,3 +211,54 @@ class TestPdfFileOutput:
         svg_to_pdf_file(sample_svg, output_path, create_parents=True)
 
         assert output_path.exists()
+
+
+class TestPdfEdgeCases:
+    """Tests for edge cases and fallbacks in PDF generation."""
+
+    def test_create_empty_pdf(self):
+        """_create_empty_pdf creates a valid empty PDF."""
+        from glove80_visualizer.pdf_generator import _create_empty_pdf
+
+        pdf_bytes = _create_empty_pdf()
+        assert pdf_bytes.startswith(b"%PDF")
+
+    def test_generate_pdf_with_empty_layers_and_svgs(self):
+        """generate_pdf_with_toc with empty layers returns empty PDF."""
+        from glove80_visualizer.pdf_generator import generate_pdf_with_toc
+
+        pdf_bytes = generate_pdf_with_toc(layers=[], svgs=[], include_toc=False)
+        assert pdf_bytes.startswith(b"%PDF")
+
+    def test_add_header_to_svg_no_svg_tag(self):
+        """_add_header_to_svg handles content without svg tag."""
+        from glove80_visualizer.pdf_generator import _add_header_to_svg
+
+        result = _add_header_to_svg("<div>not svg</div>", "Header")
+        assert result == "<div>not svg</div>"  # Unchanged
+
+    def test_add_header_to_svg_no_closing_bracket(self):
+        """_add_header_to_svg handles malformed svg tag."""
+        from glove80_visualizer.pdf_generator import _add_header_to_svg
+
+        result = _add_header_to_svg("<svg no closing", "Header")
+        assert result == "<svg no closing"  # Unchanged
+
+    def test_svg_to_pdf_cairosvg_fallback(self, sample_svg, mocker):
+        """Falls back to CairoSVG when rsvg-convert unavailable."""
+        from glove80_visualizer.pdf_generator import svg_to_pdf
+
+        # Mock shutil.which to return None (rsvg not found)
+        mocker.patch("shutil.which", return_value=None)
+
+        pdf_bytes = svg_to_pdf(sample_svg)
+        assert pdf_bytes.startswith(b"%PDF")
+
+    def test_replace_layer_label(self):
+        """_replace_layer_label replaces keymap-drawer label."""
+        from glove80_visualizer.pdf_generator import _replace_layer_label
+
+        svg = '<svg><text class="label" id="Test">Test:</text></svg>'
+        result = _replace_layer_label(svg, "Layer 0: Test")
+        assert "Layer 0: Test" in result
+        assert "Test:</text>" not in result

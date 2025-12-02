@@ -312,16 +312,9 @@ def _generate_toc_pages(layers: list[Layer], config: VisualizerConfig) -> list[b
 
 
 def _create_empty_pdf() -> bytes:
-    """Create a minimal empty PDF."""
-    pdf = pikepdf.new()
-    # Add a blank page (Letter size: 612x792 points)
-    blank_page = pikepdf.Dictionary(
-        Type=pikepdf.Name.Page,
-        MediaBox=[0, 0, 612, 792],
-        Resources=pikepdf.Dictionary(),
-        Contents=pdf.make_stream(b""),
-    )
-    pdf.pages.append(blank_page)
-    output = BytesIO()
-    pdf.save(output)
-    return output.getvalue()
+    """Create a minimal empty PDF with a blank page."""
+    # Create a minimal SVG to convert to PDF
+    empty_svg = '''<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="612" height="792" viewBox="0 0 612 792">
+</svg>'''
+    return svg_to_pdf(empty_svg)

@@ -186,3 +186,88 @@ layers:
         names = [layer.name for layer in layers]
         assert "A" in names
         assert "B" not in names  # Excluded even though in include
+
+    def test_extract_empty_yaml_returns_empty_list(self):
+        """Extractor returns empty list for empty YAML."""
+        from glove80_visualizer.extractor import extract_layers
+
+        layers = extract_layers("")
+        assert layers == []
+
+    def test_extract_no_layers_key_returns_empty_list(self):
+        """Extractor returns empty list when layers key is missing."""
+        from glove80_visualizer.extractor import extract_layers
+
+        yaml_content = """
+other_key: value
+"""
+        layers = extract_layers(yaml_content)
+        assert layers == []
+
+    def test_extract_single_key_not_list(self):
+        """Extractor handles single key that's not in a list."""
+        from glove80_visualizer.extractor import extract_layers
+
+        yaml_content = """
+layers:
+  Test:
+    - A
+    - B
+    - C
+"""
+        layers = extract_layers(yaml_content)
+        # Non-list items are appended directly
+        assert len(layers[0].bindings) == 3
+
+    def test_extract_numeric_key_data(self):
+        """Extractor handles numeric key data (fallback to string)."""
+        from glove80_visualizer.extractor import extract_layers
+
+        yaml_content = """
+layers:
+  Test:
+    - [123, 456]
+"""
+        layers = extract_layers(yaml_content)
+        assert layers[0].bindings[0].tap == "123"
+        assert layers[0].bindings[1].tap == "456"
+
+    def test_extract_dict_with_tap_key(self):
+        """Extractor handles dict with 'tap' key instead of 't'."""
+        from glove80_visualizer.extractor import extract_layers
+
+        yaml_content = """
+layers:
+  Test:
+    - [{tap: A, hold: LSHIFT}]
+"""
+        layers = extract_layers(yaml_content)
+        binding = layers[0].bindings[0]
+        assert binding.tap == "A"
+        assert binding.hold == "LSHIFT"
+
+    def test_extract_dict_with_none_tap(self):
+        """Extractor handles dict with None tap value."""
+        from glove80_visualizer.extractor import extract_layers
+
+        yaml_content = """
+layers:
+  Test:
+    - [{t: null, h: LSHIFT}]
+"""
+        layers = extract_layers(yaml_content)
+        binding = layers[0].bindings[0]
+        assert binding.tap == ""
+
+    def test_extract_dict_with_type_field(self):
+        """Extractor handles dict with type field."""
+        from glove80_visualizer.extractor import extract_layers
+
+        yaml_content = """
+layers:
+  Test:
+    - [{t: trans, type: trans}]
+"""
+        layers = extract_layers(yaml_content)
+        binding = layers[0].bindings[0]
+        assert binding.key_type == "trans"

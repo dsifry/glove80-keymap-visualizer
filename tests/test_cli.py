@@ -335,6 +335,82 @@ class TestCliResolveTransOption:
         assert output.exists()
 
 
+class TestCliEdgeCases:
+    """Tests for CLI edge cases to achieve full coverage."""
+
+    def test_cli_no_layers_found(self, runner, tmp_path):
+        """CLI shows error when keymap has no layers."""
+        from glove80_visualizer.cli import main
+
+        # Create empty keymap
+        keymap = tmp_path / "empty.keymap"
+        keymap.write_text("// Empty keymap\n")
+
+        result = runner.invoke(main, [str(keymap), "-o", str(tmp_path / "out.pdf")])
+
+        # Should fail with error
+        assert result.exit_code != 0
+
+    def test_cli_svg_default_output_path(self, runner, simple_keymap_path, tmp_path, mocker):
+        """CLI generates default SVG output directory name."""
+        from glove80_visualizer.cli import main
+
+        # Invoke without -o but with --format svg
+        # Use the keymap from fixtures directory
+        result = runner.invoke(
+            main,
+            [str(simple_keymap_path), "--format", "svg"],
+        )
+
+        # Should succeed and create default _svgs directory
+        assert result.exit_code == 0
+
+    def test_cli_base_layer_not_found(self, runner, multi_layer_keymap_path, tmp_path):
+        """CLI shows error when specified base layer is not found."""
+        from glove80_visualizer.cli import main
+
+        output = tmp_path / "output.pdf"
+        result = runner.invoke(
+            main,
+            [
+                str(multi_layer_keymap_path),
+                "-o", str(output),
+                "--resolve-trans",
+                "--base-layer", "NonexistentLayer"
+            ]
+        )
+
+        assert result.exit_code != 0
+        assert "not found" in result.output.lower()
+
+    def test_cli_resolve_trans_fallback_to_first_layer(self, runner, tmp_path, mocker):
+        """CLI uses first layer when no layer has index 0."""
+        from glove80_visualizer.cli import main
+        from glove80_visualizer.models import Layer, KeyBinding
+
+        # Create test keymap
+        keymap = tmp_path / "test.keymap"
+        keymap.write_text("""
+/ {
+    keymap {
+        compatible = "zmk,keymap";
+        Test {
+            bindings = <&kp A>;
+        };
+    };
+};
+""")
+
+        output = tmp_path / "output.pdf"
+        result = runner.invoke(
+            main,
+            [str(keymap), "-o", str(output), "--resolve-trans"]
+        )
+
+        # Should succeed
+        assert result.exit_code == 0
+
+
 class TestCliIntegration:
     """Integration tests for the CLI."""
 
