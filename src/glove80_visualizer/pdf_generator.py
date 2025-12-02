@@ -127,10 +127,12 @@ def generate_pdf_with_toc(
         toc_pdf = _generate_toc_page(layers, config)
         pdf_pages.append(toc_pdf)
 
-    # Convert each SVG to PDF with layer name header
+    # Convert each SVG to PDF
+    # Replace keymap-drawer's default label with our formatted header
     for i, (layer, svg) in enumerate(zip(layers, svgs)):
         header = config.layer_title_format.format(index=layer.index, name=layer.name)
-        pdf_bytes = svg_to_pdf(svg, config, header=header)
+        svg_with_header = _replace_layer_label(svg, header)
+        pdf_bytes = svg_to_pdf(svg_with_header, config)
         pdf_pages.append(pdf_bytes)
 
     # Merge all pages
@@ -139,6 +141,25 @@ def generate_pdf_with_toc(
         return _create_empty_pdf()
 
     return merge_pdfs(pdf_pages)
+
+
+def _replace_layer_label(svg_content: str, new_label: str) -> str:
+    """
+    Replace keymap-drawer's layer label with our own formatted label.
+
+    keymap-drawer generates labels like: <text x="0" y="28" class="label" id="Base">Base:</text>
+    We replace the content to use our format (e.g., "Layer 0: Base")
+    """
+    import re
+
+    # Pattern to match keymap-drawer's label: <text ... class="label" ...>LayerName:</text>
+    pattern = r'(<text[^>]*class="label"[^>]*>)[^<]*(</text>)'
+
+    replacement = rf'\g<1>{new_label}\g<2>'
+
+    new_svg = re.sub(pattern, replacement, svg_content, count=1)
+
+    return new_svg
 
 
 def _add_header_to_svg(svg_content: str, header: str) -> str:
