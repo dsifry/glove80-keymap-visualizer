@@ -1,0 +1,18 @@
+/*
+ * Invalid keymap file for error testing
+ * This file is intentionally malformed
+ */
+
+#include <behaviors.dtsi>
+
+/ {
+    keymap {
+        compatible = "zmk,keymap";
+
+        layer_Broken {
+            bindings = <
+                /* Missing closing bracket and incomplete structure */
+                &kp A &kp B &kp C
+            /* No closing >;  */
+        };
+        /* Missing closing brace */
