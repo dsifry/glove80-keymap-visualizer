@@ -96,5 +96,5 @@ def parse_zmk_keymap(
         result["layout"] = {}
     result["layout"]["zmk_keyboard"] = keyboard
 
-    # Convert to YAML string
-    return yaml.dump(result, default_flow_style=False, allow_unicode=True)
+    # Convert to YAML string, preserving key order (sort_keys=False is critical!)
+    return yaml.dump(result, default_flow_style=False, allow_unicode=True, sort_keys=False)

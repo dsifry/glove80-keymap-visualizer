@@ -43,7 +43,7 @@ class TestEndToEnd:
     def test_e2e_all_layers_present(self, daves_keymap_path, tmp_path):
         """SPEC-I003: All 32 layers are included in output PDF."""
         from glove80_visualizer import generate_visualization
-        from PyPDF2 import PdfReader
+        import pikepdf
 
         if not daves_keymap_path.exists():
             pytest.skip("Dave's keymap file not found")
@@ -51,9 +51,9 @@ class TestEndToEnd:
         output = tmp_path / "output.pdf"
         generate_visualization(daves_keymap_path, output)
 
-        reader = PdfReader(str(output))
+        pdf = pikepdf.open(str(output))
         # 32 layers + optional TOC page
-        assert len(reader.pages) >= 32
+        assert len(pdf.pages) >= 32
 
     @pytest.mark.slow
     def test_e2e_performance(self, daves_keymap_path, tmp_path):
@@ -165,14 +165,14 @@ class TestOutputFormats:
         """Pipeline can include table of contents in PDF."""
         from glove80_visualizer import generate_visualization
         from glove80_visualizer.config import VisualizerConfig
-        from PyPDF2 import PdfReader
+        import pikepdf
 
         output = tmp_path / "output.pdf"
         config = VisualizerConfig(include_toc=True)
 
         generate_visualization(multi_layer_keymap_path, output, config=config)
 
-        reader = PdfReader(str(output))
+        pdf = pikepdf.open(str(output))
         # TOC adds one page
         # Multi-layer has 4 layers, so 5 pages with TOC
-        assert len(reader.pages) >= 5
+        assert len(pdf.pages) >= 5
