@@ -65,6 +65,7 @@ class VisualizerConfig:
 
     # Color output
     show_colors: bool = False  # Apply semantic colors to keys
+    show_legend: bool = True  # Show color legend when colors are enabled
 
     @classmethod
     def from_yaml(cls, yaml_content: str) -> "VisualizerConfig":
