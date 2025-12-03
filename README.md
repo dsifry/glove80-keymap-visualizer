@@ -109,6 +109,8 @@ glove80-viz keymap.keymap --list-layers
 ## Features
 
 - **Shifted character display** — Shows shifted characters above keys (! above 1, " above ') like a physical keyboard
+- **Custom mod-morph support** — Automatically detects custom shift mappings (e.g., `(` → `<`) from your keymap
+- **Refined typography** — Balanced key label positioning inspired by physical keycaps, with clear visual hierarchy
 - **OS-specific modifier symbols** — Mac (⌘⌥⌃⇧), Windows (Win+Ctrl+Alt+Shift), or Linux (Super+Ctrl+Alt+Shift)
 - **Semantic coloring** — Color-code keys by category: modifiers, navigation, numbers, symbols, media, layers, system
 - **Color legend** — Shows what each color means (can be hidden with `--no-legend`)

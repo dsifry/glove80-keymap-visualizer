@@ -2839,3 +2839,150 @@ class TestModMorphInSvgGeneration:
 
         # Should contain "<" as the shifted char for "("
         assert "<" in svg or "&lt;" in svg
+
+
+class TestTypographyPositioning:
+    """Tests for typography positioning adjustments.
+
+    These tests verify that tap/shifted/hold labels are positioned correctly
+    based on which elements are present on a key.
+    """
+
+    def test_shifted_only_tap_moves_down(self):
+        """SPEC-TYPO-001: Keys with shifted but no hold move tap to y=8."""
+        from glove80_visualizer.svg_generator import _adjust_tap_positions_for_shifted
+
+        # SVG with shifted but no hold
+        svg = '''<g transform="translate(140, 84)" class="key number keypos-12">
+<rect rx="6" ry="6" x="-26" y="-24" width="52" height="48" class="key number"/>
+<text x="0" y="0" class="key number tap">2</text>
+<text x="0" y="-21" class="key number shifted">@</text>
+</g>'''
+
+        result = _adjust_tap_positions_for_shifted(svg)
+
+        # Tap should move from y="0" to y="8"
+        assert 'y="8" class="key number tap"' in result
+        # Shifted should move from y="-21" to y="-14"
+        assert 'y="-14" class="key number shifted"' in result
+
+    def test_hold_only_tap_moves_up(self):
+        """SPEC-TYPO-002: Keys with hold but no shifted move tap to y=-6."""
+        from glove80_visualizer.svg_generator import _adjust_tap_positions_for_shifted
+
+        # SVG with hold but no shifted
+        svg = '''<g transform="translate(28, 336)" class="key layer keypos-64">
+<rect rx="6" ry="6" x="-26" y="-24" width="52" height="48" class="key layer"/>
+<text x="0" y="0" class="key layer tap">RGB</text>
+<text x="0" y="21" class="key layer hold">Magic</text>
+</g>'''
+
+        result = _adjust_tap_positions_for_shifted(svg)
+
+        # Tap should move from y="0" to y="-6"
+        assert 'y="-6" class="key layer tap"' in result
+        # Hold should move from y="21" to y="16"
+        assert 'y="16" class="key layer hold"' in result
+
+    def test_shifted_and_hold_unchanged(self):
+        """SPEC-TYPO-003: Keys with both shifted and hold keep tap at y=0."""
+        from glove80_visualizer.svg_generator import _adjust_tap_positions_for_shifted
+
+        # SVG with both shifted and hold
+        svg = '''<g transform="translate(924, 224)" class="key symbol keypos-44">
+<rect rx="6" ry="6" x="-26" y="-24" width="52" height="48" class="key symbol"/>
+<text x="0" y="0" class="key symbol tap">;</text>
+<text x="0" y="21" class="key symbol hold">⌃</text>
+<text x="0" y="-21" class="key symbol shifted">:</text>
+</g>'''
+
+        result = _adjust_tap_positions_for_shifted(svg)
+
+        # Tap should stay at y="0"
+        assert 'y="0" class="key symbol tap"' in result
+        # Hold should stay at y="21"
+        assert 'y="21" class="key symbol hold"' in result
+        # Shifted should stay at y="-21"
+        assert 'y="-21" class="key symbol shifted"' in result
+
+    def test_no_shifted_no_hold_unchanged(self):
+        """SPEC-TYPO-004: Keys with neither shifted nor hold stay at y=0."""
+        from glove80_visualizer.svg_generator import _adjust_tap_positions_for_shifted
+
+        # SVG with just tap
+        svg = '''<g transform="translate(140, 140)" class="key keypos-24">
+<rect rx="6" ry="6" x="-26" y="-26" width="52" height="52" class="key"/>
+<text x="0" y="0" class="key tap">W</text>
+</g>'''
+
+        result = _adjust_tap_positions_for_shifted(svg)
+
+        # Tap should stay at y="0"
+        assert 'y="0" class="key tap"' in result
+
+
+class TestTypographyCSS:
+    """Tests for typography CSS styling."""
+
+    def test_tap_font_size_is_14px(self):
+        """SPEC-TYPO-010: Tap labels use 14px font size."""
+        from glove80_visualizer.config import VisualizerConfig
+        from glove80_visualizer.models import KeyBinding, Layer
+        from glove80_visualizer.svg_generator import generate_layer_svg
+
+        layer = Layer(
+            name="Test",
+            index=0,
+            bindings=[KeyBinding(position=i, tap="A") for i in range(80)],
+        )
+        svg = generate_layer_svg(layer, config=VisualizerConfig())
+
+        assert "text.tap" in svg
+        assert "font-size: 14px" in svg
+
+    def test_tap_has_stroke_for_weight(self):
+        """SPEC-TYPO-011: Tap labels use stroke for bolder appearance."""
+        from glove80_visualizer.config import VisualizerConfig
+        from glove80_visualizer.models import KeyBinding, Layer
+        from glove80_visualizer.svg_generator import generate_layer_svg
+
+        layer = Layer(
+            name="Test",
+            index=0,
+            bindings=[KeyBinding(position=i, tap="A") for i in range(80)],
+        )
+        svg = generate_layer_svg(layer, config=VisualizerConfig())
+
+        assert "stroke-width: 0.3px" in svg
+
+    def test_shifted_font_size_is_10px(self):
+        """SPEC-TYPO-012: Shifted labels use 10px font size."""
+        from glove80_visualizer.config import VisualizerConfig
+        from glove80_visualizer.models import KeyBinding, Layer
+        from glove80_visualizer.svg_generator import generate_layer_svg
+
+        layer = Layer(
+            name="Test",
+            index=0,
+            bindings=[KeyBinding(position=i, tap="1", shifted="!") for i in range(80)],
+        )
+        svg = generate_layer_svg(layer, config=VisualizerConfig())
+
+        assert "text.shifted" in svg
+        assert "font-size: 10px" in svg
+
+    def test_hold_font_size_is_9px(self):
+        """SPEC-TYPO-013: Hold labels use 9px font size."""
+        from glove80_visualizer.config import VisualizerConfig
+        from glove80_visualizer.models import KeyBinding, Layer
+        from glove80_visualizer.svg_generator import generate_layer_svg
+
+        layer = Layer(
+            name="Test",
+            index=0,
+            bindings=[KeyBinding(position=i, tap="A", hold="⌘") for i in range(80)],
+        )
+        svg = generate_layer_svg(layer, config=VisualizerConfig())
+
+        assert "text.hold" in svg
+        assert "font-size: 9px" in svg

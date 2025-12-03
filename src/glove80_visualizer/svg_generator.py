@@ -380,12 +380,48 @@ def generate_layer_svg(
     # Default tap size is 14, but we want a more prominent indicator
     kd_config.draw_config.glyph_tap_size = 32
 
+    # Typography spacing - increase inner padding for better vertical breathing room
+    # This moves shifted/hold text slightly inward from key edges
+    kd_config.draw_config.inner_pad_h = 4.0  # default is 2.0
+    kd_config.draw_config.small_pad = 3.0   # default is 2.0
+
     # Override default font to include better Unicode symbol support
     # Arial Unicode MS has extensive Unicode coverage and works well with CairoSVG
     font_override_css = """
 /* Better font for Unicode symbols - CairoSVG compatibility */
 svg.keymap {
     font-family: "Arial Unicode MS", "Lucida Grande", "Apple Symbols", Arial, sans-serif;
+}
+
+/* Typography refinements - inspired by physical keyboard legends */
+
+/* Base tap label - medium weight for prominence */
+svg.keymap text {
+    font-size: 12px;
+}
+
+/* Tap labels - bolder appearance via size and subtle stroke */
+text.tap {
+    font-size: 14px !important;
+    stroke: currentColor;
+    stroke-width: 0.3px;
+}
+
+/* Shifted characters - smaller and lighter */
+text.shifted {
+    font-size: 10px !important;
+    fill: #444 !important;
+}
+
+/* Hold modifiers - smaller and lighter */
+text.hold {
+    font-size: 9px !important;
+    fill: #666 !important;
+}
+
+/* Transparent keys - muted */
+text.trans {
+    fill: #999 !important;
 }
 
 /* Centered layer label styling */
@@ -421,6 +457,10 @@ text.centered-label {
 
     # Replace glyph <use> elements with inline SVG paths for CairoSVG compatibility
     svg_content = _inline_fingerprint_glyphs(svg_content)
+
+    # Adjust tap label positions for keys with shifted but no hold
+    # This creates balanced top/bottom positioning like a physical keycap
+    svg_content = _adjust_tap_positions_for_shifted(svg_content)
 
     # Add held key indicator styling
     if held_positions:
@@ -1590,6 +1630,75 @@ def _inline_fingerprint_glyphs(svg_content: str) -> str:
     svg_content = re.sub(
         r'<svg\s+id="mdi:fingerprint">[^<]*<path[^/]*/>\s*</svg>\s*',
         '',
+        svg_content,
+        flags=re.DOTALL
+    )
+
+    return svg_content
+
+
+def _adjust_tap_positions_for_shifted(svg_content: str) -> str:
+    """
+    Adjust tap label vertical position when shifted char exists but no hold.
+
+    On a physical keyboard, when a key has both a primary and shifted character
+    (like "1" and "!"), they're positioned as a balanced pair - not with the
+    primary dead-center. This function moves the tap label down when there's
+    a shifted character above but no hold character below.
+
+    Before: shifted at y=-21, tap at y=0 (cramped at top)
+    After:  shifted at y=-21, tap at y=8 (balanced pair)
+
+    Args:
+        svg_content: The SVG string to modify
+
+    Returns:
+        Modified SVG content with adjusted tap positions
+    """
+    import re
+
+    # Pattern to match a key group
+    def adjust_key_group(match: re.Match) -> str:
+        group_content = match.group(0)
+
+        # Check if this group has a shifted text element
+        has_shifted = re.search(r'class="[^"]*\bshifted\b', group_content)
+        # Check if this group has a hold text element
+        has_hold = re.search(r'class="[^"]*\bhold\b', group_content)
+
+        if has_shifted and not has_hold:
+            # Case 1: Shifted + no hold (like "1"/"!")
+            # Move tap down, shifted down from edge for balanced pair
+            group_content = re.sub(
+                r'(<text[^>]*) y="0" (class="[^"]*\btap\b)',
+                r'\1 y="8" \2',
+                group_content
+            )
+            group_content = re.sub(
+                r'(<text[^>]*) y="-21" (class="[^"]*\bshifted\b)',
+                r'\1 y="-14" \2',
+                group_content
+            )
+        elif has_hold and not has_shifted:
+            # Case 2: Hold + no shifted (like "RGB"/"Magic")
+            # Move tap up slightly, hold up from bottom edge for balanced pair
+            group_content = re.sub(
+                r'(<text[^>]*) y="0" (class="[^"]*\btap\b)',
+                r'\1 y="-6" \2',
+                group_content
+            )
+            group_content = re.sub(
+                r'(<text[^>]*) y="21" (class="[^"]*\bhold\b)',
+                r'\1 y="16" \2',
+                group_content
+            )
+
+        return group_content
+
+    # Process each key group - match the full <g>...</g> block
+    svg_content = re.sub(
+        r'<g transform="[^"]*" class="key[^"]*keypos-\d+"[^>]*>.*?</g>',
+        adjust_key_group,
         svg_content,
         flags=re.DOTALL
     )
