@@ -124,6 +124,7 @@ def _parse_key_binding(position: int, key_data) -> KeyBinding:
     if isinstance(key_data, dict):
         tap = key_data.get("t", key_data.get("tap", ""))
         hold = key_data.get("h", key_data.get("hold"))
+        shifted = key_data.get("s", key_data.get("shifted"))
         key_type = key_data.get("type")
 
         # Convert tap to string if needed
@@ -136,6 +137,7 @@ def _parse_key_binding(position: int, key_data) -> KeyBinding:
             position=position,
             tap=tap,
             hold=hold,
+            shifted=shifted,
             key_type=key_type,
         )
 

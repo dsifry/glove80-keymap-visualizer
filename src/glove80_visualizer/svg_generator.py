@@ -100,17 +100,67 @@ SHIFTED_KEY_PAIRS = {
 }
 
 
-def get_shifted_char(char: str) -> str | None:
+# Mapping from ZMK key codes to display characters
+# Used for mod-morph shifted character resolution
+ZMK_KEY_TO_CHAR = {
+    # Numbers
+    "N1": "1", "N2": "2", "N3": "3", "N4": "4", "N5": "5",
+    "N6": "6", "N7": "7", "N8": "8", "N9": "9", "N0": "0",
+    # Symbols
+    "LPAR": "(", "RPAR": ")",
+    "LT": "<", "GT": ">",
+    "LBKT": "[", "RBKT": "]",
+    "LBRC": "{", "RBRC": "}",
+    "PIPE": "|", "BSLH": "\\",
+    "EQUAL": "=", "PLUS": "+",
+    "MINUS": "-", "UNDER": "_",
+    "GRAVE": "`", "TILDE": "~",
+    "SQT": "'", "DQT": '"',
+    "SEMI": ";", "COLON": ":",
+    "COMMA": ",", "DOT": ".",
+    "FSLH": "/", "QMARK": "?",
+    "EXCL": "!", "AT": "@",
+    "HASH": "#", "DLLR": "$", "PRCNT": "%",
+    "CARET": "^", "AMPS": "&", "ASTRK": "*",
+}
+
+# Reverse mapping: display character to ZMK key code
+CHAR_TO_ZMK_KEY = {v: k for k, v in ZMK_KEY_TO_CHAR.items()}
+
+
+def get_shifted_char(
+    char: str,
+    mod_morphs: dict[str, dict[str, str]] | None = None,
+) -> str | None:
     """
     Get the shifted variant for a character on a US keyboard.
 
     Args:
-        char: The unshifted character (e.g., "1", "'", ";")
+        char: The unshifted character (e.g., "1", "'", ";", "(")
+        mod_morphs: Optional dict of mod-morph behaviors from the keymap.
+                    Keys are behavior names, values are {"tap": "LPAR", "shifted": "LT"}
 
     Returns:
-        The shifted character (e.g., "!", '"', ":") or None if no shifted variant
+        The shifted character (e.g., "!", '"', ":", "<") or None if no shifted variant
         exists (alpha keys, symbols, special keys).
+
+    If mod_morphs is provided, it checks for custom shift mappings first.
+    For example, if parang_left maps ( to <, and char is "(", returns "<".
     """
+    # Check mod-morph mappings first (they override defaults)
+    if mod_morphs:
+        # Get the ZMK key code for this character
+        zmk_key = CHAR_TO_ZMK_KEY.get(char)
+        if zmk_key:
+            # Look for a mod-morph that has this as the tap key
+            for behavior in mod_morphs.values():
+                if behavior.get("tap") == zmk_key:
+                    # Found a match - return the shifted character
+                    shifted_zmk = behavior.get("shifted")
+                    if shifted_zmk:
+                        return ZMK_KEY_TO_CHAR.get(shifted_zmk, shifted_zmk)
+
+    # Fall back to default US keyboard shifted pairs
     return SHIFTED_KEY_PAIRS.get(char)
 
 
@@ -281,6 +331,7 @@ def generate_layer_svg(
     resolve_trans: bool = False,
     base_layer: Layer | None = None,
     activators: list | None = None,
+    mod_morphs: dict[str, dict[str, str]] | None = None,
 ) -> str:
     """
     Generate an SVG diagram for a single keyboard layer.
@@ -293,6 +344,7 @@ def generate_layer_svg(
         resolve_trans: Whether to resolve transparent keys to their base layer values
         base_layer: The base layer to use for resolving transparent keys
         activators: List of LayerActivator objects for marking held keys
+        mod_morphs: Custom shift mappings from mod-morph behaviors in the keymap
 
     Returns:
         SVG content as a string
@@ -317,7 +369,9 @@ def generate_layer_svg(
         working_layer = _resolve_transparent_keys(layer, base_layer)
 
     # Convert Layer to keymap-drawer format
-    keymap_data = _layer_to_keymap_drawer_format(working_layer, config, os_style, held_positions)
+    keymap_data = _layer_to_keymap_drawer_format(
+        working_layer, config, os_style, held_positions, mod_morphs
+    )
 
     # Create keymap-drawer config
     kd_config = KDConfig()
@@ -1045,6 +1099,7 @@ def _layer_to_keymap_drawer_format(
     config: VisualizerConfig,
     os_style: str = "mac",
     held_positions: set[int] | None = None,
+    mod_morphs: dict[str, dict[str, str]] | None = None,
 ) -> dict[str, Any]:
     """
     Convert a Layer to keymap-drawer's expected YAML format.
@@ -1060,6 +1115,7 @@ def _layer_to_keymap_drawer_format(
         config: Visualization configuration
         os_style: OS style for modifier symbols
         held_positions: Set of key positions that are held to activate this layer
+        mod_morphs: Custom shift mappings from mod-morph behaviors
     """
     keys_per_row = 10
     total_keys = 80
@@ -1072,7 +1128,9 @@ def _layer_to_keymap_drawer_format(
     all_keys = []
     for binding in layer.bindings:
         all_keys.append(
-            _binding_to_keymap_drawer(binding, os_style, config, held_positions, show_shifted)
+            _binding_to_keymap_drawer(
+                binding, os_style, config, held_positions, show_shifted, mod_morphs
+            )
         )
 
     # Pad with empty strings to reach 80 keys
@@ -1096,6 +1154,7 @@ def _binding_to_keymap_drawer(
     config: VisualizerConfig | None = None,
     held_positions: set[int] | None = None,
     show_shifted: bool = False,
+    mod_morphs: dict[str, dict[str, str]] | None = None,
 ) -> Any:
     """
     Convert a KeyBinding to keymap-drawer format.
@@ -1113,6 +1172,9 @@ def _binding_to_keymap_drawer(
 
     When show_shifted is True (or binding.shifted is set), adds a "shifted" field
     for keys that have shifted variants (e.g., "!" for "1", '"' for "'").
+
+    When mod_morphs is provided, uses custom shift mappings from the keymap
+    (e.g., ( → < instead of default).
     """
     # Check if this key is a held key (activates current layer) - check early
     is_held_key = (
@@ -1144,7 +1206,7 @@ def _binding_to_keymap_drawer(
     if binding.shifted:
         shifted_char = binding.shifted
     elif show_shifted and tap_label:
-        shifted_char = get_shifted_char(tap_label)
+        shifted_char = get_shifted_char(tap_label, mod_morphs=mod_morphs)
 
     # Determine key type for coloring
     show_colors = config and config.show_colors

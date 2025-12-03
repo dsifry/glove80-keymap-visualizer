@@ -10,7 +10,7 @@ from typing import Optional, Union
 from glove80_visualizer.config import VisualizerConfig
 from glove80_visualizer.extractor import extract_layers
 from glove80_visualizer.models import KeyBinding, Layer, VisualizationResult
-from glove80_visualizer.parser import KeymapParseError, parse_zmk_keymap
+from glove80_visualizer.parser import KeymapParseError, parse_mod_morph_behaviors, parse_zmk_keymap
 from glove80_visualizer.pdf_generator import generate_pdf_with_toc
 from glove80_visualizer.svg_generator import generate_layer_svg
 
@@ -50,6 +50,10 @@ def generate_visualization(
         # 1. Parse keymap
         yaml_content = parse_zmk_keymap(keymap_path)
 
+        # 1b. Parse mod-morph behaviors from raw keymap content
+        raw_keymap_content = keymap_path.read_text()
+        mod_morphs = parse_mod_morph_behaviors(raw_keymap_content)
+
         # 2. Extract layers
         layers = extract_layers(yaml_content)
 
@@ -66,7 +70,7 @@ def generate_visualization(
 
         for layer in layers:
             try:
-                svg = generate_layer_svg(layer, config)
+                svg = generate_layer_svg(layer, config, mod_morphs=mod_morphs)
                 svgs.append(svg)
             except Exception as e:
                 if config.continue_on_error:

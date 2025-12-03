@@ -208,3 +208,64 @@ class TestVisualizationResult:
         )
         assert result.success is True
         assert result.partial_success is True
+
+
+class TestModMorphIntegration:
+    """Tests for mod-morph integration in generate_visualization."""
+
+    def test_mod_morphs_passed_to_svg_generator(self, tmp_path, mocker):
+        """Mod-morph behaviors are parsed and passed to SVG generator."""
+        from glove80_visualizer import generate_visualization
+        from glove80_visualizer.models import Layer, KeyBinding
+
+        # Create a keymap with mod-morph behavior
+        keymap_content = """
+        / {
+            behaviors {
+                parang_left: left_paren {
+                    compatible = "zmk,behavior-mod-morph";
+                    bindings = <&kp LPAR>, <&kp LT>;
+                    mods = <(MOD_LSFT|MOD_RSFT)>;
+                };
+            };
+            keymap {
+                compatible = "zmk,keymap";
+                layer_Base {
+                    bindings = <&kp A>;
+                };
+            };
+        };
+        """
+        keymap_path = tmp_path / "test.keymap"
+        keymap_path.write_text(keymap_content)
+
+        # Track what mod_morphs are passed to generate_layer_svg
+        captured_mod_morphs = []
+
+        def mock_generate(layer, config=None, mod_morphs=None, **kwargs):
+            captured_mod_morphs.append(mod_morphs)
+            return '''<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600">
+<text class="label">Test</text>
+</svg>'''
+
+        mocker.patch(
+            "glove80_visualizer.generate_layer_svg",
+            side_effect=mock_generate,
+        )
+        # Mock extract_layers to return a simple layer
+        mocker.patch(
+            "glove80_visualizer.extract_layers",
+            return_value=[Layer(name="Base", index=0, bindings=[KeyBinding(tap="A", position=0)])],
+        )
+
+        output = tmp_path / "output.pdf"
+        result = generate_visualization(keymap_path, output)
+
+        assert result.success is True
+        # Check that mod_morphs were passed
+        assert len(captured_mod_morphs) == 1
+        assert captured_mod_morphs[0] is not None
+        assert "parang_left" in captured_mod_morphs[0]
+        assert captured_mod_morphs[0]["parang_left"]["tap"] == "LPAR"
+        assert captured_mod_morphs[0]["parang_left"]["shifted"] == "LT"

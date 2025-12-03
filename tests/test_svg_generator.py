@@ -2648,3 +2648,194 @@ class TestShiftedKeyCli:
 
         config = VisualizerConfig(show_shifted=False)
         assert config.show_shifted is False
+
+
+class TestModMorphShiftedExtraction:
+    """Tests for extracting shifted characters from ZMK mod-morph behaviors.
+
+    Mod-morph behaviors define custom shift behavior, e.g.:
+    - parang_left: tap=( shifted=<
+    - parang_right: tap=) shifted=>
+    """
+
+    def test_parse_mod_morph_simple(self):
+        """SPEC-MM-001: Parse a simple mod-morph behavior with shift modifier."""
+        from glove80_visualizer.parser import parse_mod_morph_behaviors
+
+        keymap_content = '''
+        parang_left: left_parenthesis_and_less_than {
+            compatible = "zmk,behavior-mod-morph";
+            #binding-cells = <0>;
+            bindings = <&kp LPAR>, <&kp LT>;
+            mods = <(MOD_LSFT|MOD_RSFT)>;
+        };
+        '''
+        result = parse_mod_morph_behaviors(keymap_content)
+
+        assert "parang_left" in result
+        assert result["parang_left"]["tap"] == "LPAR"
+        assert result["parang_left"]["shifted"] == "LT"
+
+    def test_parse_mod_morph_right_paren(self):
+        """SPEC-MM-002: Parse mod-morph for right parenthesis."""
+        from glove80_visualizer.parser import parse_mod_morph_behaviors
+
+        keymap_content = '''
+        parang_right: right_parenthesis_and_greater_than {
+            compatible = "zmk,behavior-mod-morph";
+            #binding-cells = <0>;
+            bindings = <&kp RPAR>, <&kp GT>;
+            mods = <(MOD_LSFT|MOD_RSFT)>;
+        };
+        '''
+        result = parse_mod_morph_behaviors(keymap_content)
+
+        assert "parang_right" in result
+        assert result["parang_right"]["tap"] == "RPAR"
+        assert result["parang_right"]["shifted"] == "GT"
+
+    def test_parse_mod_morph_multiple(self):
+        """SPEC-MM-003: Parse multiple mod-morph behaviors."""
+        from glove80_visualizer.parser import parse_mod_morph_behaviors
+
+        keymap_content = '''
+        parang_left: left_paren {
+            compatible = "zmk,behavior-mod-morph";
+            #binding-cells = <0>;
+            bindings = <&kp LPAR>, <&kp LT>;
+            mods = <(MOD_LSFT|MOD_RSFT)>;
+        };
+        parang_right: right_paren {
+            compatible = "zmk,behavior-mod-morph";
+            #binding-cells = <0>;
+            bindings = <&kp RPAR>, <&kp GT>;
+            mods = <(MOD_LSFT|MOD_RSFT)>;
+        };
+        '''
+        result = parse_mod_morph_behaviors(keymap_content)
+
+        assert len(result) == 2
+        assert "parang_left" in result
+        assert "parang_right" in result
+
+    def test_parse_mod_morph_ignores_non_shift(self):
+        """SPEC-MM-004: Ignore mod-morph behaviors that don't use shift."""
+        from glove80_visualizer.parser import parse_mod_morph_behaviors
+
+        keymap_content = '''
+        ctrl_morph: ctrl_behavior {
+            compatible = "zmk,behavior-mod-morph";
+            #binding-cells = <0>;
+            bindings = <&kp A>, <&kp B>;
+            mods = <(MOD_LCTL|MOD_RCTL)>;
+        };
+        '''
+        result = parse_mod_morph_behaviors(keymap_content)
+
+        # Should not include ctrl-based morphs
+        assert "ctrl_morph" not in result
+
+    def test_parse_mod_morph_empty_content(self):
+        """SPEC-MM-005: Handle empty or no mod-morph content."""
+        from glove80_visualizer.parser import parse_mod_morph_behaviors
+
+        result = parse_mod_morph_behaviors("")
+        assert result == {}
+
+        result = parse_mod_morph_behaviors("some random content")
+        assert result == {}
+
+    def test_parse_mod_morph_real_keymap_file(self):
+        """SPEC-MM-006: Parse mod-morph from real keymap file."""
+        from pathlib import Path
+
+        from glove80_visualizer.parser import parse_mod_morph_behaviors
+
+        keymap_path = Path("daves-current-glove80-keymap.keymap")
+        if keymap_path.exists():
+            content = keymap_path.read_text()
+            result = parse_mod_morph_behaviors(content)
+
+            # Should find parang_left and parang_right
+            assert "parang_left" in result
+            assert "parang_right" in result
+            assert result["parang_left"]["tap"] == "LPAR"
+            assert result["parang_left"]["shifted"] == "LT"
+
+
+class TestModMorphInSvgGeneration:
+    """Tests for applying mod-morph shifted chars in SVG output."""
+
+    def test_get_shifted_char_with_mod_morph(self):
+        """SPEC-MM-010: get_shifted_char uses mod-morph mappings."""
+        from glove80_visualizer.svg_generator import get_shifted_char
+
+        mod_morphs = {
+            "parang_left": {"tap": "LPAR", "shifted": "LT"},
+        }
+        # When tap is "(", should return "<" from mod-morph
+        result = get_shifted_char("(", mod_morphs=mod_morphs)
+        assert result == "<"
+
+    def test_get_shifted_char_mod_morph_overrides_default(self):
+        """SPEC-MM-011: Mod-morph mappings override default SHIFTED_KEY_PAIRS."""
+        from glove80_visualizer.svg_generator import get_shifted_char
+
+        # Default for "1" is "!"
+        assert get_shifted_char("1") == "!"
+
+        # But mod-morph can override it
+        mod_morphs = {
+            "custom_1": {"tap": "N1", "shifted": "PIPE"},
+        }
+        result = get_shifted_char("1", mod_morphs=mod_morphs)
+        assert result == "|"
+
+    def test_get_shifted_char_falls_back_to_default(self):
+        """SPEC-MM-012: Falls back to default when no mod-morph match."""
+        from glove80_visualizer.svg_generator import get_shifted_char
+
+        mod_morphs = {
+            "parang_left": {"tap": "LPAR", "shifted": "LT"},
+        }
+        # "1" is not in mod_morphs, should use default
+        result = get_shifted_char("1", mod_morphs=mod_morphs)
+        assert result == "!"
+
+    def test_binding_with_mod_morph_shifted(self):
+        """SPEC-MM-013: KeyBinding for mod-morph key shows custom shifted."""
+        from glove80_visualizer.models import KeyBinding
+        from glove80_visualizer.svg_generator import _binding_to_keymap_drawer
+
+        mod_morphs = {
+            "parang_left": {"tap": "LPAR", "shifted": "LT"},
+        }
+        # Key displays "(" but shifted should be "<"
+        binding = KeyBinding(position=0, tap="(")
+        result = _binding_to_keymap_drawer(
+            binding, os_style="mac", show_shifted=True, mod_morphs=mod_morphs
+        )
+
+        assert isinstance(result, dict)
+        assert result.get("t") == "("
+        assert result.get("shifted") == "<"
+
+    def test_svg_generation_with_mod_morphs(self):
+        """SPEC-MM-014: SVG generation uses mod-morph mappings."""
+        from glove80_visualizer.config import VisualizerConfig
+        from glove80_visualizer.models import KeyBinding, Layer
+        from glove80_visualizer.svg_generator import generate_layer_svg
+
+        mod_morphs = {
+            "parang_left": {"tap": "LPAR", "shifted": "LT"},
+        }
+        config = VisualizerConfig(show_shifted=True)
+        layer = Layer(
+            name="Test",
+            index=0,
+            bindings=[KeyBinding(position=i, tap="(" if i == 0 else "X") for i in range(80)],
+        )
+        svg = generate_layer_svg(layer, config=config, mod_morphs=mod_morphs)
+
+        # Should contain "<" as the shifted char for "("
+        assert "<" in svg or "&lt;" in svg

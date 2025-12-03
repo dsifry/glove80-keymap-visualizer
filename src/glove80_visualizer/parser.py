@@ -5,6 +5,7 @@ This module handles parsing ZMK .keymap files into intermediate YAML
 representation using keymap-drawer.
 """
 
+import re
 import warnings
 from pathlib import Path
 
@@ -99,3 +100,70 @@ def parse_zmk_keymap(
 
     # Convert to YAML string, preserving key order (sort_keys=False is critical!)
     return yaml.dump(result, default_flow_style=False, allow_unicode=True, sort_keys=False)
+
+
+def parse_mod_morph_behaviors(keymap_content: str) -> dict[str, dict[str, str]]:
+    """
+    Parse mod-morph behaviors from a ZMK keymap file to extract custom shifted characters.
+
+    Mod-morph behaviors allow keys to output different characters when shift is held.
+    For example:
+        parang_left: tap=( shifted=<
+        parang_right: tap=) shifted=>
+
+    Args:
+        keymap_content: Raw content of a .keymap file
+
+    Returns:
+        Dictionary mapping behavior name to {tap: str, shifted: str}
+        Only includes behaviors that use shift modifiers (MOD_LSFT or MOD_RSFT)
+
+    Example:
+        >>> content = '''
+        ... parang_left: left_paren {
+        ...     compatible = "zmk,behavior-mod-morph";
+        ...     bindings = <&kp LPAR>, <&kp LT>;
+        ...     mods = <(MOD_LSFT|MOD_RSFT)>;
+        ... };
+        ... '''
+        >>> parse_mod_morph_behaviors(content)
+        {'parang_left': {'tap': 'LPAR', 'shifted': 'LT'}}
+    """
+    result: dict[str, dict[str, str]] = {}
+
+    # Pattern to match mod-morph behavior blocks
+    # Captures: behavior_name, block_content
+    behavior_pattern = re.compile(
+        r'(\w+):\s*\w*\s*\{\s*'  # behavior_name: optional_label {
+        r'compatible\s*=\s*"zmk,behavior-mod-morph"[^}]*'  # must be mod-morph
+        r'\}',
+        re.DOTALL,
+    )
+
+    # Pattern to extract bindings (tap and shifted)
+    bindings_pattern = re.compile(
+        r'bindings\s*=\s*<&kp\s+(\w+)>\s*,\s*<&kp\s+(\w+)>'
+    )
+
+    # Pattern to check for shift modifiers
+    shift_mods_pattern = re.compile(r'mods\s*=\s*<[^>]*MOD_[LR]SFT[^>]*>')
+
+    for match in behavior_pattern.finditer(keymap_content):
+        behavior_name = match.group(1)
+        block_content = match.group(0)
+
+        # Check if this is a shift-based morph
+        if not shift_mods_pattern.search(block_content):
+            continue
+
+        # Extract the tap and shifted bindings
+        bindings_match = bindings_pattern.search(block_content)
+        if bindings_match:
+            tap_key = bindings_match.group(1)
+            shifted_key = bindings_match.group(2)
+            result[behavior_name] = {
+                "tap": tap_key,
+                "shifted": shifted_key,
+            }
+
+    return result
