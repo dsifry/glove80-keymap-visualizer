@@ -283,11 +283,34 @@ def generate_layer_svg(
     # Default tap size is 14, but we want a more prominent indicator
     kd_config.draw_config.glyph_tap_size = 32
 
+    # Override default font to include better Unicode symbol support
+    # Arial Unicode MS has extensive Unicode coverage and works well with CairoSVG
+    font_override_css = """
+/* Better font for Unicode symbols - CairoSVG compatibility */
+svg.keymap {
+    font-family: "Arial Unicode MS", "Lucida Grande", "Apple Symbols", Arial, sans-serif;
+}
+
+/* Centered layer label styling */
+text.centered-label {
+    text-anchor: middle !important;
+    font-size: 20px;
+    fill: #24292e !important;
+    stroke: white;
+    stroke-width: 3;
+    paint-order: stroke;
+    letter-spacing: 0.1em;
+}
+"""
+
     # Add color CSS if enabled
+    extra_css = font_override_css
     if config.show_colors:
         color_scheme = ColorScheme()
         color_css = _generate_color_css(color_scheme)
-        kd_config.draw_config.svg_extra_style = color_css
+        extra_css += color_css
+
+    kd_config.draw_config.svg_extra_style = extra_css
 
     # Generate SVG
     out = StringIO()
@@ -295,6 +318,9 @@ def generate_layer_svg(
     drawer.print_board(draw_layers=[working_layer.name])
 
     svg_content = out.getvalue()
+
+    # Replace emoji with text equivalents for CairoSVG compatibility
+    svg_content = _replace_emoji_for_cairo(svg_content)
 
     # Replace glyph <use> elements with inline SVG paths for CairoSVG compatibility
     svg_content = _inline_fingerprint_glyphs(svg_content)
@@ -1148,7 +1174,8 @@ def _generate_color_legend(scheme: ColorScheme) -> str:
 
     # Legend positioning - centered below the keyboard
     # Keyboard is ~1008 wide (with 30px offset), legend should be centered
-    legend_y = 525  # Below the keyboard keys
+    # Position below thumb cluster (which extends to ~520) with padding
+    legend_y = 555  # Below the thumb keys with clearance
     box_size = 12  # Color swatch size
     box_text_gap = 4  # Gap between box and its label
     item_gap = 25  # Gap between items
@@ -1192,9 +1219,21 @@ def _generate_color_legend(scheme: ColorScheme) -> str:
 
     legend_content = "\n".join(items_svg)
 
+    # Add a white background rectangle behind the legend for readability
+    bg_padding = 10
+    bg_x = legend_x_start - bg_padding
+    bg_y = legend_y - bg_padding + 2
+    bg_width = total_width + bg_padding * 2
+    bg_height = box_size + bg_padding * 2
+    background = (
+        f'<rect x="{bg_x}" y="{bg_y}" width="{bg_width}" height="{bg_height}" '
+        f'rx="4" ry="4" fill="white" fill-opacity="0.9"/>'
+    )
+
     return f'''
 <!-- Color Legend -->
 <g class="color-legend" transform="translate(30, 0)">
+{background}
 {legend_content}
 </g>
 '''
@@ -1215,8 +1254,53 @@ def _add_color_legend(svg_content: str, scheme: ColorScheme) -> str:
     """
     legend_svg = _generate_color_legend(scheme)
 
+    # Increase SVG height to add padding below the legend
+    # Legend is at y=555, with box_size=12, so bottom is around y=567
+    # Add padding to make it at least 600px tall
+    min_height = 600
+    svg_content = _increase_svg_height(svg_content, min_height)
+
     # Insert before closing </svg> tag
     svg_content = svg_content.replace("</svg>", f"{legend_svg}</svg>")
+
+    return svg_content
+
+
+def _increase_svg_height(svg_content: str, min_height: int) -> str:
+    """
+    Increase SVG height and viewBox if below minimum.
+
+    Args:
+        svg_content: The SVG string to modify
+        min_height: Minimum height in pixels
+
+    Returns:
+        Modified SVG with increased height if needed
+    """
+    # Find current height
+    height_match = re.search(r'height="(\d+)"', svg_content)
+    if not height_match:
+        return svg_content
+
+    current_height = int(height_match.group(1))
+    if current_height >= min_height:
+        return svg_content
+
+    # Update height attribute
+    svg_content = re.sub(
+        r'height="(\d+)"',
+        f'height="{min_height}"',
+        svg_content,
+        count=1
+    )
+
+    # Update viewBox height
+    svg_content = re.sub(
+        r'viewBox="(\d+)\s+(\d+)\s+(\d+)\s+(\d+)"',
+        lambda m: f'viewBox="{m.group(1)} {m.group(2)} {m.group(3)} {min_height}"',
+        svg_content,
+        count=1
+    )
 
     return svg_content
 
@@ -1238,8 +1322,10 @@ def _center_layer_label(svg_content: str, layer_name: str) -> str:
     # The keymap-drawer generates: <text x="0" y="28" class="label" id="LayerName">LayerName:</text>
     # We want to move it to the center and change styling
 
-    # Center X position (keyboard is ~1008 wide with 30px offset, center ~504)
-    center_x = 474  # Adjusted for the 30px translate offset
+    # Center X position between left and right keyboard halves
+    # Left hand extends to ~460, right hand starts at ~550
+    # Center of the gap: (460 + 550) / 2 = 505
+    center_x = 504  # Center of the gap between keyboard halves
 
     # Pattern to match the layer label
     # Note: The label includes a colon after the layer name
@@ -1275,6 +1361,50 @@ def _add_title_to_svg(svg_content: str, title: str) -> str:
             svg_content[:insert_pos] + title_element + svg_content[insert_pos:]
         )
 
+    return svg_content
+
+
+# Emoji to text replacements for CairoSVG compatibility
+# CairoSVG often fails to render emoji, so we replace them with text equivalents
+EMOJI_REPLACEMENTS = {
+    # Layer/function emoji
+    "😀": "Emoji",
+    "🌍": "World",
+    "⚙": "Sys",
+    "✨": "Magic",
+    "🖱": "Mouse",
+    "↔": "Swap",
+    # Volume/media emoji
+    "🔊": "Vol+",
+    "🔉": "Vol-",
+    "🔇": "Mute",
+    "🔆": "Bri+",
+    "🔅": "Bri-",
+    "☀": "Bri",
+    "🌑": "Dark",
+    # Other problematic Unicode that may not render
+    "⇱": "Home",
+    "⇲": "End",
+    "⇞": "PgUp",
+    "⇟": "PgDn",
+}
+
+
+def _replace_emoji_for_cairo(svg_content: str) -> str:
+    """
+    Replace emoji and problematic Unicode with text equivalents.
+
+    CairoSVG doesn't reliably render emoji characters, so we replace
+    them with readable text alternatives.
+
+    Args:
+        svg_content: The SVG string to process
+
+    Returns:
+        SVG with emoji replaced by text
+    """
+    for emoji, text in EMOJI_REPLACEMENTS.items():
+        svg_content = svg_content.replace(emoji, text)
     return svg_content
 
 

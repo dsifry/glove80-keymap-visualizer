@@ -1999,6 +1999,141 @@ class TestHeldKeyIndicator:
         assert result.get("h") == "Layer"
 
 
+class TestEmojiReplacement:
+    """Tests for emoji to text replacement for CairoSVG compatibility."""
+
+    def test_emoji_replaced_with_text(self):
+        """SPEC-ER-001: Emoji characters are replaced with text equivalents."""
+        from glove80_visualizer.svg_generator import _replace_emoji_for_cairo
+
+        svg = '<text>😀</text><text>🌍</text><text>⚙</text>'
+        result = _replace_emoji_for_cairo(svg)
+
+        assert "😀" not in result
+        assert "🌍" not in result
+        assert "⚙" not in result
+        assert "Emoji" in result
+        assert "World" in result
+        assert "Sys" in result
+
+    def test_mouse_emoji_replaced(self):
+        """SPEC-ER-002: Mouse emoji is replaced with text."""
+        from glove80_visualizer.svg_generator import _replace_emoji_for_cairo
+
+        svg = '<text>🖱</text>'
+        result = _replace_emoji_for_cairo(svg)
+
+        assert "🖱" not in result
+        assert "Mouse" in result
+
+    def test_magic_emoji_replaced(self):
+        """SPEC-ER-003: Magic/sparkles emoji is replaced with text."""
+        from glove80_visualizer.svg_generator import _replace_emoji_for_cairo
+
+        svg = '<text>✨</text>'
+        result = _replace_emoji_for_cairo(svg)
+
+        assert "✨" not in result
+        assert "Magic" in result
+
+    def test_volume_emoji_replaced(self):
+        """SPEC-ER-004: Volume emoji characters are replaced with text."""
+        from glove80_visualizer.svg_generator import _replace_emoji_for_cairo
+
+        svg = '<text>🔊</text><text>🔇</text>'
+        result = _replace_emoji_for_cairo(svg)
+
+        assert "🔊" not in result
+        assert "🔇" not in result
+        assert "Vol+" in result
+        assert "Mute" in result
+
+    def test_non_emoji_text_unchanged(self):
+        """SPEC-ER-005: Regular text is not modified."""
+        from glove80_visualizer.svg_generator import _replace_emoji_for_cairo
+
+        svg = '<text>Hello World</text><text>ABC</text>'
+        result = _replace_emoji_for_cairo(svg)
+
+        assert result == svg
+
+
+class TestColorLegendBackground:
+    """Tests for color legend background and positioning."""
+
+    def test_legend_has_white_background(self):
+        """SPEC-LB-001: Legend has a white background for readability."""
+        from glove80_visualizer.svg_generator import _generate_color_legend
+        from glove80_visualizer.colors import ColorScheme
+
+        scheme = ColorScheme()
+        legend_svg = _generate_color_legend(scheme)
+
+        # Should have a background rect with white fill
+        assert 'fill="white"' in legend_svg or "fill='white'" in legend_svg
+
+    def test_legend_positioned_below_keyboard(self):
+        """SPEC-LB-002: Legend is positioned below the keyboard keys (y > 545)."""
+        from glove80_visualizer.svg_generator import _generate_color_legend
+        from glove80_visualizer.colors import ColorScheme
+        import re
+
+        scheme = ColorScheme()
+        legend_svg = _generate_color_legend(scheme)
+
+        # Find y coordinates in the legend (exclude ry= which is corner radius)
+        # Match y="..." but not ry="..."
+        y_matches = re.findall(r'(?<!r)y="(\d+)"', legend_svg)
+        y_values = [int(y) for y in y_matches]
+
+        # All y values should be greater than 545 to be below the thumb cluster
+        # (thumb keys extend to about 520, legend should have clearance)
+        assert all(y >= 545 for y in y_values), f"Legend y values {y_values} should all be >= 545"
+
+    def test_svg_height_increased_for_legend_padding(self):
+        """SPEC-LB-003: SVG height is increased to provide padding below legend."""
+        from glove80_visualizer.svg_generator import generate_layer_svg
+        from glove80_visualizer.models import Layer, KeyBinding
+        from glove80_visualizer.config import VisualizerConfig
+        import re
+
+        layer = Layer(name="Test", index=0, bindings=[
+            KeyBinding(position=i, tap="A") for i in range(80)
+        ])
+        config = VisualizerConfig(show_colors=True)
+
+        svg = generate_layer_svg(layer, config=config)
+
+        # Extract height from SVG
+        height_match = re.search(r'height="(\d+)"', svg)
+        assert height_match, "SVG should have height attribute"
+        height = int(height_match.group(1))
+
+        # Height should be increased to at least 600 for legend padding
+        assert height >= 600, f"SVG height {height} should be >= 600 for legend padding"
+
+    def test_increase_svg_height_no_height_attribute(self):
+        """SPEC-LB-004: _increase_svg_height handles SVG without height attribute."""
+        from glove80_visualizer.svg_generator import _increase_svg_height
+
+        svg = '<svg viewBox="0 0 100 100"></svg>'
+        result = _increase_svg_height(svg, 200)
+
+        # Should return unchanged
+        assert result == svg
+
+    def test_increase_svg_height_already_sufficient(self):
+        """SPEC-LB-005: _increase_svg_height doesn't change if height already sufficient."""
+        from glove80_visualizer.svg_generator import _increase_svg_height
+
+        svg = '<svg width="100" height="700" viewBox="0 0 100 700"></svg>'
+        result = _increase_svg_height(svg, 600)
+
+        # Should return unchanged
+        assert result == svg
+        assert 'height="700"' in result
+
+
 class TestColorLegend:
     """Tests for color legend in layer diagrams."""
 
@@ -2074,6 +2209,25 @@ class TestCenteredLayerName:
         assert "Cursor" in svg
         # Should have text-anchor middle for centering
         assert 'text-anchor' in svg.lower() or 'middle' in svg.lower()
+
+    def test_layer_label_x_position_centered(self):
+        """SPEC-LN-002: Layer label x position is truly centered (around 504 for 1068px)."""
+        from glove80_visualizer.svg_generator import _center_layer_label
+        import re
+
+        # Simulate input from keymap-drawer
+        svg_input = '<text x="0" y="28" class="label" id="Test">Test:</text>'
+        result = _center_layer_label(svg_input, "Test")
+
+        # Extract the x value from the result
+        x_match = re.search(r'x="(\d+)"', result)
+        assert x_match, "Should have x coordinate in centered label"
+        x_value = int(x_match.group(1))
+
+        # True center of 1068px keyboard (minus 30px left margin) is (1068-30)/2 = 519
+        # But the group already has translate(30,0), so we want 504 within the group
+        # Allow tolerance for different approaches
+        assert 490 <= x_value <= 540, f"Label x={x_value} should be centered (490-540)"
 
 
 class TestColorOutput:

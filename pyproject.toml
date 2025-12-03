@@ -26,11 +26,13 @@ classifiers = [
 ]
 
 dependencies = [
-    "keymap-drawer>=0.18.0",
-    "cairosvg>=2.7.0",
-    "pikepdf>=8.0.0",
-    "pyyaml>=6.0",
-    "click>=8.0.0",
+    # 0.x versions: pin to minor version (breaking changes allowed in minor bumps)
+    "keymap-drawer>=0.18.0,<0.19.0",
+    # 1.x+ versions: standard semver (breaking changes only in major bumps)
+    "cairosvg>=2.7.0,<3.0.0",
+    "pikepdf>=8.0.0,<10.0.0",
+    "pyyaml>=6.0.0,<7.0.0",
+    "click>=8.0.0,<9.0.0",
 ]
 
 [project.optional-dependencies]
