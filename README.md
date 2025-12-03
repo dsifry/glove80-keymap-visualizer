@@ -15,13 +15,21 @@ This tool takes your ZMK `.keymap` file (exported from the [MoErgo Glove80 Layou
 
 ## Example Output
 
-**With `--color` flag** (semantic coloring by key category):
+**Default output** — Shows shifted characters above keys (! above 1, @ above 2, etc.):
+
+![Example plain output](docs/images/example-plain.png)
+
+**With `--color` flag** — Semantic coloring by key category with legend:
 
 ![Example with color coding](docs/images/example-color.png)
 
-**Plain output** (no color coding):
+**Layer with held key indicator** — Fingerprint icon shows which key activates this layer:
 
-![Example plain output](docs/images/example-plain.png)
+![Example Cursor layer with held key](docs/images/example-cursor.png)
+
+**With `--no-shifted` flag** — Hide shifted characters for a cleaner look:
+
+![Example without shifted characters](docs/images/example-no-shifted.png)
 
 ## Getting Started
 
@@ -100,10 +108,11 @@ glove80-viz keymap.keymap --list-layers
 
 ## Features
 
+- **Shifted character display** — Shows shifted characters above keys (! above 1, " above ') like a physical keyboard
 - **OS-specific modifier symbols** — Mac (⌘⌥⌃⇧), Windows (Win+Ctrl+Alt+Shift), or Linux (Super+Ctrl+Alt+Shift)
 - **Semantic coloring** — Color-code keys by category: modifiers, navigation, numbers, symbols, media, layers, system
 - **Color legend** — Shows what each color means (can be hidden with `--no-legend`)
-- **Held key indicators** — Shows which key you hold to activate each layer
+- **Held key indicators** — Fingerprint icon shows which key you hold to activate each layer
 - **MEH/HYPER expansion** — `MEH(K)` displays as `⌃⌥⇧K` on Mac
 - **Transparent key resolution** — Optionally show inherited keys instead of "trans" markers
 - **Table of contents** — PDF includes clickable TOC for easy navigation
@@ -124,6 +133,7 @@ glove80-viz keymap.keymap --list-layers
 | `--linux` | Use Linux modifier symbols |
 | `--color` | Apply semantic colors to keys |
 | `--no-legend` | Hide color legend (use with `--color`) |
+| `--no-shifted` | Hide shifted characters on keys (shown by default) |
 | `--resolve-trans` | Show inherited keys instead of "trans" |
 | `--base-layer` | Base layer for `--resolve-trans` (default: first layer) |
 | `--no-toc` | Disable table of contents in PDF |
@@ -156,6 +166,7 @@ For persistent settings, create a YAML config file:
 os_style: mac          # "mac", "windows", or "linux"
 show_colors: true
 show_legend: true
+show_shifted: true     # show shifted chars (default: true)
 resolve_trans: false
 include_toc: true
 page_size: letter      # or "a4"

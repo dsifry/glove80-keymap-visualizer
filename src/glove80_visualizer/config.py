@@ -67,6 +67,9 @@ class VisualizerConfig:
     show_colors: bool = False  # Apply semantic colors to keys
     show_legend: bool = True  # Show color legend when colors are enabled
 
+    # Shifted character display
+    show_shifted: bool = True  # Show shifted chars on keys (e.g., ! above 1)
+
     @classmethod
     def from_yaml(cls, yaml_content: str) -> "VisualizerConfig":
         """

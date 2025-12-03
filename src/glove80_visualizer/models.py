@@ -20,12 +20,14 @@ class KeyBinding:
         position: The physical key position (0-79 for Glove80)
         tap: The tap behavior/key label
         hold: Optional hold behavior (for hold-tap keys)
+        shifted: Optional shifted character (shown at top of key, e.g., ! for 1)
         key_type: Optional type marker (e.g., "trans", "held")
     """
 
     position: int
     tap: str
     hold: str | None = None
+    shifted: str | None = None
     key_type: str | None = None
 
     @property

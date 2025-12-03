@@ -71,6 +71,49 @@ MODIFIER_SYMBOLS = {
     },
 }
 
+# US keyboard shifted character pairs (unshifted -> shifted)
+# Used to show shifted variants on keys like a physical keyboard
+SHIFTED_KEY_PAIRS = {
+    # Number row
+    "1": "!",
+    "2": "@",
+    "3": "#",
+    "4": "$",
+    "5": "%",
+    "6": "^",
+    "7": "&",
+    "8": "*",
+    "9": "(",
+    "0": ")",
+    # Punctuation
+    "`": "~",
+    "-": "_",
+    "=": "+",
+    "[": "{",
+    "]": "}",
+    "\\": "|",
+    ";": ":",
+    "'": '"',
+    ",": "<",
+    ".": ">",
+    "/": "?",
+}
+
+
+def get_shifted_char(char: str) -> str | None:
+    """
+    Get the shifted variant for a character on a US keyboard.
+
+    Args:
+        char: The unshifted character (e.g., "1", "'", ";")
+
+    Returns:
+        The shifted character (e.g., "!", '"', ":") or None if no shifted variant
+        exists (alpha keys, symbols, special keys).
+    """
+    return SHIFTED_KEY_PAIRS.get(char)
+
+
 # Key label mappings for better display (common mappings that don't vary by OS)
 KEY_LABEL_MAP = {
     # Transparent and none keys
@@ -1022,10 +1065,15 @@ def _layer_to_keymap_drawer_format(
     total_keys = 80
     num_rows = 8
 
+    # Check if show_shifted is enabled
+    show_shifted = config.show_shifted if config else False
+
     # Build flat list of all keys, padding to 80
     all_keys = []
     for binding in layer.bindings:
-        all_keys.append(_binding_to_keymap_drawer(binding, os_style, config, held_positions))
+        all_keys.append(
+            _binding_to_keymap_drawer(binding, os_style, config, held_positions, show_shifted)
+        )
 
     # Pad with empty strings to reach 80 keys
     while len(all_keys) < total_keys:
@@ -1047,6 +1095,7 @@ def _binding_to_keymap_drawer(
     os_style: str = "mac",
     config: VisualizerConfig | None = None,
     held_positions: set[int] | None = None,
+    show_shifted: bool = False,
 ) -> Any:
     """
     Convert a KeyBinding to keymap-drawer format.
@@ -1061,6 +1110,9 @@ def _binding_to_keymap_drawer(
 
     When held_positions contains the binding's position and show_held_indicator
     is True, marks the key as "held" with a fingerprint glyph.
+
+    When show_shifted is True (or binding.shifted is set), adds a "shifted" field
+    for keys that have shifted variants (e.g., "!" for "1", '"' for "'").
     """
     # Check if this key is a held key (activates current layer) - check early
     is_held_key = (
@@ -1086,6 +1138,14 @@ def _binding_to_keymap_drawer(
     # Format the tap key label
     tap_label = format_key_label(binding.tap, os_style) if binding.tap else ""
 
+    # Determine shifted character
+    # Use explicit binding.shifted if set, otherwise auto-detect if show_shifted is True
+    shifted_char = None
+    if binding.shifted:
+        shifted_char = binding.shifted
+    elif show_shifted and tap_label:
+        shifted_char = get_shifted_char(tap_label)
+
     # Determine key type for coloring
     show_colors = config and config.show_colors
     key_type = None
@@ -1102,15 +1162,21 @@ def _binding_to_keymap_drawer(
             # If hold is a layer activator, use that for the key type
             if hold_category == "layer":
                 key_type = "layer"
-        result = {"t": tap_label, "h": hold_label}
+        result: dict[str, Any] = {"t": tap_label, "h": hold_label}
         if key_type and key_type != "default":
             result["type"] = key_type
+        if shifted_char:
+            result["shifted"] = shifted_char
         return result
 
-    # Simple key
-
-    if key_type and key_type != "default":
-        return {"t": tap_label, "type": key_type}
+    # Simple key - needs dict if shifted or type is present
+    if shifted_char or (key_type and key_type != "default"):
+        result = {"t": tap_label}
+        if key_type and key_type != "default":
+            result["type"] = key_type
+        if shifted_char:
+            result["shifted"] = shifted_char
+        return result
 
     return tap_label
 

@@ -2398,3 +2398,253 @@ class TestMehHyperCombos:
         assert "⌃⌥⇧⌘" in result
         # ENTER should be formatted as ↵
         assert "↵" in result
+
+
+class TestShiftedKeyPairs:
+    """Tests for showing shifted character variants on keys.
+
+    When enabled, non-alpha keys show both their unshifted and shifted
+    characters, e.g., ' shows as " above ' (like a physical keyboard).
+    """
+
+    def test_get_shifted_char_single_quote(self):
+        """SPEC-SK-001: Single quote returns double quote as shifted variant."""
+        from glove80_visualizer.svg_generator import get_shifted_char
+
+        assert get_shifted_char("'") == '"'
+
+    def test_get_shifted_char_number_1(self):
+        """SPEC-SK-002: Number 1 returns ! as shifted variant."""
+        from glove80_visualizer.svg_generator import get_shifted_char
+
+        assert get_shifted_char("1") == "!"
+
+    def test_get_shifted_char_number_2(self):
+        """SPEC-SK-003: Number 2 returns @ as shifted variant."""
+        from glove80_visualizer.svg_generator import get_shifted_char
+
+        assert get_shifted_char("2") == "@"
+
+    def test_get_shifted_char_semicolon(self):
+        """SPEC-SK-004: Semicolon returns colon as shifted variant."""
+        from glove80_visualizer.svg_generator import get_shifted_char
+
+        assert get_shifted_char(";") == ":"
+
+    def test_get_shifted_char_comma(self):
+        """SPEC-SK-005: Comma returns < as shifted variant."""
+        from glove80_visualizer.svg_generator import get_shifted_char
+
+        assert get_shifted_char(",") == "<"
+
+    def test_get_shifted_char_period(self):
+        """SPEC-SK-006: Period returns > as shifted variant."""
+        from glove80_visualizer.svg_generator import get_shifted_char
+
+        assert get_shifted_char(".") == ">"
+
+    def test_get_shifted_char_slash(self):
+        """SPEC-SK-007: Slash returns ? as shifted variant."""
+        from glove80_visualizer.svg_generator import get_shifted_char
+
+        assert get_shifted_char("/") == "?"
+
+    def test_get_shifted_char_backtick(self):
+        """SPEC-SK-008: Backtick returns ~ as shifted variant."""
+        from glove80_visualizer.svg_generator import get_shifted_char
+
+        assert get_shifted_char("`") == "~"
+
+    def test_get_shifted_char_minus(self):
+        """SPEC-SK-009: Minus returns underscore as shifted variant."""
+        from glove80_visualizer.svg_generator import get_shifted_char
+
+        assert get_shifted_char("-") == "_"
+
+    def test_get_shifted_char_equals(self):
+        """SPEC-SK-010: Equals returns + as shifted variant."""
+        from glove80_visualizer.svg_generator import get_shifted_char
+
+        assert get_shifted_char("=") == "+"
+
+    def test_get_shifted_char_left_bracket(self):
+        """SPEC-SK-011: Left bracket returns { as shifted variant."""
+        from glove80_visualizer.svg_generator import get_shifted_char
+
+        assert get_shifted_char("[") == "{"
+
+    def test_get_shifted_char_right_bracket(self):
+        """SPEC-SK-012: Right bracket returns } as shifted variant."""
+        from glove80_visualizer.svg_generator import get_shifted_char
+
+        assert get_shifted_char("]") == "}"
+
+    def test_get_shifted_char_backslash(self):
+        """SPEC-SK-013: Backslash returns | as shifted variant."""
+        from glove80_visualizer.svg_generator import get_shifted_char
+
+        assert get_shifted_char("\\") == "|"
+
+    def test_get_shifted_char_alpha_returns_none(self):
+        """SPEC-SK-014: Alpha characters return None (no shifted display)."""
+        from glove80_visualizer.svg_generator import get_shifted_char
+
+        assert get_shifted_char("a") is None
+        assert get_shifted_char("A") is None
+        assert get_shifted_char("z") is None
+
+    def test_get_shifted_char_unknown_returns_none(self):
+        """SPEC-SK-015: Unknown characters return None."""
+        from glove80_visualizer.svg_generator import get_shifted_char
+
+        assert get_shifted_char("⌘") is None
+        assert get_shifted_char("↵") is None
+        assert get_shifted_char("trans") is None
+
+    def test_get_shifted_char_all_numbers(self):
+        """SPEC-SK-016: All number keys have correct shifted variants."""
+        from glove80_visualizer.svg_generator import get_shifted_char
+
+        expected = {
+            "1": "!",
+            "2": "@",
+            "3": "#",
+            "4": "$",
+            "5": "%",
+            "6": "^",
+            "7": "&",
+            "8": "*",
+            "9": "(",
+            "0": ")",
+        }
+        for num, symbol in expected.items():
+            assert get_shifted_char(num) == symbol, f"Expected {num} -> {symbol}"
+
+
+class TestShiftedKeyInSvg:
+    """Tests for rendering shifted characters in SVG output."""
+
+    def test_binding_with_shifted_field(self):
+        """SPEC-SK-020: KeyBinding with shifted field passes to keymap-drawer."""
+        from glove80_visualizer.models import KeyBinding
+        from glove80_visualizer.svg_generator import _binding_to_keymap_drawer
+
+        binding = KeyBinding(position=0, tap="'", shifted='"')
+        result = _binding_to_keymap_drawer(binding, os_style="mac")
+
+        assert isinstance(result, dict)
+        assert result.get("t") == "'"
+        assert result.get("shifted") == '"'
+
+    def test_binding_with_shifted_and_hold(self):
+        """SPEC-SK-021: KeyBinding with shifted AND hold fields renders both."""
+        from glove80_visualizer.models import KeyBinding
+        from glove80_visualizer.svg_generator import _binding_to_keymap_drawer
+
+        binding = KeyBinding(position=0, tap="1", hold="LSHIFT", shifted="!")
+        result = _binding_to_keymap_drawer(binding, os_style="mac")
+
+        assert isinstance(result, dict)
+        assert result.get("t") == "1"
+        assert result.get("h") == "⇧"
+        assert result.get("shifted") == "!"
+
+    def test_binding_without_shifted_no_shifted_field(self):
+        """SPEC-SK-022: KeyBinding without shifted doesn't add shifted field."""
+        from glove80_visualizer.models import KeyBinding
+        from glove80_visualizer.svg_generator import _binding_to_keymap_drawer
+
+        binding = KeyBinding(position=0, tap="A")
+        result = _binding_to_keymap_drawer(binding, os_style="mac")
+
+        # Simple string or dict without shifted
+        if isinstance(result, dict):
+            assert "shifted" not in result
+        else:
+            assert isinstance(result, str)
+
+    def test_auto_shifted_for_number_key(self):
+        """SPEC-SK-023: With show_shifted=True, number keys auto-populate shifted."""
+        from glove80_visualizer.models import KeyBinding
+        from glove80_visualizer.svg_generator import _binding_to_keymap_drawer
+
+        binding = KeyBinding(position=0, tap="1")
+        result = _binding_to_keymap_drawer(binding, os_style="mac", show_shifted=True)
+
+        assert isinstance(result, dict)
+        assert result.get("t") == "1"
+        assert result.get("shifted") == "!"
+
+    def test_auto_shifted_for_punctuation(self):
+        """SPEC-SK-024: With show_shifted=True, punctuation auto-populates shifted."""
+        from glove80_visualizer.models import KeyBinding
+        from glove80_visualizer.svg_generator import _binding_to_keymap_drawer
+
+        binding = KeyBinding(position=0, tap=";")
+        result = _binding_to_keymap_drawer(binding, os_style="mac", show_shifted=True)
+
+        assert isinstance(result, dict)
+        assert result.get("t") == ";"
+        assert result.get("shifted") == ":"
+
+    def test_auto_shifted_skips_alpha(self):
+        """SPEC-SK-025: With show_shifted=True, alpha keys don't get shifted field."""
+        from glove80_visualizer.models import KeyBinding
+        from glove80_visualizer.svg_generator import _binding_to_keymap_drawer
+
+        binding = KeyBinding(position=0, tap="A")
+        result = _binding_to_keymap_drawer(binding, os_style="mac", show_shifted=True)
+
+        # Alpha keys shouldn't have shifted (uppercase is obvious)
+        if isinstance(result, dict):
+            assert "shifted" not in result
+        else:
+            assert result == "A"
+
+    def test_svg_contains_shifted_character(self):
+        """SPEC-SK-026: Generated SVG contains shifted character text."""
+        from glove80_visualizer.config import VisualizerConfig
+        from glove80_visualizer.models import KeyBinding, Layer
+        from glove80_visualizer.svg_generator import generate_layer_svg
+
+        config = VisualizerConfig(show_shifted=True)
+        layer = Layer(
+            name="Test",
+            index=0,
+            bindings=[KeyBinding(position=i, tap="'" if i == 0 else "X") for i in range(80)],
+        )
+        svg = generate_layer_svg(layer, config=config)
+
+        # Both the tap (') and shifted (") should appear
+        assert "'" in svg or "&#39;" in svg  # single quote or escaped
+        assert '"' in svg or "&quot;" in svg  # double quote or escaped
+
+
+class TestShiftedKeyCli:
+    """Tests for --no-shifted CLI flag (shifted is on by default)."""
+
+    def test_cli_no_shifted_flag_exists(self):
+        """SPEC-SK-030: CLI has --no-shifted flag."""
+        from click.testing import CliRunner
+
+        from glove80_visualizer.cli import main
+
+        runner = CliRunner()
+        result = runner.invoke(main, ["--help"])
+
+        assert "--no-shifted" in result.output
+
+    def test_config_show_shifted_default_true(self):
+        """SPEC-SK-031: VisualizerConfig.show_shifted defaults to True."""
+        from glove80_visualizer.config import VisualizerConfig
+
+        config = VisualizerConfig()
+        assert hasattr(config, "show_shifted")
+        assert config.show_shifted is True  # Default on
+
+    def test_config_show_shifted_can_be_disabled(self):
+        """SPEC-SK-032: VisualizerConfig.show_shifted can be set to False."""
+        from glove80_visualizer.config import VisualizerConfig
+
+        config = VisualizerConfig(show_shifted=False)
+        assert config.show_shifted is False

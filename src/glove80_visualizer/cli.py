@@ -138,6 +138,11 @@ class MutuallyExclusiveOption(click.Option):
     is_flag=True,
     help="Hide color legend when using --color",
 )
+@click.option(
+    "--no-shifted",
+    is_flag=True,
+    help="Hide shifted characters on keys (shown by default)",
+)
 @click.version_option(version=__version__)
 def main(
     keymap: Path,
@@ -158,6 +163,7 @@ def main(
     base_layer: str | None,
     color: bool,
     no_legend: bool,
+    no_shifted: bool,
 ) -> None:
     """
     Generate PDF/SVG visualizations of Glove80 keyboard layers.
@@ -211,6 +217,7 @@ def main(
     config.resolve_trans = resolve_trans
     config.show_colors = color
     config.show_legend = not no_legend
+    config.show_shifted = not no_shifted
 
     # Parse keymap file
     log(f"Parsing keymap: {keymap}")
