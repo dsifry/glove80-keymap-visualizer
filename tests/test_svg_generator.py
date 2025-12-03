@@ -2986,3 +2986,305 @@ class TestTypographyCSS:
 
         assert "text.hold" in svg
         assert "font-size: 9px" in svg
+
+
+class TestCairoSvgCompatibility:
+    """
+    Tests to prevent CairoSVG rendering bugs.
+
+    CairoSVG has a bug where text containing '&' followed by characters
+    (like '&left_pinky_hold' or '&lower') renders as giant dark glyphs
+    that obscure the keyboard visualization.
+
+    These tests ensure our SVG output never contains raw '&' prefixed
+    behavior strings that would trigger this bug.
+    """
+
+    def test_svg_text_no_raw_ampersand_behaviors(self):
+        """SPEC-CAIRO-001: SVG text nodes must not contain raw &behavior strings.
+
+        Raw ZMK behavior references like '&left_pinky_hold' or '&mo' in SVG
+        text cause CairoSVG to render giant dark artifacts.
+        """
+        import re
+
+        from glove80_visualizer.config import VisualizerConfig
+        from glove80_visualizer.models import KeyBinding, Layer
+        from glove80_visualizer.svg_generator import generate_layer_svg
+
+        # Create layer with behaviors that have & prefixes
+        bindings = [
+            KeyBinding(position=0, tap="A", hold="&left_pinky_hold LCTL"),
+            KeyBinding(position=1, tap="S", hold="&left_ringy_hold LALT"),
+            KeyBinding(position=2, tap="D", hold="&left_middy_hold LGUI"),
+            KeyBinding(position=3, tap="&sticky_key_oneshot LSFT"),
+            KeyBinding(position=4, tap="&rgb_ug_status_macro"),
+            KeyBinding(position=5, tap="&mo 2"),
+            KeyBinding(position=6, tap="&lt 1 SPACE"),
+            KeyBinding(position=7, tap="&unknown_behavior"),
+        ] + [KeyBinding(position=i, tap="X") for i in range(8, 80)]
+
+        layer = Layer(name="Test", index=0, bindings=bindings)
+        svg = generate_layer_svg(layer, config=VisualizerConfig())
+
+        # Extract all text content from SVG
+        text_contents = re.findall(r"<text[^>]*>([^<]*)</text>", svg)
+
+        # Check that no text contains raw & followed by word characters
+        # (XML entities like &amp; &lt; &gt; are OK)
+        for text in text_contents:
+            # Decode XML entities for checking
+            decoded = text.replace("&amp;", "&").replace("&lt;", "<").replace("&gt;", ">")
+            decoded = decoded.replace("&quot;", '"').replace("&#x27;", "'")
+            # Should not have & followed by letters (raw behavior reference)
+            assert not re.search(
+                r"&[a-z_]", decoded
+            ), f"Found raw &behavior in text: {text!r}"
+
+    def test_format_key_label_strips_ampersand_prefix(self):
+        """SPEC-CAIRO-002: format_key_label must transform &behaviors to safe labels."""
+        from glove80_visualizer.svg_generator import format_key_label
+
+        # All these should NOT start with & in the output
+        test_cases = [
+            ("&left_pinky_hold LCTL", "⌃"),  # Should extract just the modifier
+            ("&left_ringy_hold LALT", "⌥"),
+            ("&left_middy_hold LGUI", "⌘"),
+            ("&sticky_key_oneshot LSFT", "●⇧"),
+            ("&rgb_ug_status_macro", "RGB"),
+            ("&mo 2", "hold2"),  # Layer momentary with layer number
+            ("&unknown_foo_bar", None),  # Should not start with &
+        ]
+
+        for input_val, expected in test_cases:
+            result = format_key_label(input_val, "mac")
+            assert not result.startswith(
+                "&"
+            ), f"format_key_label({input_val!r}) returned {result!r} which starts with &"
+            if expected is not None:
+                assert (
+                    result == expected
+                ), f"format_key_label({input_val!r}) = {result!r}, expected {expected!r}"
+
+    def test_format_key_label_unknown_behavior_truncated(self):
+        """SPEC-CAIRO-003: Unknown &behaviors are truncated without & prefix."""
+        from glove80_visualizer.svg_generator import format_key_label
+
+        # Long unknown behaviors should be truncated
+        result = format_key_label("&very_long_unknown_behavior_name", "mac")
+        assert not result.startswith("&")
+        assert len(result) <= 8  # Should be truncated
+        assert "…" in result or len(result) <= 6  # Either truncated with ellipsis or short
+
+    def test_binding_to_keymap_drawer_no_ampersand_leak(self):
+        """SPEC-CAIRO-004: _binding_to_keymap_drawer must not leak raw & strings."""
+        from glove80_visualizer.config import VisualizerConfig
+        from glove80_visualizer.models import KeyBinding
+        from glove80_visualizer.svg_generator import _binding_to_keymap_drawer
+
+        config = VisualizerConfig()
+        config.show_colors = True
+
+        test_bindings = [
+            KeyBinding(position=0, tap="A", hold="&left_pinky_hold LCTL"),
+            KeyBinding(position=1, tap="&sticky_key_oneshot LSFT"),
+            KeyBinding(position=2, tap="&rgb_ug_status_macro", hold="Magic"),
+            KeyBinding(position=3, tap="&unknown_behavior"),
+        ]
+
+        for binding in test_bindings:
+            result = _binding_to_keymap_drawer(binding, "mac", config)
+
+            # Result can be a string or a dict
+            if isinstance(result, str):
+                assert not result.startswith(
+                    "&"
+                ), f"Tap leaked &: {binding.tap} -> {result}"
+            elif isinstance(result, dict):
+                tap = result.get("t", "")
+                hold = result.get("h", "")
+                assert not str(tap).startswith(
+                    "&"
+                ), f"Tap leaked &: {binding.tap} -> {tap}"
+                assert not str(hold).startswith(
+                    "&"
+                ), f"Hold leaked &: {binding.hold} -> {hold}"
+
+    def test_binding_shifted_behavior_is_formatted(self):
+        """SPEC-CAIRO-005: binding.shifted must be formatted, not used raw.
+
+        When a KeyBinding has a shifted value that's a behavior (like
+        &select_line_left), it must be formatted before being put in the SVG.
+        """
+        from glove80_visualizer.config import VisualizerConfig
+        from glove80_visualizer.models import KeyBinding
+        from glove80_visualizer.svg_generator import _binding_to_keymap_drawer
+
+        config = VisualizerConfig()
+        config.show_colors = True
+
+        # This is a real pattern from mod-morph behaviors
+        binding = KeyBinding(
+            position=0,
+            tap="&select_line_right",
+            shifted="&select_line_left",  # Shift variant
+        )
+
+        result = _binding_to_keymap_drawer(binding, "mac", config)
+
+        # The shifted value should be formatted, not raw
+        assert isinstance(result, dict)
+        shifted = result.get("shifted", "")
+        assert not shifted.startswith("&"), f"Shifted leaked raw &: {shifted!r}"
+        # Should be formatted to something like "Sel←L"
+        assert shifted == "Sel←L", f"Expected 'Sel←L', got {shifted!r}"
+
+    def test_all_binding_fields_formatted_no_raw_ampersand(self):
+        """SPEC-CAIRO-005b: All binding fields (tap, hold, shifted) must be formatted.
+
+        This comprehensive test ensures no raw &behavior strings leak through
+        any field in the keymap-drawer output.
+        """
+        from glove80_visualizer.config import VisualizerConfig
+        from glove80_visualizer.models import KeyBinding
+        from glove80_visualizer.svg_generator import _binding_to_keymap_drawer
+
+        config = VisualizerConfig()
+        config.show_colors = True
+
+        # Test all combinations of & behaviors in different fields
+        test_cases = [
+            # (tap, hold, shifted)
+            ("&left_pinky_hold LCTL", None, None),
+            ("A", "&left_pinky_hold LCTL", None),
+            ("A", None, "&select_line_left"),
+            ("&sticky_key_oneshot LSFT", "&mo 1", "&unknown_behavior"),
+            ("&rgb_ug_status_macro", "&lt 2 SPACE", "&extend_word_left"),
+            ("&select_line_right", "&left_middy_hold LGUI", "&select_line_left"),
+        ]
+
+        for tap, hold, shifted in test_cases:
+            binding = KeyBinding(position=0, tap=tap, hold=hold, shifted=shifted)
+            result = _binding_to_keymap_drawer(binding, "mac", config)
+
+            # Extract all string values from result
+            if isinstance(result, str):
+                values = [("tap", result)]
+            else:
+                values = [
+                    ("tap", result.get("t", "")),
+                    ("hold", result.get("h", "")),
+                    ("shifted", result.get("shifted", "")),
+                ]
+
+            for field_name, value in values:
+                if value:
+                    assert not str(value).startswith("&"), (
+                        f"Field '{field_name}' leaked raw &: "
+                        f"input=({tap!r}, {hold!r}, {shifted!r}) -> {value!r}"
+                    )
+
+    def test_layer_to_keymap_drawer_format_no_raw_ampersand(self):
+        """SPEC-CAIRO-005c: _layer_to_keymap_drawer_format must not leak raw &.
+
+        Test the full layer conversion to ensure no raw & behaviors appear
+        in the output that gets passed to keymap-drawer.
+        """
+        import re
+
+        from glove80_visualizer.config import VisualizerConfig
+        from glove80_visualizer.models import KeyBinding, Layer
+        from glove80_visualizer.svg_generator import _layer_to_keymap_drawer_format
+
+        # Create layer with various & behaviors in all fields
+        bindings = [
+            KeyBinding(position=0, tap="&left_pinky_hold LCTL"),
+            KeyBinding(position=1, tap="A", hold="&left_ringy_hold LALT"),
+            KeyBinding(position=2, tap="B", shifted="&select_line_left"),
+            KeyBinding(
+                position=3,
+                tap="&sticky_key_oneshot LSFT",
+                hold="&mo 2",
+                shifted="&unknown_shifted",
+            ),
+            KeyBinding(position=4, tap="&rgb_ug_status_macro", hold="Magic"),
+            KeyBinding(
+                position=5,
+                tap="&select_line_right",
+                hold="&extend_word_right",
+                shifted="&select_line_left",
+            ),
+        ] + [KeyBinding(position=i, tap="X") for i in range(6, 80)]
+
+        layer = Layer(name="Test", index=0, bindings=bindings)
+        config = VisualizerConfig()
+        config.show_colors = True
+        config.show_shifted = True
+
+        keymap_data = _layer_to_keymap_drawer_format(layer, config, "mac", set(), None)
+
+        # Recursively check all string values in the output
+        def check_value(path: str, value):
+            if isinstance(value, str):
+                # Check for raw & followed by word characters (not XML entities)
+                if re.search(r"&[a-z_]", value):
+                    raise AssertionError(f"Raw & found at {path}: {value!r}")
+            elif isinstance(value, dict):
+                for k, v in value.items():
+                    check_value(f"{path}.{k}", v)
+            elif isinstance(value, list):
+                for i, v in enumerate(value):
+                    check_value(f"{path}[{i}]", v)
+
+        check_value("keymap_data", keymap_data)
+
+    def test_svg_renders_without_cairosvg_artifacts(self):
+        """SPEC-CAIRO-006: Generated SVG renders cleanly with CairoSVG.
+
+        This is an integration test that actually renders the SVG with
+        CairoSVG and checks that no large dark artifacts appear.
+        """
+        import io
+
+        import cairosvg
+        from PIL import Image
+
+        from glove80_visualizer.config import VisualizerConfig
+        from glove80_visualizer.models import KeyBinding, Layer
+        from glove80_visualizer.svg_generator import generate_layer_svg
+
+        # Create layer with various & behaviors that previously caused issues
+        # Including shifted behaviors which were the source of the bug
+        bindings = [
+            KeyBinding(position=0, tap="A", hold="&left_pinky_hold LCTL"),
+            KeyBinding(position=1, tap="S", hold="&left_ringy_hold LALT"),
+            KeyBinding(position=2, tap="D", hold="&left_middy_hold LGUI"),
+            KeyBinding(position=3, tap="&sticky_key_oneshot LSFT"),
+            KeyBinding(position=4, tap="&rgb_ug_status_macro"),
+            # These have shifted behaviors that triggered the bug
+            KeyBinding(position=5, tap="&select_line_right", shifted="&select_line_left"),
+            KeyBinding(position=6, tap="&extend_word_right", shifted="&extend_word_left"),
+        ] + [KeyBinding(position=i, tap="X") for i in range(7, 80)]
+
+        layer = Layer(name="Test", index=0, bindings=bindings)
+        config = VisualizerConfig()
+        config.show_colors = True
+        svg = generate_layer_svg(layer, config=config)
+
+        # Render with CairoSVG
+        png_data = cairosvg.svg2png(bytestring=svg.encode(), output_width=800)
+        img = Image.open(io.BytesIO(png_data))
+
+        # Check for dark artifact pixels
+        # The bug renders giant dark glyphs - more than 10% dark pixels indicates failure
+        pixels = list(img.getdata())
+        dark_pixels = sum(
+            1
+            for p in pixels
+            if p[0] < 50 and p[1] < 50 and p[2] < 50 and (len(p) < 4 or p[3] > 100)
+        )
+        dark_ratio = dark_pixels / len(pixels)
+
+        assert (
+            dark_ratio < 0.1
+        ), f"CairoSVG rendered {dark_ratio:.1%} dark pixels - likely artifact bug"

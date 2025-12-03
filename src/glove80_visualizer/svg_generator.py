@@ -1244,7 +1244,9 @@ def _binding_to_keymap_drawer(
     # Use explicit binding.shifted if set, otherwise auto-detect if show_shifted is True
     shifted_char = None
     if binding.shifted:
-        shifted_char = binding.shifted
+        # Format the shifted value - it may be a behavior like &select_line_left
+        # which needs to be transformed to avoid CairoSVG rendering bugs
+        shifted_char = format_key_label(binding.shifted, os_style)
     elif show_shifted and tap_label:
         shifted_char = get_shifted_char(tap_label, mod_morphs=mod_morphs)
 
