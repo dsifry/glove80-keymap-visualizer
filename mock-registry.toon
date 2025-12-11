@@ -1,0 +1,18 @@
+meta:
+  generated: "2025-12-11T08:59:35.241872+00:00"
+  generator: scripts/generate_registries.py
+  version: "1.0"
+factories[0]:
+fixtures[12]{name,description,returns,location}:
+  fixtures_dir,Return the path to the test fixtures directory.,Path,/Users/dsifry/Developer/glove80-keymap-visualizer/tests/conftest.py
+  simple_keymap_path,Return path to the simple single-layer keymap fixture.,Path,/Users/dsifry/Developer/glove80-keymap-visualizer/tests/conftest.py
+  multi_layer_keymap_path,Return path to the multi-layer keymap fixture.,Path,/Users/dsifry/Developer/glove80-keymap-visualizer/tests/conftest.py
+  hold_tap_keymap_path,Return path to the keymap with hold-tap behaviors fixture.,Path,/Users/dsifry/Developer/glove80-keymap-visualizer/tests/conftest.py
+  invalid_keymap_path,Return path to the intentionally invalid keymap fixture.,Path,/Users/dsifry/Developer/glove80-keymap-visualizer/tests/conftest.py
+  daves_keymap_path,Return path to Dave's full 32-layer keymap.,Path,/Users/dsifry/Developer/glove80-keymap-visualizer/tests/conftest.py
+  sample_layer,Create a sample Layer object for testing.,"",/Users/dsifry/Developer/glove80-keymap-visualizer/tests/conftest.py
+  sample_layers,Create multiple sample Layer objects for testing.,"",/Users/dsifry/Developer/glove80-keymap-visualizer/tests/conftest.py
+  sample_svg,Return a minimal valid SVG for testing.,str,/Users/dsifry/Developer/glove80-keymap-visualizer/tests/conftest.py
+  sample_pdf_pages,Return a list of sample PDF bytes for testing merging.,list,/Users/dsifry/Developer/glove80-keymap-visualizer/tests/conftest.py
+  runner,Return a Click CLI test runner.,"",/Users/dsifry/Developer/glove80-keymap-visualizer/tests/conftest.py
+  tmp_output_dir,Create a temporary directory for test outputs.,Path,/Users/dsifry/Developer/glove80-keymap-visualizer/tests/conftest.py
