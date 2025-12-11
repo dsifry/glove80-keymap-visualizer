@@ -5,7 +5,6 @@ These tests define the expected behavior of the command-line interface.
 Write these tests FIRST (TDD), then implement the CLI to pass them.
 """
 
-
 import pytest
 
 
@@ -107,7 +106,7 @@ class TestCliErrors:
         """CLI requires output path."""
         from glove80_visualizer.cli import main
 
-        result = runner.invoke(main, [str(simple_keymap_path)])
+        runner.invoke(main, [str(simple_keymap_path)])
 
         # Should either error or use default output
         # The exact behavior depends on implementation choice
@@ -195,9 +194,7 @@ class TestCliOptions:
         from glove80_visualizer.cli import main
 
         output = tmp_path / "output.pdf"
-        result = runner.invoke(
-            main, [str(simple_keymap_path), "-o", str(output), "-v"]
-        )
+        result = runner.invoke(main, [str(simple_keymap_path), "-o", str(output), "-v"])
 
         assert result.exit_code == 0
         # Should show some progress information
@@ -229,9 +226,7 @@ class TestCliOptions:
         from glove80_visualizer.cli import main
 
         output = tmp_path / "output.pdf"
-        result = runner.invoke(
-            main, [str(simple_keymap_path), "-o", str(output), "-q"]
-        )
+        result = runner.invoke(main, [str(simple_keymap_path), "-o", str(output), "-q"])
 
         assert result.exit_code == 0
         # Output should be minimal
@@ -246,9 +241,7 @@ class TestCliOsStyleOptions:
         from glove80_visualizer.cli import main
 
         output = tmp_path / "output.pdf"
-        result = runner.invoke(
-            main, [str(simple_keymap_path), "-o", str(output), "--mac"]
-        )
+        result = runner.invoke(main, [str(simple_keymap_path), "-o", str(output), "--mac"])
 
         assert result.exit_code == 0
         assert output.exists()
@@ -258,9 +251,7 @@ class TestCliOsStyleOptions:
         from glove80_visualizer.cli import main
 
         output = tmp_path / "output.pdf"
-        result = runner.invoke(
-            main, [str(simple_keymap_path), "-o", str(output), "--windows"]
-        )
+        result = runner.invoke(main, [str(simple_keymap_path), "-o", str(output), "--windows"])
 
         assert result.exit_code == 0
         assert output.exists()
@@ -270,9 +261,7 @@ class TestCliOsStyleOptions:
         from glove80_visualizer.cli import main
 
         output = tmp_path / "output.pdf"
-        result = runner.invoke(
-            main, [str(simple_keymap_path), "-o", str(output), "--linux"]
-        )
+        result = runner.invoke(main, [str(simple_keymap_path), "-o", str(output), "--linux"])
 
         assert result.exit_code == 0
         assert output.exists()
@@ -287,16 +276,18 @@ class TestCliOsStyleOptions:
         )
 
         # Should fail or warn when multiple OS options are given
-        assert result.exit_code != 0 or "error" in result.output.lower() or "conflict" in result.output.lower()
+        assert (
+            result.exit_code != 0
+            or "error" in result.output.lower()
+            or "conflict" in result.output.lower()
+        )
 
     def test_cli_default_is_mac(self, runner, simple_keymap_path, tmp_path):
         """SPEC-C014: Default OS style is Mac when no option specified."""
         from glove80_visualizer.cli import main
 
         output = tmp_path / "output.pdf"
-        result = runner.invoke(
-            main, [str(simple_keymap_path), "-o", str(output)]
-        )
+        result = runner.invoke(main, [str(simple_keymap_path), "-o", str(output)])
 
         assert result.exit_code == 0
         # Default should work without any OS flag
@@ -323,12 +314,15 @@ class TestCliResolveTransOption:
 
         output = tmp_path / "output.pdf"
         result = runner.invoke(
-            main, [
+            main,
+            [
                 str(multi_layer_keymap_path),
-                "-o", str(output),
+                "-o",
+                str(output),
                 "--resolve-trans",
-                "--base-layer", "Base"
-            ]
+                "--base-layer",
+                "Base",
+            ],
         )
 
         assert result.exit_code == 0
@@ -343,9 +337,7 @@ class TestCliColorOption:
         from glove80_visualizer.cli import main
 
         output = tmp_path / "output.pdf"
-        result = runner.invoke(
-            main, [str(simple_keymap_path), "-o", str(output), "--color"]
-        )
+        result = runner.invoke(main, [str(simple_keymap_path), "-o", str(output), "--color"])
 
         assert result.exit_code == 0
         assert output.exists()
@@ -373,7 +365,15 @@ class TestCliNoLegendOption:
         output_dir = tmp_path / "svgs"
         result = runner.invoke(
             main,
-            [str(simple_keymap_path), "-o", str(output_dir), "--format", "svg", "--color", "--no-legend"],
+            [
+                str(simple_keymap_path),
+                "-o",
+                str(output_dir),
+                "--format",
+                "svg",
+                "--color",
+                "--no-legend",
+            ],
         )
 
         assert result.exit_code == 0
@@ -453,10 +453,12 @@ class TestCliEdgeCases:
             main,
             [
                 str(multi_layer_keymap_path),
-                "-o", str(output),
+                "-o",
+                str(output),
                 "--resolve-trans",
-                "--base-layer", "NonexistentLayer"
-            ]
+                "--base-layer",
+                "NonexistentLayer",
+            ],
         )
 
         assert result.exit_code != 0
@@ -465,11 +467,11 @@ class TestCliEdgeCases:
     def test_cli_resolve_trans_fallback_to_first_layer(self, runner, tmp_path, mocker):
         """CLI uses first layer when no layer has index 0."""
         from glove80_visualizer.cli import main
-        from glove80_visualizer.models import Layer, KeyBinding
 
         # Create test keymap
         keymap = tmp_path / "test.keymap"
-        keymap.write_text("""
+        keymap.write_text(
+            """
 / {
     keymap {
         compatible = "zmk,keymap";
@@ -478,13 +480,11 @@ class TestCliEdgeCases:
         };
     };
 };
-""")
+"""
+        )
 
         output = tmp_path / "output.pdf"
-        result = runner.invoke(
-            main,
-            [str(keymap), "-o", str(output), "--resolve-trans"]
-        )
+        result = runner.invoke(main, [str(keymap), "-o", str(output), "--resolve-trans"])
 
         # Should succeed
         assert result.exit_code == 0

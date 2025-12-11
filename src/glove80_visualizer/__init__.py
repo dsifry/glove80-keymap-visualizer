@@ -5,7 +5,6 @@ Generate PDF visualizations of Glove80 keyboard layers from ZMK keymap files.
 """
 
 from pathlib import Path
-from typing import Optional, Union
 
 from glove80_visualizer.config import VisualizerConfig
 from glove80_visualizer.extractor import extract_layers
@@ -65,8 +64,8 @@ def generate_visualization(
             )
 
         # 3. Generate SVGs
-        svgs = []
-        failed_layers = []
+        svgs: list[str | None] = []
+        failed_layers: list[str] = []
 
         for layer in layers:
             try:
@@ -85,7 +84,7 @@ def generate_visualization(
 
         # Filter out failed layers
         if config.continue_on_error:
-            valid_pairs = [(l, s) for l, s in zip(layers, svgs) if s is not None]
+            valid_pairs = [(lyr, s) for lyr, s in zip(layers, svgs) if s is not None]
             if not valid_pairs:
                 return VisualizationResult(
                     success=False,
@@ -93,13 +92,17 @@ def generate_visualization(
                     layers_processed=0,
                 )
             layers = [p[0] for p in valid_pairs]
-            svgs = [p[1] for p in valid_pairs]
+            # After filtering, we know all values are str (not None)
+            filtered_svgs: list[str] = [p[1] for p in valid_pairs]
+        else:
+            # No failures possible, all svgs are strings
+            filtered_svgs = [s for s in svgs if s is not None]
 
         # 4. Generate output
         if config.output_format == "svg":
             # Output SVG files
             output_path.mkdir(parents=True, exist_ok=True)
-            for layer, svg in zip(layers, svgs):
+            for layer, svg in zip(layers, filtered_svgs):
                 svg_path = output_path / f"{layer.name}.svg"
                 svg_path.write_text(svg)
             return VisualizationResult(
@@ -111,7 +114,7 @@ def generate_visualization(
             # Generate PDF
             pdf_bytes = generate_pdf_with_toc(
                 layers=layers,
-                svgs=svgs,
+                svgs=filtered_svgs,
                 config=config,
                 include_toc=config.include_toc,
             )
