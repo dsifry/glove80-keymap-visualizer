@@ -251,10 +251,11 @@ class KeymapRenderer:
 ```
 
 **Test Coverage Requirements:**
-- Target: 100% coverage for new code
-- Minimum: ≥95% for any module
-- Use `make test-cov` to verify coverage
-- Coverage must be maintained or improved on each PR
+- **Hard requirement: 100% test coverage** - No exceptions
+- Use mocks for slow dependencies (browsers, network, external APIs)
+- Create common mock factories in `tests/conftest.py` for reuse
+- Use `make test-cov` to verify coverage before every commit
+- PRs with <100% coverage will not be merged
 
 ---
 

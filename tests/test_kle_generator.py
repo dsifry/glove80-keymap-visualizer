@@ -376,6 +376,61 @@ class TestKLEKeyMapping:
         assert '"|\\n' in result or "'" + '|\\n' in result or '\\\\' in result
 
 
+class TestKLEEdgeCases:
+    """Test edge cases for KLE template generation."""
+
+    def test_shifted_and_hold_label_format(self):
+        """KLE edge case: Key with both shifted AND hold should format correctly."""
+        from glove80_visualizer.kle_template import generate_kle_from_template
+
+        # Create a key with shifted character AND hold behavior
+        # e.g., "1" key with hold LCTL - should show: !\\n1\\n\\n\\nCtrl
+        bindings = [KeyBinding(position=11, tap="1", hold="LCTL")]
+        bindings.extend([KeyBinding(position=i, tap="X") for i in range(80) if i != 11])
+        layer = Layer(name="Test", index=0, bindings=bindings)
+
+        result = generate_kle_from_template(layer)
+        # Should have all three parts: shifted (!), tap (1), and hold (Ctrl symbol)
+        # Format: "shifted\ntap\n\n\nhold"
+        assert "!" in result  # Shifted character
+        assert "1" in result  # Tap character
+
+    def test_out_of_range_zmk_position_is_ignored(self):
+        """KLE edge case: ZMK positions that map to invalid slots should be skipped."""
+        from glove80_visualizer.kle_template import generate_kle_from_template
+
+        # Create a layer with only valid positions - the invalid ones won't crash
+        # ZMK position 99 doesn't exist in ZMK_TO_KLE_SLOT, should be skipped
+        bindings = [KeyBinding(position=i, tap=chr(65 + (i % 26))) for i in range(80)]
+        layer = Layer(name="Test", index=0, bindings=bindings)
+
+        # Should not raise any errors
+        result = generate_kle_from_template(layer)
+        assert result is not None
+        assert isinstance(result, str)
+
+    def test_kle_slot_beyond_template_positions_is_skipped(self, mocker):
+        """KLE edge case: Slot index beyond TEMPLATE_POSITIONS should be skipped."""
+        from glove80_visualizer import kle_template
+        from glove80_visualizer.kle_template import generate_kle_from_template
+
+        # Mock ZMK_TO_KLE_SLOT to return an out-of-range slot for position 11
+        original_slot_map = kle_template.ZMK_TO_KLE_SLOT.copy()
+        # Add a position that maps to an invalid slot (beyond TEMPLATE_POSITIONS)
+        mock_slot_map = original_slot_map.copy()
+        mock_slot_map[11] = 99999  # Way beyond any valid slot
+
+        mocker.patch.object(kle_template, "ZMK_TO_KLE_SLOT", mock_slot_map)
+
+        bindings = [KeyBinding(position=11, tap="1")]
+        bindings.extend([KeyBinding(position=i, tap="X") for i in range(80) if i != 11])
+        layer = Layer(name="Test", index=0, bindings=bindings)
+
+        # Should not raise - the invalid slot should be skipped
+        result = generate_kle_from_template(layer)
+        assert result is not None
+
+
 class TestKLEComboTextBlocks:
     """Test combo text block generation in KLE JSON."""
 

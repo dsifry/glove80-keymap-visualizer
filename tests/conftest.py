@@ -1,8 +1,13 @@
 """
 Pytest fixtures for glove80-keymap-visualizer tests.
+
+This module provides common fixtures and mock factories for testing.
+Mock factories ensure consistent, fast tests without external dependencies.
 """
 
 from pathlib import Path
+from typing import Any
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -96,3 +101,214 @@ def tmp_output_dir(tmp_path: Path) -> Path:
     output_dir = tmp_path / "output"
     output_dir.mkdir()
     return output_dir
+
+
+# =============================================================================
+# Mock Factories for External Dependencies
+# =============================================================================
+
+
+class PlaywrightMockFactory:
+    """
+    Factory for creating Playwright browser mocks.
+
+    Use this to test code that uses headless browsers without actually
+    launching a browser. All browser operations are mocked.
+
+    Example:
+        def test_render_kle(playwright_mocks):
+            mock_playwright, mock_browser, mock_page = playwright_mocks
+            # Test code that uses sync_playwright()
+    """
+
+    @staticmethod
+    def create_page_mock() -> MagicMock:
+        """Create a mock Playwright page with all expected methods."""
+        mock_page = MagicMock()
+        mock_page.goto = MagicMock()
+        mock_page.wait_for_selector = MagicMock()
+        mock_page.wait_for_timeout = MagicMock()
+        mock_page.click = MagicMock()
+
+        # File chooser mock
+        mock_file_chooser = MagicMock()
+        mock_fc_context = MagicMock()
+        mock_fc_context.__enter__ = MagicMock(return_value=mock_fc_context)
+        mock_fc_context.__exit__ = MagicMock(return_value=False)
+        mock_fc_context.value = mock_file_chooser
+        mock_page.expect_file_chooser = MagicMock(return_value=mock_fc_context)
+
+        # Locator mock for screenshots
+        mock_locator = MagicMock()
+        mock_locator.screenshot = MagicMock()
+        mock_page.locator = MagicMock(return_value=mock_locator)
+
+        return mock_page
+
+    @staticmethod
+    def create_browser_mock(page_mock: MagicMock | None = None) -> MagicMock:
+        """Create a mock Playwright browser."""
+        mock_browser = MagicMock()
+        mock_context = MagicMock()
+
+        if page_mock is None:
+            page_mock = PlaywrightMockFactory.create_page_mock()
+
+        mock_context.new_page = MagicMock(return_value=page_mock)
+        mock_browser.new_context = MagicMock(return_value=mock_context)
+        mock_browser.close = MagicMock()
+
+        return mock_browser
+
+    @staticmethod
+    def create_playwright_mock(browser_mock: MagicMock | None = None) -> MagicMock:
+        """Create the full sync_playwright() context manager mock."""
+        mock_playwright = MagicMock()
+
+        if browser_mock is None:
+            browser_mock = PlaywrightMockFactory.create_browser_mock()
+
+        mock_chromium = MagicMock()
+        mock_chromium.launch = MagicMock(return_value=browser_mock)
+        mock_playwright.chromium = mock_chromium
+
+        # Context manager support
+        mock_context = MagicMock()
+        mock_context.__enter__ = MagicMock(return_value=mock_playwright)
+        mock_context.__exit__ = MagicMock(return_value=False)
+
+        return mock_context
+
+
+@pytest.fixture
+def playwright_mocks() -> tuple[MagicMock, MagicMock, MagicMock]:
+    """
+    Create a complete set of Playwright mocks for browser testing.
+
+    Returns:
+        Tuple of (playwright_context, browser_mock, page_mock)
+
+    Usage:
+        def test_browser_render(playwright_mocks, mocker):
+            mock_playwright, mock_browser, mock_page = playwright_mocks
+            mocker.patch(
+                "glove80_visualizer.kle_renderer.sync_playwright",
+                return_value=mock_playwright
+            )
+            # Test browser-based rendering
+    """
+    mock_page = PlaywrightMockFactory.create_page_mock()
+    mock_browser = PlaywrightMockFactory.create_browser_mock(mock_page)
+    mock_playwright = PlaywrightMockFactory.create_playwright_mock(mock_browser)
+
+    return mock_playwright, mock_browser, mock_page
+
+
+class PILMockFactory:
+    """
+    Factory for creating PIL/Pillow Image mocks.
+
+    Use this to test image processing code without actual image files.
+    """
+
+    @staticmethod
+    def create_image_mock(
+        mode: str = "RGBA",
+        size: tuple[int, int] = (1920, 1200),
+    ) -> MagicMock:
+        """Create a mock PIL Image with specified mode and size."""
+        mock_img = MagicMock()
+        mock_img.mode = mode
+        mock_img.size = size
+        mock_img.save = MagicMock()
+        mock_img.convert = MagicMock(return_value=mock_img)
+
+        # For RGBA mode, mock the alpha channel split
+        if mode == "RGBA":
+            mock_alpha = MagicMock()
+            mock_img.split = MagicMock(return_value=(None, None, None, mock_alpha))
+
+        return mock_img
+
+    @staticmethod
+    def create_image_module_mock(image_mock: MagicMock | None = None) -> MagicMock:
+        """Create a mock PIL.Image module."""
+        mock_module = MagicMock()
+
+        if image_mock is None:
+            image_mock = PILMockFactory.create_image_mock()
+
+        mock_module.open = MagicMock(return_value=image_mock)
+        mock_module.new = MagicMock(return_value=image_mock)
+
+        return mock_module
+
+
+@pytest.fixture
+def pil_image_mock() -> MagicMock:
+    """Create a mock PIL Image for testing image operations."""
+    return PILMockFactory.create_image_mock()
+
+
+@pytest.fixture
+def pil_module_mock(pil_image_mock: MagicMock) -> MagicMock:
+    """Create a mock PIL.Image module for patching."""
+    return PILMockFactory.create_image_module_mock(pil_image_mock)
+
+
+class PdfMergerMockFactory:
+    """Factory for creating PyPDF2 PdfMerger mocks."""
+
+    @staticmethod
+    def create_merger_mock() -> MagicMock:
+        """Create a mock PdfMerger."""
+        mock_merger = MagicMock()
+        mock_merger.append = MagicMock()
+        mock_merger.write = MagicMock()
+        mock_merger.close = MagicMock()
+        return mock_merger
+
+
+@pytest.fixture
+def pdf_merger_mock() -> MagicMock:
+    """Create a mock PyPDF2 PdfMerger for testing PDF operations."""
+    return PdfMergerMockFactory.create_merger_mock()
+
+
+# =============================================================================
+# Composite Fixtures for Common Test Scenarios
+# =============================================================================
+
+
+@pytest.fixture
+def kle_renderer_mocks(
+    playwright_mocks: tuple[MagicMock, MagicMock, MagicMock],
+    pil_module_mock: MagicMock,
+    pdf_merger_mock: MagicMock,
+) -> dict[str, Any]:
+    """
+    Complete set of mocks for testing kle_renderer.py.
+
+    Returns a dict with all mocks needed for KLE rendering tests:
+    - playwright: The sync_playwright context manager mock
+    - browser: The browser mock
+    - page: The page mock
+    - pil_image: The PIL.Image module mock
+    - pdf_merger: The PdfMerger mock
+
+    Usage:
+        def test_kle_render(kle_renderer_mocks, mocker):
+            mocker.patch(
+                "glove80_visualizer.kle_renderer.sync_playwright",
+                return_value=kle_renderer_mocks["playwright"]
+            )
+    """
+    mock_playwright, mock_browser, mock_page = playwright_mocks
+
+    return {
+        "playwright": mock_playwright,
+        "browser": mock_browser,
+        "page": mock_page,
+        "pil_image": pil_module_mock,
+        "pdf_merger": pdf_merger_mock,
+    }

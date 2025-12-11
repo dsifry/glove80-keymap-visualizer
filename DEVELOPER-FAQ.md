@@ -716,6 +716,38 @@ def test_parser_parses_minimal_keymap(minimal_keymap):
 
 ---
 
+### Q15b: Where are test mocks and factories located?
+
+All shared mocks and factories live in `tests/conftest.py`:
+
+| Factory Class | Purpose | Created Fixtures |
+|---------------|---------|-----------------|
+| `PlaywrightMockFactory` | Mock headless browser operations | `playwright_mocks` |
+| `PILMockFactory` | Mock PIL/Pillow image operations | `pil_image_mock`, `pil_module_mock` |
+| `PdfMergerMockFactory` | Mock PyPDF2 PDF merging | `pdf_merger_mock` |
+
+**Composite Fixture:**
+- `kle_renderer_mocks` - Complete set of mocks for KLE rendering tests
+
+**Usage Example:**
+```python
+def test_browser_render(playwright_mocks, mocker):
+    mock_playwright, mock_browser, mock_page = playwright_mocks
+    mocker.patch(
+        "glove80_visualizer.kle_renderer.sync_playwright",
+        return_value=mock_playwright
+    )
+    # Test browser-based rendering
+```
+
+**Important Guidelines:**
+- **Always check conftest.py first** before creating new mocks
+- **Add new factories to conftest.py** for reuse across tests
+- **Use mocks for slow dependencies** (browsers, network, external APIs)
+- **Avoid mocks for core business logic** - test real code when possible
+
+---
+
 ### Q16: How do I run specific tests?
 
 ```bash
@@ -1007,6 +1039,7 @@ make format
 | Source code | `src/glove80_visualizer/` |
 | Tests | `tests/` |
 | Test fixtures | `tests/fixtures/` |
+| **Mock factories** | `tests/conftest.py` |
 | Claude config | `.claude/` |
 | Slash commands | `.claude/commands/` |
 | Documentation guides | `.claude/guides/` |

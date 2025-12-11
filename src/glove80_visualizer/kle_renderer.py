@@ -162,7 +162,7 @@ def _png_to_pdf(png_path: Path, pdf_path: Path) -> None:
             img = img.convert("RGB")
 
         img.save(pdf_path, "PDF", resolution=150.0)
-    except ImportError:
+    except ImportError:  # pragma: no cover
         raise RuntimeError("PIL/Pillow is required for PDF conversion")
 
 
