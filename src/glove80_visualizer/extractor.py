@@ -88,6 +88,12 @@ def _flatten_bindings(
 
     keymap-drawer returns bindings as rows (list of lists).
     This flattens them while preserving order.
+
+    Args:
+        bindings_data: Potentially nested list of binding data from YAML
+
+    Returns:
+        Flat list of binding data elements
     """
     result: list[str | dict | None] = []
 

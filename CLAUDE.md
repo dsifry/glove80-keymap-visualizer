@@ -55,11 +55,13 @@ CLI tool that generates PDF visualizations of Glove80 keyboard layers from ZMK `
 |------|---------|
 | `src/glove80_visualizer/` | Main source code |
 | `tests/` | Test files |
-| `tests/conftest.py` | Pytest fixtures |
+| `tests/conftest.py` | Pytest fixtures and mock factories |
 | `tests/fixtures/*.keymap` | Test keymap files |
-| `docs/{branch}/plans/` | Implementation plans |
-| `docs/{branch}/specs/` | TDD specifications |
-| `docs/{branch}/reviews/` | CTO-level reviews (timestamped) |
+| `docs/{branch-name}/plans/` | Implementation plans |
+| `docs/{branch-name}/specs/` | TDD specifications |
+| `docs/{branch-name}/reviews/` | CTO-level reviews (timestamped) |
+
+**Note:** `{branch-name}` uses hyphens instead of slashes. For branch `feature/my-feature`, use `docs/feature-my-feature/`.
 
 ## Custom Slash Commands
 
@@ -95,10 +97,52 @@ These skills auto-activate based on context - you don't need to invoke them manu
 
 | Skill                            | When It Activates                  | What It Does                                                                               |
 | -------------------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------ |
+| `glove80-viz:monitoring-ci-after-push` | **MANDATORY after every `git push`** | Monitors CI until complete, fixes failures immediately |
 | `glove80-viz:pr-shepherd`        | After PR creation or on-demand     | Monitors PR through merge: CI/CD, reviews, auto-fixes, thread resolution                   |
 | `glove80-viz:handling-pr-comments` | When addressing PR review feedback | Ensures systematic responses to each comment thread with proper attribution and resolution |
+| `glove80-viz:maintaining-service-registry` | When modifying functions in `src/` | Ensures Google-style docstrings and registry updates |
+| `glove80-viz:maintaining-mock-registry` | When modifying fixtures in `tests/conftest.py` | Ensures fixture documentation and registry updates |
+| `glove80-viz:registry-verification` | Before completing any task | Validates registries are current and error-free |
+
+**CRITICAL**: After any `git push`, you MUST use `monitoring-ci-after-push` to wait for CI and fix any failures before continuing.
 
 Skills are defined in `.claude/plugins/glove80-viz/skills/`.
+
+## Service & Mock Registries
+
+This project maintains auto-generated registries of all functions and mocks:
+
+| File | Contents |
+|------|----------|
+| `service-registry.toon` | All functions, classes, and services in `src/` |
+| `mock-registry.toon` | All fixtures from `tests/conftest.py` |
+
+### Registry Requirements
+
+- All functions must have **Google-style docstrings** with Args, Returns, Raises sections
+- All fixtures must have docstrings describing their purpose
+- CI fails if registries are out of date or have docstring errors
+
+### Registry Commands
+
+```bash
+# Validate docstrings (errors fail, warnings OK)
+python scripts/generate_registries.py --check
+
+# Regenerate registries
+python scripts/generate_registries.py
+
+# Verbose output
+python scripts/generate_registries.py --verbose
+```
+
+### Before Completing Tasks
+
+Add to your validation sequence:
+
+```bash
+make lint && make typecheck && make test && python scripts/generate_registries.py --check
+```
 
 ## Worktree Development
 

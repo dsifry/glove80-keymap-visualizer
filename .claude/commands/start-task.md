@@ -78,7 +78,7 @@ If it's a complex task:
 - Consider breaking into smaller tasks
 - Use extended thinking for planning
 - Create detailed implementation plan
-- Create spec in `docs/{branch-name}/specs/`
+- Create spec in `docs/{branch-name}/specs/` (use hyphens: `feature/my-feature` → `docs/feature-my-feature/specs/`)
 
 ### 4. Task Escalation
 

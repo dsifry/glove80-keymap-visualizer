@@ -678,8 +678,15 @@ def format_key_label(key: str, os_style: str = "mac") -> str:
 
 
 def _format_behavior(behavior: str, os_style: str) -> str:
-    """Format ZMK behavior strings like &sticky_key_oneshot LSFT."""
+    """Format ZMK behavior strings like &sticky_key_oneshot LSFT.
 
+    Args:
+        behavior: The ZMK behavior string to format
+        os_style: The OS style for modifier formatting ('mac' or 'windows')
+
+    Returns:
+        Formatted display string for the behavior
+    """
     # Handle emoji macros - extract emoji name and return actual emoji
     if behavior.startswith("&emoji_") and behavior.endswith("_macro"):
         return _format_emoji_macro(behavior)
@@ -785,7 +792,14 @@ def _format_behavior(behavior: str, os_style: str) -> str:
 
 
 def _format_emoji_macro(behavior: str) -> str:
-    """Convert emoji macro names to actual emoji characters."""
+    """Convert emoji macro names to actual emoji characters.
+
+    Args:
+        behavior: The ZMK emoji macro behavior string
+
+    Returns:
+        The corresponding emoji character
+    """
     # Extract emoji name: &emoji_heart_macro -> heart
     match = re.match(r"^&emoji_(.+)_macro$", behavior)
     if not match:
@@ -883,7 +897,14 @@ def _format_emoji_macro(behavior: str) -> str:
 
 
 def _format_emoji_preset(behavior: str) -> str:
-    """Format emoji preset behaviors that don't follow the _macro pattern."""
+    """Format emoji preset behaviors that don't follow the _macro pattern.
+
+    Args:
+        behavior: The ZMK emoji preset behavior string
+
+    Returns:
+        The corresponding emoji or preset indicator
+    """
     # Remove the & prefix
     name = behavior[1:] if behavior.startswith("&") else behavior
 
@@ -905,7 +926,14 @@ def _format_emoji_preset(behavior: str) -> str:
 
 
 def _format_world_macro(behavior: str) -> str:
-    """Convert world/international macro names to actual characters."""
+    """Convert world/international macro names to actual characters.
+
+    Args:
+        behavior: The ZMK world macro behavior string
+
+    Returns:
+        The corresponding international character
+    """
     # Extract character description: &world_a_acute_lower_macro -> a_acute_lower
     match = re.match(r"^&world_(.+)_macro$", behavior)
     if not match:
@@ -1007,7 +1035,14 @@ def _format_world_macro(behavior: str) -> str:
 
 
 def _format_mouse_scroll(behavior: str) -> str:
-    """Format mouse scroll behavior."""
+    """Format mouse scroll behavior.
+
+    Args:
+        behavior: The ZMK mouse scroll behavior string
+
+    Returns:
+        Formatted display string for mouse scroll
+    """
     # &msc SCRL_UP -> ⊘↑
     scroll_map = {
         "SCRL_UP": "⊘↑",
@@ -1022,7 +1057,14 @@ def _format_mouse_scroll(behavior: str) -> str:
 
 
 def _format_mouse_move(behavior: str) -> str:
-    """Format mouse move behavior."""
+    """Format mouse move behavior.
+
+    Args:
+        behavior: The ZMK mouse move behavior string
+
+    Returns:
+        Formatted display string for mouse move
+    """
     # &mmv MOVE_UP -> 🖱↑
     move_map = {
         "MOVE_UP": "🖱↑",
@@ -1037,7 +1079,14 @@ def _format_mouse_move(behavior: str) -> str:
 
 
 def _format_mouse_click(behavior: str) -> str:
-    """Format mouse click behavior."""
+    """Format mouse click behavior.
+
+    Args:
+        behavior: The ZMK mouse click behavior string
+
+    Returns:
+        Formatted display string for mouse click
+    """
     # &mkp LCLK -> 🖱L
     click_map = {
         "LCLK": "🖱L",
@@ -1053,7 +1102,14 @@ def _format_mouse_click(behavior: str) -> str:
 
 
 def _format_select_behavior(behavior: str) -> str:
-    """Format select behaviors."""
+    """Format select behaviors.
+
+    Args:
+        behavior: The ZMK select behavior string
+
+    Returns:
+        Formatted display string for select behavior
+    """
     # &select_word_right -> Sel→W
     select_map = {
         "&select_word_right": "Sel→W",
@@ -1067,7 +1123,14 @@ def _format_select_behavior(behavior: str) -> str:
 
 
 def _format_extend_behavior(behavior: str) -> str:
-    """Format extend behaviors."""
+    """Format extend behaviors.
+
+    Args:
+        behavior: The ZMK extend behavior string
+
+    Returns:
+        Formatted display string for extend behavior
+    """
     # &extend_word_right -> Ext→W
     extend_map = {
         "&extend_word_right": "Ext→W",
@@ -1079,7 +1142,15 @@ def _format_extend_behavior(behavior: str) -> str:
 
 
 def _format_modifier_combo(combo: str, os_style: str) -> str:
-    """Format keymap-drawer modifier combos like Gui+Sft+Z."""
+    """Format keymap-drawer modifier combos like Gui+Sft+Z.
+
+    Args:
+        combo: The modifier combo string (e.g., 'Gui+Sft+Z')
+        os_style: The OS style for modifier formatting ('mac' or 'windows')
+
+    Returns:
+        Formatted combo string with modifier symbols
+    """
     # Modifier name mappings to short codes
     modifier_names = {
         "GUI": "LG",
@@ -1131,6 +1202,9 @@ def _get_meh_label(os_style: str, as_prefix: bool = False) -> str:
         os_style: Operating system style
         as_prefix: If True, return a prefix for combo (e.g., "Ctrl+Alt+Shift+")
                   If False, return standalone label (e.g., "Meh")
+
+    Returns:
+        The formatted Meh label string
     """
     if os_style == "mac":
         return "⌃⌥⇧"  # Control + Option + Shift
@@ -1147,6 +1221,9 @@ def _get_hyper_label(os_style: str, as_prefix: bool = False) -> str:
         os_style: Operating system style
         as_prefix: If True, return a prefix for combo (e.g., "Ctrl+Alt+Shift+Win+")
                   If False, return standalone label (e.g., "Hypr")
+
+    Returns:
+        The formatted Hyper label string
     """
     if os_style == "mac":
         return "⌃⌥⇧⌘"  # Control + Option + Shift + Command
@@ -1157,7 +1234,15 @@ def _get_hyper_label(os_style: str, as_prefix: bool = False) -> str:
 
 
 def _get_modifier_label(modifier_code: str, os_style: str) -> str:
-    """Get the label for a modifier code like LS, LG, LA, LC."""
+    """Get the label for a modifier code like LS, LG, LA, LC.
+
+    Args:
+        modifier_code: The modifier code (e.g., 'LS', 'LG', 'LA', 'LC')
+        os_style: The OS style for symbol selection ('mac' or 'windows')
+
+    Returns:
+        The symbol for the modifier
+    """
     code_to_key = {
         "LS": "LSHIFT",
         "RS": "RSHIFT",
@@ -1238,6 +1323,9 @@ def _layer_to_keymap_drawer_format(
         held_positions: Set of key positions that are held to activate this layer
         mod_morphs: Custom shift mappings from mod-morph behaviors
         physical_layout: Pre-built PhysicalLayout object from layout_factory
+
+    Returns:
+        Dictionary in keymap-drawer's expected format
     """
     keys_per_row = 10  # noqa: F841 - kept for documentation
     total_keys = 80
@@ -1296,6 +1384,17 @@ def _binding_to_keymap_drawer(
 
     When mod_morphs is provided, uses custom shift mappings from the keymap
     (e.g., ( → < instead of default).
+
+    Args:
+        binding: The KeyBinding to convert
+        os_style: OS style for modifier symbols
+        config: Visualization configuration
+        held_positions: Set of key positions that are held to activate this layer
+        show_shifted: Whether to show shifted characters
+        mod_morphs: Custom shift mappings from mod-morph behaviors
+
+    Returns:
+        Key data in keymap-drawer format (string or dict)
     """
     # Check if this key is a held key (activates current layer) - check early
     is_held_key = (
@@ -1596,6 +1695,13 @@ def _add_title_to_svg(svg_content: str, title: str) -> str:
     Add a title element to the SVG.
 
     Inserts a text element at the top of the SVG with the layer name.
+
+    Args:
+        svg_content: The SVG string to modify
+        title: The title text to add
+
+    Returns:
+        Modified SVG with title added
     """
     # Find the first <rect or <g after the opening svg tag
 

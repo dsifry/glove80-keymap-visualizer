@@ -49,7 +49,38 @@ make test
 - [ ] Run `make test` - ALL tests pass
 - [ ] Ensure code follows patterns in existing codebase
 
-### 4. Functionality Preservation
+### 4. Registry Verification
+
+If you modified code in `src/` or fixtures in `tests/conftest.py`:
+
+- [ ] Run `python scripts/generate_registries.py --check` - NO errors
+- [ ] Run `python scripts/generate_registries.py` to regenerate registries
+- [ ] Check `git diff service-registry.toon mock-registry.toon` for changes
+- [ ] Include registry files in commit if they changed
+
+**CRITICAL**: Registry validation is part of CI. Failing to update registries will fail the PR.
+
+### 5. CI Monitoring After Push (MANDATORY)
+
+After every `git push`, you MUST monitor CI until all checks complete:
+
+- [ ] Run `gh pr checks <pr-number>` or `gh run list --branch <branch>` to monitor
+- [ ] Wait for ALL checks to complete (not just start)
+- [ ] If any check fails, investigate immediately with `gh run view <id> --log-failed`
+- [ ] Fix failures locally, push fix, and re-monitor
+- [ ] Only proceed when ALL checks are green
+
+**CRITICAL**: Do NOT move on to other tasks while CI is pending or failing. Fix issues while context is fresh.
+
+```bash
+# Monitor CI status
+gh pr checks <pr-number>
+
+# Get failed job logs
+gh run view <run-id> --log-failed
+```
+
+### 6. Functionality Preservation
 
 - [ ] Existing functionality remains intact
 - [ ] No regression in related features
@@ -94,13 +125,19 @@ If any answer is "no", continue working on the task.
 
 ```bash
 # Full validation (run before marking complete)
-make lint && make typecheck && make test
+make lint && make typecheck && make test && python scripts/generate_registries.py --check
 
 # Quick test run
 make test
 
 # Format and lint fix
 make format
+
+# Registry validation
+python scripts/generate_registries.py --check
+
+# Regenerate registries
+python scripts/generate_registries.py
 ```
 
 ## Remember

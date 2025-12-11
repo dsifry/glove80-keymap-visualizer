@@ -32,14 +32,22 @@ class KeyBinding:
 
     @property
     def is_transparent(self) -> bool:
-        """Check if this is a transparent key (&trans)."""
+        """Check if this is a transparent key (&trans).
+
+        Returns:
+            True if the key is transparent, False otherwise
+        """
         if self.key_type == "trans":
             return True
         return self.tap.lower() in TRANS_MARKERS if self.tap else False
 
     @property
     def is_none(self) -> bool:
-        """Check if this is a none/blocked key (&none)."""
+        """Check if this is a none/blocked key (&none).
+
+        Returns:
+            True if the key is none/blocked, False otherwise
+        """
         if self.tap is None or self.tap == "":
             return True
         return self.tap.lower() in NONE_MARKERS
@@ -62,7 +70,11 @@ class Layer:
 
     @property
     def is_complete(self) -> bool:
-        """Check if this layer has all 80 key bindings for Glove80."""
+        """Check if this layer has all 80 key bindings for Glove80.
+
+        Returns:
+            True if the layer has exactly 80 bindings, False otherwise
+        """
         return len(self.bindings) == 80
 
 
