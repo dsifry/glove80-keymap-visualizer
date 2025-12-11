@@ -121,8 +121,9 @@ jobs:
         run: |
           python scripts/generate_registries.py
           # Ignore the 'generated' timestamp line when comparing
-          # Only fail if there are non-timestamp changes
-          if git diff service-registry.toon mock-registry.toon | grep -v "^[-+]  generated:" | grep -q "^[-+]"; then
+          # Filter out: diff headers (---/+++), generated timestamp lines
+          # Only fail if there are actual content changes (lines starting with - or + but not --, ++, or timestamp)
+          if git diff service-registry.toon mock-registry.toon | grep -E "^[-+][^-+]" | grep -v "generated:" | grep -q "^[-+]"; then
             echo "::error::Registry files are out of date. Run 'python scripts/generate_registries.py' and commit the changes."
             git diff service-registry.toon mock-registry.toon | head -50
             exit 1
