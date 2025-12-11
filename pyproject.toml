@@ -61,6 +61,7 @@ packages = ["src/glove80_visualizer"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["."]
 python_files = ["test_*.py"]
 python_functions = ["test_*"]
 addopts = "-v --cov=src/glove80_visualizer --cov-report=term-missing"
