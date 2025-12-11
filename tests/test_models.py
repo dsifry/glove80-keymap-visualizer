@@ -6,7 +6,6 @@ Write these tests FIRST (TDD), then implement the models to pass them.
 """
 
 
-
 class TestKeyBinding:
     """Tests for the KeyBinding dataclass."""
 
@@ -142,6 +141,7 @@ class TestVisualizerConfig:
     def test_config_from_file_not_found(self, tmp_path):
         """VisualizerConfig raises FileNotFoundError for missing file."""
         import pytest
+
         from glove80_visualizer.config import VisualizerConfig
 
         with pytest.raises(FileNotFoundError) as exc_info:
@@ -178,7 +178,7 @@ class TestLayerActivator:
             source_layer_name="QWERTY",
             source_position=69,
             target_layer_name="Cursor",
-            tap_key="BACKSPACE"
+            tap_key="BACKSPACE",
         )
         assert activator.source_layer_name == "QWERTY"
         assert activator.source_position == 69

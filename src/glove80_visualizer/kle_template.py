@@ -5,23 +5,26 @@ Uses Sunaku's KLE JSON as a template and populates it with actual keymap binding
 This preserves all the careful positioning, rotations, and styling.
 """
 
-import json
 import copy
+import json
 from pathlib import Path
 from typing import Any
 
-from glove80_visualizer.models import Layer, KeyBinding, Combo
+from glove80_visualizer.models import Combo, KeyBinding, Layer
 from glove80_visualizer.svg_generator import format_key_label, get_shifted_char
 
-
 # Template file location
-TEMPLATE_PATH = Path(__file__).parent.parent.parent / "tests" / "fixtures" / "kle" / "sunaku-base-layer.json"
+TEMPLATE_PATH = (
+    Path(__file__).parent.parent.parent
+    / "tests" / "fixtures" / "kle" / "sunaku-base-layer.json"
+)
 
 
 def load_template() -> list[Any]:
     """Load Sunaku's KLE template."""
     with open(TEMPLATE_PATH) as f:
-        return json.load(f)
+        result: list[Any] = json.load(f)
+        return result
 
 
 # Template positions: (row_idx, item_idx) for each slot

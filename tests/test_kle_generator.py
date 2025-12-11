@@ -6,7 +6,6 @@ template structure to create KLE-compatible JSON output.
 """
 
 import json
-from pathlib import Path
 
 import pytest
 
@@ -70,9 +69,12 @@ class TestKLEKeyProperties:
         parsed = json.loads(result)
         # Look for R1, C1 labels which should be decorative
         found_decorative = False
+        decorative_labels = (
+            "R1", "R2", "R3", "R4", "R5", "R6", "C1", "C2", "C3", "C4", "C5", "C6"
+        )
         for row in parsed[1:]:
             for i, item in enumerate(row):
-                if isinstance(item, str) and item in ("R1", "R2", "R3", "R4", "R5", "R6", "C1", "C2", "C3", "C4", "C5", "C6"):
+                if isinstance(item, str) and item in decorative_labels:
                     # Previous item should be a dict with d: true
                     if i > 0 and isinstance(row[i-1], dict):
                         assert row[i-1].get("d") is True, f"Label {item} should be decorative"
@@ -293,7 +295,7 @@ class TestKLEKeyMapping:
 
     def test_number_row_positions(self):
         """Test that number row keys map to correct slots."""
-        from glove80_visualizer.kle_template import ZMK_TO_SLOT, TEMPLATE_POSITIONS
+        from glove80_visualizer.kle_template import TEMPLATE_POSITIONS, ZMK_TO_SLOT
 
         # ZMK positions 11-20 are number keys 1-0
         # They should map to template positions in row 4-5
@@ -304,7 +306,7 @@ class TestKLEKeyMapping:
 
     def test_qwerty_row_positions(self):
         """Test that QWERTY row keys map to correct slots."""
-        from glove80_visualizer.kle_template import ZMK_TO_SLOT, TEMPLATE_POSITIONS
+        from glove80_visualizer.kle_template import TEMPLATE_POSITIONS, ZMK_TO_SLOT
 
         # ZMK positions 23-32 are Q,W,E,R,T,Y,U,I,O,P
         for zmk_pos in range(23, 33):
@@ -314,7 +316,7 @@ class TestKLEKeyMapping:
 
     def test_home_row_positions(self):
         """Test that home row keys map to correct slots."""
-        from glove80_visualizer.kle_template import ZMK_TO_SLOT, TEMPLATE_POSITIONS
+        from glove80_visualizer.kle_template import TEMPLATE_POSITIONS, ZMK_TO_SLOT
 
         # ZMK positions 35-45 are A,S,D,F,G,H,J,K,L,;,'
         for zmk_pos in range(35, 46):
@@ -324,7 +326,7 @@ class TestKLEKeyMapping:
 
     def test_thumb_cluster_positions(self):
         """Test that thumb cluster keys map to correct slots."""
-        from glove80_visualizer.kle_template import ZMK_TO_SLOT, TEMPLATE_POSITIONS
+        from glove80_visualizer.kle_template import TEMPLATE_POSITIONS, ZMK_TO_SLOT
 
         # Left thumb: 52, 69, 70, 76, 77, 56
         # Right thumb: 57, 71, 72, 73, 74, 75
@@ -444,8 +446,12 @@ class TestKLEComboTextBlocks:
 
         # sample_layer has name "TestLayer"
         combos = [
-            Combo(name="LT3+LT6", positions=[54, 71], action="Toggle Gaming", layers=["TestLayer", "Gaming"]),
-            Combo(name="LT1+LT4", positions=[52, 69], action="Cmd+Tab", layers=["Symbol"]),  # Not on this layer
+            Combo(
+                name="LT3+LT6", positions=[54, 71],
+                action="Toggle Gaming", layers=["TestLayer", "Gaming"]
+            ),
+            # Not on this layer:
+            Combo(name="LT1+LT4", positions=[52, 69], action="Cmd+Tab", layers=["Symbol"]),
         ]
 
         result = generate_kle_from_template(sample_layer, combos=combos)

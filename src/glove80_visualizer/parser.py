@@ -136,19 +136,17 @@ def parse_mod_morph_behaviors(keymap_content: str) -> dict[str, dict[str, str]]:
     # Pattern to match mod-morph behavior blocks
     # Captures: behavior_name, block_content
     behavior_pattern = re.compile(
-        r'(\w+):\s*\w*\s*\{\s*'  # behavior_name: optional_label {
+        r"(\w+):\s*\w*\s*\{\s*"  # behavior_name: optional_label {
         r'compatible\s*=\s*"zmk,behavior-mod-morph"[^}]*'  # must be mod-morph
-        r'\}',
+        r"\}",
         re.DOTALL,
     )
 
     # Pattern to extract bindings (tap and shifted)
-    bindings_pattern = re.compile(
-        r'bindings\s*=\s*<&kp\s+(\w+)>\s*,\s*<&kp\s+(\w+)>'
-    )
+    bindings_pattern = re.compile(r"bindings\s*=\s*<&kp\s+(\w+)>\s*,\s*<&kp\s+(\w+)>")
 
     # Pattern to check for shift modifiers
-    shift_mods_pattern = re.compile(r'mods\s*=\s*<[^>]*MOD_[LR]SFT[^>]*>')
+    shift_mods_pattern = re.compile(r"mods\s*=\s*<[^>]*MOD_[LR]SFT[^>]*>")
 
     for match in behavior_pattern.finditer(keymap_content):
         behavior_name = match.group(1)

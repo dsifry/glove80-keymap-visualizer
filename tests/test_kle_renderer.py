@@ -5,8 +5,6 @@ These tests verify the headless browser rendering capability.
 Note: These require playwright and chromium to be installed.
 """
 
-import json
-from pathlib import Path
 
 import pytest
 
@@ -48,7 +46,8 @@ class TestKLEJavaScriptInjection:
                         try {{
                             var layout = {sample_kle_json};
                             var result = $serial.deserialize(layout);
-                            var scope = angular.element(document.querySelector('[ng-controller]')).scope();
+                            var el = document.querySelector('[ng-controller]');
+                            var scope = angular.element(el).scope();
                             if (scope) {{
                                 scope.keys = result.keys;
                                 scope.meta = result.meta;
@@ -67,7 +66,9 @@ class TestKLEJavaScriptInjection:
                 assert result["keyCount"] > initial_keys, \
                     f"Expected more keys than default ({initial_keys}), got {result['keyCount']}"
                 # Glove80 has 80 keys + decorative labels (R1-R6, C1-C6, T1-T6) + center block
-                assert result["keyCount"] >= 80, f"Expected at least 80 keys, got {result['keyCount']}"
+                assert result["keyCount"] >= 80, (
+                    f"Expected at least 80 keys, got {result['keyCount']}"
+                )
 
             finally:
                 browser.close()
@@ -91,7 +92,8 @@ class TestKLEJavaScriptInjection:
                     (function() {{
                         var layout = {sample_kle_json};
                         var result = $serial.deserialize(layout);
-                        var scope = angular.element(document.querySelector('[ng-controller]')).scope();
+                        var el = document.querySelector('[ng-controller]');
+                        var scope = angular.element(el).scope();
                         if (scope) {{
                             scope.keys = result.keys;
                             scope.meta = result.meta;
@@ -120,14 +122,16 @@ class TestKLEJavaScriptInjection:
     @pytest.mark.slow
     def test_screenshot_contains_custom_layout(self, sample_kle_json, tmp_path):
         """KLE-INJECT-003: Screenshot should capture the custom layout, not default."""
-        from playwright.sync_api import sync_playwright
         from PIL import Image
+        from playwright.sync_api import sync_playwright
 
         output_path = tmp_path / "test_layout.png"
 
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=True)
-            page = browser.new_page(viewport={"width": 1920, "height": 1200}, device_scale_factor=2.0)
+            page = browser.new_page(
+                viewport={"width": 1920, "height": 1200}, device_scale_factor=2.0
+            )
 
             try:
                 page.goto("https://www.keyboard-layout-editor.com/",
@@ -139,7 +143,8 @@ class TestKLEJavaScriptInjection:
                     (function() {{
                         var layout = {sample_kle_json};
                         var result = $serial.deserialize(layout);
-                        var scope = angular.element(document.querySelector('[ng-controller]')).scope();
+                        var el = document.querySelector('[ng-controller]');
+                        var scope = angular.element(el).scope();
                         if (scope) {{
                             scope.keys = result.keys;
                             scope.meta = result.meta;
@@ -194,8 +199,9 @@ class TestKLERenderToFile:
     @pytest.mark.slow
     def test_render_kle_to_png_correct_dimensions(self, sample_kle_json, tmp_path):
         """KLE-RENDER-001b: PNG should have correct dimensions for Glove80."""
-        from glove80_visualizer.kle_renderer import render_kle_to_png
         from PIL import Image
+
+        from glove80_visualizer.kle_renderer import render_kle_to_png
 
         output_path = tmp_path / "test.png"
         render_kle_to_png(sample_kle_json, output_path)

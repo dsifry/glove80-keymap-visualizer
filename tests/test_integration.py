@@ -127,9 +127,7 @@ class TestErrorRecovery:
         config = VisualizerConfig(continue_on_error=True)
 
         # Even if one layer has issues, others should still be processed
-        result = generate_visualization(
-            multi_layer_keymap_path, output, config=config
-        )
+        result = generate_visualization(multi_layer_keymap_path, output, config=config)
 
         # Should have some output even with errors
         assert output.exists() or result.partial_success

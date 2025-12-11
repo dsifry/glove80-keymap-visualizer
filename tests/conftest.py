@@ -48,10 +48,7 @@ def sample_layer():
     """Create a sample Layer object for testing."""
     from glove80_visualizer.models import KeyBinding, Layer
 
-    bindings = [
-        KeyBinding(position=i, tap=chr(65 + (i % 26)))  # A-Z cycling
-        for i in range(80)
-    ]
+    bindings = [KeyBinding(position=i, tap=chr(65 + (i % 26))) for i in range(80)]  # A-Z cycling
     return Layer(name="TestLayer", index=0, bindings=bindings)
 
 
@@ -62,10 +59,7 @@ def sample_layers():
 
     layers = []
     for layer_idx in range(4):
-        bindings = [
-            KeyBinding(position=i, tap=chr(65 + ((i + layer_idx) % 26)))
-            for i in range(80)
-        ]
+        bindings = [KeyBinding(position=i, tap=chr(65 + ((i + layer_idx) % 26))) for i in range(80)]
         layers.append(Layer(name=f"Layer{layer_idx}", index=layer_idx, bindings=bindings))
     return layers
 

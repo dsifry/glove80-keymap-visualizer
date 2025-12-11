@@ -6,7 +6,6 @@ Write these tests FIRST (TDD), then implement the generator to pass them.
 """
 
 
-
 class TestGenerateLayerSvg:
     """Tests for generating SVG diagrams for layers."""
 
@@ -66,9 +65,7 @@ class TestGenerateLayerSvg:
         from glove80_visualizer.models import KeyBinding, Layer
         from glove80_visualizer.svg_generator import generate_layer_svg
 
-        layer = Layer(
-            name="Test", index=0, bindings=[KeyBinding(position=0, tap="&trans")]
-        )
+        layer = Layer(name="Test", index=0, bindings=[KeyBinding(position=0, tap="&trans")])
         svg = generate_layer_svg(layer)
         assert svg is not None
         # Transparent keys should render without error
@@ -196,13 +193,11 @@ class TestResolveTransparentKeys:
         assert "trans" in svg_normal.lower()
 
         # With resolve_trans - should show "A" (inherited from base)
-        svg_resolved = generate_layer_svg(
-            upper_layer,
-            resolve_trans=True,
-            base_layer=base_layer
-        )
+        svg_resolved = generate_layer_svg(upper_layer, resolve_trans=True, base_layer=base_layer)
         assert "A" in svg_resolved
-        assert "trans" not in svg_resolved.lower() or "class" in svg_resolved  # trans might be in class name
+        assert (
+            "trans" not in svg_resolved.lower() or "class" in svg_resolved
+        )  # trans might be in class name
 
     def test_resolve_trans_uses_inherited_styling(self):
         """SPEC-S033: Resolved transparent keys should have 'inherited' styling."""
@@ -221,11 +216,7 @@ class TestResolveTransparentKeys:
             bindings=[KeyBinding(position=0, tap="&trans")],
         )
 
-        svg = generate_layer_svg(
-            upper_layer,
-            resolve_trans=True,
-            base_layer=base_layer
-        )
+        svg = generate_layer_svg(upper_layer, resolve_trans=True, base_layer=base_layer)
 
         # Should have some indication that the key is inherited
         # Either "inherited" class or lighter styling
@@ -243,12 +234,8 @@ class TestResolveTransparentKeys:
             bindings=[KeyBinding(position=0, tap="Z")],
         )
 
-        # Middle layer also has &trans at position 0
-        middle_layer = Layer(
-            name="Lower",
-            index=1,
-            bindings=[KeyBinding(position=0, tap="&trans")],
-        )
+        # Middle layer also has &trans at position 0 (not used directly in test,
+        # but documents the scenario where multiple layers have transparent keys)
 
         # Top layer has &trans at position 0
         top_layer = Layer(
@@ -259,11 +246,7 @@ class TestResolveTransparentKeys:
 
         # Should resolve all the way down to base layer's 'Z'
         # Note: We resolve against base layer, not through the chain
-        svg = generate_layer_svg(
-            top_layer,
-            resolve_trans=True,
-            base_layer=base_layer
-        )
+        svg = generate_layer_svg(top_layer, resolve_trans=True, base_layer=base_layer)
         assert "Z" in svg
 
     def test_resolve_trans_preserves_non_trans_keys(self):
@@ -285,15 +268,11 @@ class TestResolveTransparentKeys:
             index=1,
             bindings=[
                 KeyBinding(position=0, tap="&trans"),  # Should resolve to A
-                KeyBinding(position=1, tap="!"),       # Should stay as !
+                KeyBinding(position=1, tap="!"),  # Should stay as !
             ],
         )
 
-        svg = generate_layer_svg(
-            upper_layer,
-            resolve_trans=True,
-            base_layer=base_layer
-        )
+        svg = generate_layer_svg(upper_layer, resolve_trans=True, base_layer=base_layer)
 
         assert "A" in svg  # Resolved from trans
         assert "!" in svg  # Preserved as-is
@@ -606,7 +585,8 @@ class TestArrowKeyIcons:
                 KeyBinding(position=1, tap="DOWN"),
                 KeyBinding(position=2, tap="UP"),
                 KeyBinding(position=3, tap="RIGHT"),
-            ] + [KeyBinding(position=i, tap="X") for i in range(4, 80)],
+            ]
+            + [KeyBinding(position=i, tap="X") for i in range(4, 80)],
         )
         svg = generate_layer_svg(layer)
 
@@ -1705,16 +1685,12 @@ class TestFallbackBranches:
 
     def test_generate_all_layer_svgs_uses_first_layer_as_base(self):
         """generate_all_layer_svgs uses first layer as base if no index 0."""
+        from glove80_visualizer.models import KeyBinding, Layer
         from glove80_visualizer.svg_generator import generate_all_layer_svgs
-        from glove80_visualizer.models import Layer, KeyBinding
 
         # Create layers without index 0
-        layer1 = Layer(name="Layer1", index=1, bindings=[
-            KeyBinding(position=0, tap="A")
-        ])
-        layer2 = Layer(name="Layer2", index=2, bindings=[
-            KeyBinding(position=0, tap="&trans")
-        ])
+        layer1 = Layer(name="Layer1", index=1, bindings=[KeyBinding(position=0, tap="A")])
+        layer2 = Layer(name="Layer2", index=2, bindings=[KeyBinding(position=0, tap="&trans")])
 
         # Should not raise, uses layer1 as fallback base
         result = generate_all_layer_svgs([layer1, layer2], resolve_trans=True)
@@ -1722,16 +1698,12 @@ class TestFallbackBranches:
 
     def test_generate_all_layer_svgs_finds_index_0_layer(self):
         """generate_all_layer_svgs finds layer with index 0 as base."""
+        from glove80_visualizer.models import KeyBinding, Layer
         from glove80_visualizer.svg_generator import generate_all_layer_svgs
-        from glove80_visualizer.models import Layer, KeyBinding
 
         # Create layers with index 0 not first in list
-        layer0 = Layer(name="Base", index=0, bindings=[
-            KeyBinding(position=0, tap="B")
-        ])
-        layer1 = Layer(name="Layer1", index=1, bindings=[
-            KeyBinding(position=0, tap="&trans")
-        ])
+        layer0 = Layer(name="Base", index=0, bindings=[KeyBinding(position=0, tap="B")])
+        layer1 = Layer(name="Layer1", index=1, bindings=[KeyBinding(position=0, tap="&trans")])
 
         # Should find index 0 even if it's second in list
         result = generate_all_layer_svgs([layer1, layer0], resolve_trans=True)
@@ -1754,36 +1726,52 @@ class TestFallbackBranches:
         assert "●" in result or "⇧" in result
 
 
-class TestResolveTransparentKeys:
+class TestResolveTransparentKeysEdgeCases:
     """Tests for transparent key resolution edge cases."""
 
     def test_resolve_trans_base_layer_also_transparent(self):
         """When base layer key is also transparent, keep it transparent."""
+        from glove80_visualizer.models import KeyBinding, Layer
         from glove80_visualizer.svg_generator import _resolve_transparent_keys
-        from glove80_visualizer.models import Layer, KeyBinding
 
-        base_layer = Layer(name="Base", index=0, bindings=[
-            KeyBinding(position=0, tap="&trans"),  # Base is also transparent
-        ])
-        overlay = Layer(name="Overlay", index=1, bindings=[
-            KeyBinding(position=0, tap="&trans"),
-        ])
+        base_layer = Layer(
+            name="Base",
+            index=0,
+            bindings=[
+                KeyBinding(position=0, tap="&trans"),  # Base is also transparent
+            ],
+        )
+        overlay = Layer(
+            name="Overlay",
+            index=1,
+            bindings=[
+                KeyBinding(position=0, tap="&trans"),
+            ],
+        )
 
         result = _resolve_transparent_keys(overlay, base_layer)
         assert result.bindings[0].tap == "&trans"
 
     def test_resolve_trans_missing_position_in_base(self):
         """When position doesn't exist in base, keep transparent."""
+        from glove80_visualizer.models import KeyBinding, Layer
         from glove80_visualizer.svg_generator import _resolve_transparent_keys
-        from glove80_visualizer.models import Layer, KeyBinding
 
-        base_layer = Layer(name="Base", index=0, bindings=[
-            KeyBinding(position=0, tap="A"),
-        ])
-        overlay = Layer(name="Overlay", index=1, bindings=[
-            KeyBinding(position=0, tap="&trans"),
-            KeyBinding(position=1, tap="&trans"),  # No position 1 in base
-        ])
+        base_layer = Layer(
+            name="Base",
+            index=0,
+            bindings=[
+                KeyBinding(position=0, tap="A"),
+            ],
+        )
+        overlay = Layer(
+            name="Overlay",
+            index=1,
+            bindings=[
+                KeyBinding(position=0, tap="&trans"),
+                KeyBinding(position=1, tap="&trans"),  # No position 1 in base
+            ],
+        )
 
         result = _resolve_transparent_keys(overlay, base_layer)
         assert result.bindings[0].tap == "A"  # Resolved
@@ -1795,20 +1783,22 @@ class TestHeldKeyIndicator:
 
     def test_held_key_has_fingerprint_glyph(self):
         """SPEC-HK-006: Held key position shows inlined fingerprint SVG."""
-        from glove80_visualizer.svg_generator import generate_layer_svg
-        from glove80_visualizer.models import Layer, KeyBinding, LayerActivator
         from glove80_visualizer.config import VisualizerConfig
+        from glove80_visualizer.models import KeyBinding, Layer, LayerActivator
+        from glove80_visualizer.svg_generator import generate_layer_svg
 
-        layer = Layer(name="Cursor", index=1, bindings=[
-            KeyBinding(position=i, tap="A") for i in range(80)
-        ])
+        layer = Layer(
+            name="Cursor", index=1, bindings=[KeyBinding(position=i, tap="A") for i in range(80)]
+        )
         # Position 69 is the held key
-        activators = [LayerActivator(
-            source_layer_name="QWERTY",
-            source_position=69,
-            target_layer_name="Cursor",
-            tap_key="BACKSPACE"
-        )]
+        activators = [
+            LayerActivator(
+                source_layer_name="QWERTY",
+                source_position=69,
+                target_layer_name="Cursor",
+                tap_key="BACKSPACE",
+            )
+        ]
         config = VisualizerConfig(show_held_indicator=True)
 
         svg = generate_layer_svg(layer, config=config, activators=activators)
@@ -1824,10 +1814,15 @@ class TestHeldKeyIndicator:
         from glove80_visualizer.svg_generator import _inline_fingerprint_glyphs
 
         # Simulated SVG with <use> element
-        svg_input = '''<svg>
-<svg id="mdi:fingerprint"><path d="test"/></svg>
-<use href="#mdi:fingerprint" xlink:href="#mdi:fingerprint" x="-16" y="-16" height="32" width="32.0" class="test"/>
-</svg>'''
+        # fmt: off
+        svg_input = (
+            "<svg>\n"
+            '<svg id="mdi:fingerprint"><path d="test"/></svg>\n'
+            '<use href="#mdi:fingerprint" xlink:href="#mdi:fingerprint" '
+            'x="-16" y="-16" height="32" width="32.0" class="test"/>\n'
+            "</svg>"
+        )
+        # fmt: on
 
         result = _inline_fingerprint_glyphs(svg_input)
 
@@ -1840,9 +1835,9 @@ class TestHeldKeyIndicator:
 
     def test_held_key_has_held_type(self):
         """SPEC-HK-008: Held key gets type='held' for red shading."""
-        from glove80_visualizer.svg_generator import _binding_to_keymap_drawer
-        from glove80_visualizer.models import KeyBinding
         from glove80_visualizer.config import VisualizerConfig
+        from glove80_visualizer.models import KeyBinding
+        from glove80_visualizer.svg_generator import _binding_to_keymap_drawer
 
         binding = KeyBinding(position=69, tap="A")
         config = VisualizerConfig(show_held_indicator=True)
@@ -1855,9 +1850,9 @@ class TestHeldKeyIndicator:
 
     def test_held_key_shows_fingerprint_tap_and_layer_hold(self):
         """SPEC-HK-009: Held key shows fingerprint as tap and 'Layer' as hold."""
-        from glove80_visualizer.svg_generator import _binding_to_keymap_drawer
-        from glove80_visualizer.models import KeyBinding
         from glove80_visualizer.config import VisualizerConfig
+        from glove80_visualizer.models import KeyBinding
+        from glove80_visualizer.svg_generator import _binding_to_keymap_drawer
 
         binding = KeyBinding(position=69, tap="A")
         config = VisualizerConfig(show_held_indicator=True)
@@ -1873,9 +1868,9 @@ class TestHeldKeyIndicator:
 
     def test_held_indicator_disabled(self):
         """SPEC-HK-007: Held indicator can be disabled."""
-        from glove80_visualizer.svg_generator import _binding_to_keymap_drawer
-        from glove80_visualizer.models import KeyBinding
         from glove80_visualizer.config import VisualizerConfig
+        from glove80_visualizer.models import KeyBinding
+        from glove80_visualizer.svg_generator import _binding_to_keymap_drawer
 
         binding = KeyBinding(position=69, tap="A")
         config = VisualizerConfig(show_held_indicator=False)
@@ -1893,9 +1888,9 @@ class TestHeldKeyIndicator:
 
     def test_non_held_key_no_fingerprint(self):
         """SPEC-HK-010: Non-held keys don't get fingerprint."""
-        from glove80_visualizer.svg_generator import _binding_to_keymap_drawer
-        from glove80_visualizer.models import KeyBinding
         from glove80_visualizer.config import VisualizerConfig
+        from glove80_visualizer.models import KeyBinding
+        from glove80_visualizer.svg_generator import _binding_to_keymap_drawer
 
         binding = KeyBinding(position=10, tap="B")  # Not position 69
         config = VisualizerConfig(show_held_indicator=True)
@@ -1913,12 +1908,12 @@ class TestHeldKeyIndicator:
 
     def test_held_indicator_no_activators(self):
         """SVG generates without activators parameter."""
+        from glove80_visualizer.models import KeyBinding, Layer
         from glove80_visualizer.svg_generator import generate_layer_svg
-        from glove80_visualizer.models import Layer, KeyBinding
 
-        layer = Layer(name="Test", index=0, bindings=[
-            KeyBinding(position=i, tap="X") for i in range(80)
-        ])
+        layer = Layer(
+            name="Test", index=0, bindings=[KeyBinding(position=i, tap="X") for i in range(80)]
+        )
 
         # Should not raise
         svg = generate_layer_svg(layer)
@@ -1926,9 +1921,9 @@ class TestHeldKeyIndicator:
 
     def test_multiple_held_keys(self):
         """SPEC-HK-011: Multiple held positions all get indicators."""
-        from glove80_visualizer.svg_generator import _binding_to_keymap_drawer
-        from glove80_visualizer.models import KeyBinding
         from glove80_visualizer.config import VisualizerConfig
+        from glove80_visualizer.models import KeyBinding
+        from glove80_visualizer.svg_generator import _binding_to_keymap_drawer
 
         config = VisualizerConfig(show_held_indicator=True)
         held_positions = {10, 20, 30}
@@ -1944,9 +1939,9 @@ class TestHeldKeyIndicator:
 
     def test_held_key_with_hold_behavior(self):
         """SPEC-HK-012: Held key with hold behavior still gets fingerprint."""
-        from glove80_visualizer.svg_generator import _binding_to_keymap_drawer
-        from glove80_visualizer.models import KeyBinding
         from glove80_visualizer.config import VisualizerConfig
+        from glove80_visualizer.models import KeyBinding
+        from glove80_visualizer.svg_generator import _binding_to_keymap_drawer
 
         # Key with both tap and hold, and it's a held position
         binding = KeyBinding(position=69, tap="BACKSPACE", hold="Cursor")
@@ -1964,9 +1959,9 @@ class TestHeldKeyIndicator:
 
     def test_held_key_transparent_shows_fingerprint(self):
         """SPEC-HK-013: Held key that is transparent still shows fingerprint."""
-        from glove80_visualizer.svg_generator import _binding_to_keymap_drawer
-        from glove80_visualizer.models import KeyBinding
         from glove80_visualizer.config import VisualizerConfig
+        from glove80_visualizer.models import KeyBinding
+        from glove80_visualizer.svg_generator import _binding_to_keymap_drawer
 
         # Transparent key at held position
         binding = KeyBinding(position=69, tap="&trans")
@@ -1982,9 +1977,9 @@ class TestHeldKeyIndicator:
 
     def test_held_key_none_shows_fingerprint(self):
         """SPEC-HK-014: Held key that is &none still shows fingerprint."""
-        from glove80_visualizer.svg_generator import _binding_to_keymap_drawer
-        from glove80_visualizer.models import KeyBinding
         from glove80_visualizer.config import VisualizerConfig
+        from glove80_visualizer.models import KeyBinding
+        from glove80_visualizer.svg_generator import _binding_to_keymap_drawer
 
         # &none key at held position
         binding = KeyBinding(position=69, tap="")
@@ -2006,7 +2001,7 @@ class TestEmojiReplacement:
         """SPEC-ER-001: Emoji characters are replaced with text equivalents."""
         from glove80_visualizer.svg_generator import _replace_emoji_for_cairo
 
-        svg = '<text>😀</text><text>🌍</text><text>⚙</text>'
+        svg = "<text>😀</text><text>🌍</text><text>⚙</text>"
         result = _replace_emoji_for_cairo(svg)
 
         assert "😀" not in result
@@ -2020,7 +2015,7 @@ class TestEmojiReplacement:
         """SPEC-ER-002: Mouse emoji is replaced with text."""
         from glove80_visualizer.svg_generator import _replace_emoji_for_cairo
 
-        svg = '<text>🖱</text>'
+        svg = "<text>🖱</text>"
         result = _replace_emoji_for_cairo(svg)
 
         assert "🖱" not in result
@@ -2030,7 +2025,7 @@ class TestEmojiReplacement:
         """SPEC-ER-003: Magic/sparkles emoji is replaced with text."""
         from glove80_visualizer.svg_generator import _replace_emoji_for_cairo
 
-        svg = '<text>✨</text>'
+        svg = "<text>✨</text>"
         result = _replace_emoji_for_cairo(svg)
 
         assert "✨" not in result
@@ -2040,7 +2035,7 @@ class TestEmojiReplacement:
         """SPEC-ER-004: Volume emoji characters are replaced with text."""
         from glove80_visualizer.svg_generator import _replace_emoji_for_cairo
 
-        svg = '<text>🔊</text><text>🔇</text>'
+        svg = "<text>🔊</text><text>🔇</text>"
         result = _replace_emoji_for_cairo(svg)
 
         assert "🔊" not in result
@@ -2052,7 +2047,7 @@ class TestEmojiReplacement:
         """SPEC-ER-005: Regular text is not modified."""
         from glove80_visualizer.svg_generator import _replace_emoji_for_cairo
 
-        svg = '<text>Hello World</text><text>ABC</text>'
+        svg = "<text>Hello World</text><text>ABC</text>"
         result = _replace_emoji_for_cairo(svg)
 
         assert result == svg
@@ -2063,8 +2058,8 @@ class TestColorLegendBackground:
 
     def test_legend_has_white_background(self):
         """SPEC-LB-001: Legend has a white background for readability."""
-        from glove80_visualizer.svg_generator import _generate_color_legend
         from glove80_visualizer.colors import ColorScheme
+        from glove80_visualizer.svg_generator import _generate_color_legend
 
         scheme = ColorScheme()
         legend_svg = _generate_color_legend(scheme)
@@ -2074,9 +2069,10 @@ class TestColorLegendBackground:
 
     def test_legend_positioned_below_keyboard(self):
         """SPEC-LB-002: Legend is positioned below the keyboard keys (y > 545)."""
-        from glove80_visualizer.svg_generator import _generate_color_legend
-        from glove80_visualizer.colors import ColorScheme
         import re
+
+        from glove80_visualizer.colors import ColorScheme
+        from glove80_visualizer.svg_generator import _generate_color_legend
 
         scheme = ColorScheme()
         legend_svg = _generate_color_legend(scheme)
@@ -2092,14 +2088,15 @@ class TestColorLegendBackground:
 
     def test_svg_height_increased_for_legend_padding(self):
         """SPEC-LB-003: SVG height is increased to provide padding below legend."""
-        from glove80_visualizer.svg_generator import generate_layer_svg
-        from glove80_visualizer.models import Layer, KeyBinding
-        from glove80_visualizer.config import VisualizerConfig
         import re
 
-        layer = Layer(name="Test", index=0, bindings=[
-            KeyBinding(position=i, tap="A") for i in range(80)
-        ])
+        from glove80_visualizer.config import VisualizerConfig
+        from glove80_visualizer.models import KeyBinding, Layer
+        from glove80_visualizer.svg_generator import generate_layer_svg
+
+        layer = Layer(
+            name="Test", index=0, bindings=[KeyBinding(position=i, tap="A") for i in range(80)]
+        )
         config = VisualizerConfig(show_colors=True)
 
         svg = generate_layer_svg(layer, config=config)
@@ -2139,13 +2136,13 @@ class TestColorLegend:
 
     def test_color_legend_added_when_colors_enabled(self):
         """SPEC-CL-020: SVG includes color legend when show_colors is True."""
-        from glove80_visualizer.svg_generator import generate_layer_svg
-        from glove80_visualizer.models import Layer, KeyBinding
         from glove80_visualizer.config import VisualizerConfig
+        from glove80_visualizer.models import KeyBinding, Layer
+        from glove80_visualizer.svg_generator import generate_layer_svg
 
-        layer = Layer(name="Test", index=0, bindings=[
-            KeyBinding(position=i, tap="A") for i in range(80)
-        ])
+        layer = Layer(
+            name="Test", index=0, bindings=[KeyBinding(position=i, tap="A") for i in range(80)]
+        )
         config = VisualizerConfig(show_colors=True)
 
         svg = generate_layer_svg(layer, config=config)
@@ -2155,13 +2152,13 @@ class TestColorLegend:
 
     def test_color_legend_shows_categories(self):
         """SPEC-CL-021: Color legend shows all key categories."""
-        from glove80_visualizer.svg_generator import generate_layer_svg
-        from glove80_visualizer.models import Layer, KeyBinding
         from glove80_visualizer.config import VisualizerConfig
+        from glove80_visualizer.models import KeyBinding, Layer
+        from glove80_visualizer.svg_generator import generate_layer_svg
 
-        layer = Layer(name="Test", index=0, bindings=[
-            KeyBinding(position=i, tap="A") for i in range(80)
-        ])
+        layer = Layer(
+            name="Test", index=0, bindings=[KeyBinding(position=i, tap="A") for i in range(80)]
+        )
         config = VisualizerConfig(show_colors=True)
 
         svg = generate_layer_svg(layer, config=config)
@@ -2173,13 +2170,13 @@ class TestColorLegend:
 
     def test_color_legend_not_shown_when_disabled(self):
         """SPEC-CL-022: No legend when show_colors is False."""
-        from glove80_visualizer.svg_generator import generate_layer_svg
-        from glove80_visualizer.models import Layer, KeyBinding
         from glove80_visualizer.config import VisualizerConfig
+        from glove80_visualizer.models import KeyBinding, Layer
+        from glove80_visualizer.svg_generator import generate_layer_svg
 
-        layer = Layer(name="Test", index=0, bindings=[
-            KeyBinding(position=i, tap="A") for i in range(80)
-        ])
+        layer = Layer(
+            name="Test", index=0, bindings=[KeyBinding(position=i, tap="A") for i in range(80)]
+        )
         config = VisualizerConfig(show_colors=False)
 
         svg = generate_layer_svg(layer, config=config)
@@ -2194,13 +2191,13 @@ class TestCenteredLayerName:
 
     def test_layer_name_centered_between_hands(self):
         """SPEC-LN-001: Layer name appears centered between keyboard halves."""
-        from glove80_visualizer.svg_generator import generate_layer_svg
-        from glove80_visualizer.models import Layer, KeyBinding
         from glove80_visualizer.config import VisualizerConfig
+        from glove80_visualizer.models import KeyBinding, Layer
+        from glove80_visualizer.svg_generator import generate_layer_svg
 
-        layer = Layer(name="Cursor", index=1, bindings=[
-            KeyBinding(position=i, tap="A") for i in range(80)
-        ])
+        layer = Layer(
+            name="Cursor", index=1, bindings=[KeyBinding(position=i, tap="A") for i in range(80)]
+        )
         config = VisualizerConfig()
 
         svg = generate_layer_svg(layer, config=config)
@@ -2208,12 +2205,13 @@ class TestCenteredLayerName:
         # Should have layer name in center area
         assert "Cursor" in svg
         # Should have text-anchor middle for centering
-        assert 'text-anchor' in svg.lower() or 'middle' in svg.lower()
+        assert "text-anchor" in svg.lower() or "middle" in svg.lower()
 
     def test_layer_label_x_position_centered(self):
         """SPEC-LN-002: Layer label x position is truly centered (around 504 for 1068px)."""
-        from glove80_visualizer.svg_generator import _center_layer_label
         import re
+
+        from glove80_visualizer.svg_generator import _center_layer_label
 
         # Simulate input from keymap-drawer
         svg_input = '<text x="0" y="28" class="label" id="Test">Test:</text>'
@@ -2235,13 +2233,13 @@ class TestColorOutput:
 
     def test_color_css_added_when_enabled(self):
         """SPEC-CL-013: SVG includes color CSS when show_colors is True."""
-        from glove80_visualizer.svg_generator import generate_layer_svg
-        from glove80_visualizer.models import Layer, KeyBinding
         from glove80_visualizer.config import VisualizerConfig
+        from glove80_visualizer.models import KeyBinding, Layer
+        from glove80_visualizer.svg_generator import generate_layer_svg
 
-        layer = Layer(name="Test", index=0, bindings=[
-            KeyBinding(position=i, tap="A") for i in range(80)
-        ])
+        layer = Layer(
+            name="Test", index=0, bindings=[KeyBinding(position=i, tap="A") for i in range(80)]
+        )
         config = VisualizerConfig(show_colors=True)
 
         svg = generate_layer_svg(layer, config=config)
@@ -2254,13 +2252,13 @@ class TestColorOutput:
 
     def test_color_css_not_added_when_disabled(self):
         """SPEC-CL-014: SVG does NOT include color CSS when show_colors is False."""
-        from glove80_visualizer.svg_generator import generate_layer_svg
-        from glove80_visualizer.models import Layer, KeyBinding
         from glove80_visualizer.config import VisualizerConfig
+        from glove80_visualizer.models import KeyBinding, Layer
+        from glove80_visualizer.svg_generator import generate_layer_svg
 
-        layer = Layer(name="Test", index=0, bindings=[
-            KeyBinding(position=i, tap="A") for i in range(80)
-        ])
+        layer = Layer(
+            name="Test", index=0, bindings=[KeyBinding(position=i, tap="A") for i in range(80)]
+        )
         config = VisualizerConfig(show_colors=False)
 
         svg = generate_layer_svg(layer, config=config)
@@ -2271,9 +2269,9 @@ class TestColorOutput:
 
     def test_modifier_key_gets_modifier_type(self):
         """SPEC-CL-015: Modifier keys get type='modifier' when colors enabled."""
-        from glove80_visualizer.svg_generator import _binding_to_keymap_drawer
-        from glove80_visualizer.models import KeyBinding
         from glove80_visualizer.config import VisualizerConfig
+        from glove80_visualizer.models import KeyBinding
+        from glove80_visualizer.svg_generator import _binding_to_keymap_drawer
 
         binding = KeyBinding(position=0, tap="LSHIFT")
         config = VisualizerConfig(show_colors=True)
@@ -2286,9 +2284,9 @@ class TestColorOutput:
 
     def test_navigation_key_gets_navigation_type(self):
         """SPEC-CL-016: Navigation keys get type='navigation' when colors enabled."""
-        from glove80_visualizer.svg_generator import _binding_to_keymap_drawer
-        from glove80_visualizer.models import KeyBinding
         from glove80_visualizer.config import VisualizerConfig
+        from glove80_visualizer.models import KeyBinding
+        from glove80_visualizer.svg_generator import _binding_to_keymap_drawer
 
         binding = KeyBinding(position=0, tap="LEFT")
         config = VisualizerConfig(show_colors=True)
@@ -2300,9 +2298,9 @@ class TestColorOutput:
 
     def test_alpha_key_no_type_when_colors_enabled(self):
         """SPEC-CL-017: Regular alpha keys don't get a type (default color)."""
-        from glove80_visualizer.svg_generator import _binding_to_keymap_drawer
-        from glove80_visualizer.models import KeyBinding
         from glove80_visualizer.config import VisualizerConfig
+        from glove80_visualizer.models import KeyBinding
+        from glove80_visualizer.svg_generator import _binding_to_keymap_drawer
 
         binding = KeyBinding(position=0, tap="A")
         config = VisualizerConfig(show_colors=True)
@@ -2314,9 +2312,9 @@ class TestColorOutput:
 
     def test_layer_hold_gets_layer_type(self):
         """SPEC-CL-018: Layer activator hold keys get type='layer' when colors enabled."""
-        from glove80_visualizer.svg_generator import _binding_to_keymap_drawer
-        from glove80_visualizer.models import KeyBinding
         from glove80_visualizer.config import VisualizerConfig
+        from glove80_visualizer.models import KeyBinding
+        from glove80_visualizer.svg_generator import _binding_to_keymap_drawer
 
         binding = KeyBinding(position=0, tap="BACKSPACE", hold="Cursor")
         config = VisualizerConfig(show_colors=True)
@@ -2328,8 +2326,8 @@ class TestColorOutput:
 
     def test_generate_color_css_function(self):
         """SPEC-CL-019: _generate_color_css creates proper CSS rules."""
-        from glove80_visualizer.svg_generator import _generate_color_css
         from glove80_visualizer.colors import ColorScheme
+        from glove80_visualizer.svg_generator import _generate_color_css
 
         scheme = ColorScheme()
         css = _generate_color_css(scheme)
@@ -2662,14 +2660,14 @@ class TestModMorphShiftedExtraction:
         """SPEC-MM-001: Parse a simple mod-morph behavior with shift modifier."""
         from glove80_visualizer.parser import parse_mod_morph_behaviors
 
-        keymap_content = '''
+        keymap_content = """
         parang_left: left_parenthesis_and_less_than {
             compatible = "zmk,behavior-mod-morph";
             #binding-cells = <0>;
             bindings = <&kp LPAR>, <&kp LT>;
             mods = <(MOD_LSFT|MOD_RSFT)>;
         };
-        '''
+        """
         result = parse_mod_morph_behaviors(keymap_content)
 
         assert "parang_left" in result
@@ -2680,14 +2678,14 @@ class TestModMorphShiftedExtraction:
         """SPEC-MM-002: Parse mod-morph for right parenthesis."""
         from glove80_visualizer.parser import parse_mod_morph_behaviors
 
-        keymap_content = '''
+        keymap_content = """
         parang_right: right_parenthesis_and_greater_than {
             compatible = "zmk,behavior-mod-morph";
             #binding-cells = <0>;
             bindings = <&kp RPAR>, <&kp GT>;
             mods = <(MOD_LSFT|MOD_RSFT)>;
         };
-        '''
+        """
         result = parse_mod_morph_behaviors(keymap_content)
 
         assert "parang_right" in result
@@ -2698,7 +2696,7 @@ class TestModMorphShiftedExtraction:
         """SPEC-MM-003: Parse multiple mod-morph behaviors."""
         from glove80_visualizer.parser import parse_mod_morph_behaviors
 
-        keymap_content = '''
+        keymap_content = """
         parang_left: left_paren {
             compatible = "zmk,behavior-mod-morph";
             #binding-cells = <0>;
@@ -2711,7 +2709,7 @@ class TestModMorphShiftedExtraction:
             bindings = <&kp RPAR>, <&kp GT>;
             mods = <(MOD_LSFT|MOD_RSFT)>;
         };
-        '''
+        """
         result = parse_mod_morph_behaviors(keymap_content)
 
         assert len(result) == 2
@@ -2722,14 +2720,14 @@ class TestModMorphShiftedExtraction:
         """SPEC-MM-004: Ignore mod-morph behaviors that don't use shift."""
         from glove80_visualizer.parser import parse_mod_morph_behaviors
 
-        keymap_content = '''
+        keymap_content = """
         ctrl_morph: ctrl_behavior {
             compatible = "zmk,behavior-mod-morph";
             #binding-cells = <0>;
             bindings = <&kp A>, <&kp B>;
             mods = <(MOD_LCTL|MOD_RCTL)>;
         };
-        '''
+        """
         result = parse_mod_morph_behaviors(keymap_content)
 
         # Should not include ctrl-based morphs
@@ -2853,11 +2851,11 @@ class TestTypographyPositioning:
         from glove80_visualizer.svg_generator import _adjust_tap_positions_for_shifted
 
         # SVG with shifted but no hold
-        svg = '''<g transform="translate(140, 84)" class="key number keypos-12">
+        svg = """<g transform="translate(140, 84)" class="key number keypos-12">
 <rect rx="6" ry="6" x="-26" y="-24" width="52" height="48" class="key number"/>
 <text x="0" y="0" class="key number tap">2</text>
 <text x="0" y="-21" class="key number shifted">@</text>
-</g>'''
+</g>"""
 
         result = _adjust_tap_positions_for_shifted(svg)
 
@@ -2871,11 +2869,11 @@ class TestTypographyPositioning:
         from glove80_visualizer.svg_generator import _adjust_tap_positions_for_shifted
 
         # SVG with hold but no shifted
-        svg = '''<g transform="translate(28, 336)" class="key layer keypos-64">
+        svg = """<g transform="translate(28, 336)" class="key layer keypos-64">
 <rect rx="6" ry="6" x="-26" y="-24" width="52" height="48" class="key layer"/>
 <text x="0" y="0" class="key layer tap">RGB</text>
 <text x="0" y="21" class="key layer hold">Magic</text>
-</g>'''
+</g>"""
 
         result = _adjust_tap_positions_for_shifted(svg)
 
@@ -2889,12 +2887,12 @@ class TestTypographyPositioning:
         from glove80_visualizer.svg_generator import _adjust_tap_positions_for_shifted
 
         # SVG with both shifted and hold
-        svg = '''<g transform="translate(924, 224)" class="key symbol keypos-44">
+        svg = """<g transform="translate(924, 224)" class="key symbol keypos-44">
 <rect rx="6" ry="6" x="-26" y="-24" width="52" height="48" class="key symbol"/>
 <text x="0" y="0" class="key symbol tap">;</text>
 <text x="0" y="21" class="key symbol hold">⌃</text>
 <text x="0" y="-21" class="key symbol shifted">:</text>
-</g>'''
+</g>"""
 
         result = _adjust_tap_positions_for_shifted(svg)
 
@@ -2910,10 +2908,10 @@ class TestTypographyPositioning:
         from glove80_visualizer.svg_generator import _adjust_tap_positions_for_shifted
 
         # SVG with just tap
-        svg = '''<g transform="translate(140, 140)" class="key keypos-24">
+        svg = """<g transform="translate(140, 140)" class="key keypos-24">
 <rect rx="6" ry="6" x="-26" y="-26" width="52" height="52" class="key"/>
 <text x="0" y="0" class="key tap">W</text>
-</g>'''
+</g>"""
 
         result = _adjust_tap_positions_for_shifted(svg)
 
@@ -3037,9 +3035,7 @@ class TestCairoSvgCompatibility:
             decoded = text.replace("&amp;", "&").replace("&lt;", "<").replace("&gt;", ">")
             decoded = decoded.replace("&quot;", '"').replace("&#x27;", "'")
             # Should not have & followed by letters (raw behavior reference)
-            assert not re.search(
-                r"&[a-z_]", decoded
-            ), f"Found raw &behavior in text: {text!r}"
+            assert not re.search(r"&[a-z_]", decoded), f"Found raw &behavior in text: {text!r}"
 
     def test_format_key_label_strips_ampersand_prefix(self):
         """SPEC-CAIRO-002: format_key_label must transform &behaviors to safe labels."""
@@ -3058,13 +3054,13 @@ class TestCairoSvgCompatibility:
 
         for input_val, expected in test_cases:
             result = format_key_label(input_val, "mac")
-            assert not result.startswith(
-                "&"
-            ), f"format_key_label({input_val!r}) returned {result!r} which starts with &"
+            assert not result.startswith("&"), (
+                f"format_key_label({input_val!r}) returned {result!r} which starts with &"
+            )
             if expected is not None:
-                assert (
-                    result == expected
-                ), f"format_key_label({input_val!r}) = {result!r}, expected {expected!r}"
+                assert result == expected, (
+                    f"format_key_label({input_val!r}) = {result!r}, expected {expected!r}"
+                )
 
     def test_format_key_label_unknown_behavior_truncated(self):
         """SPEC-CAIRO-003: Unknown &behaviors are truncated without & prefix."""
@@ -3097,18 +3093,12 @@ class TestCairoSvgCompatibility:
 
             # Result can be a string or a dict
             if isinstance(result, str):
-                assert not result.startswith(
-                    "&"
-                ), f"Tap leaked &: {binding.tap} -> {result}"
+                assert not result.startswith("&"), f"Tap leaked &: {binding.tap} -> {result}"
             elif isinstance(result, dict):
                 tap = result.get("t", "")
                 hold = result.get("h", "")
-                assert not str(tap).startswith(
-                    "&"
-                ), f"Tap leaked &: {binding.tap} -> {tap}"
-                assert not str(hold).startswith(
-                    "&"
-                ), f"Hold leaked &: {binding.hold} -> {hold}"
+                assert not str(tap).startswith("&"), f"Tap leaked &: {binding.tap} -> {tap}"
+                assert not str(hold).startswith("&"), f"Hold leaked &: {binding.hold} -> {hold}"
 
     def test_binding_shifted_behavior_is_formatted(self):
         """SPEC-CAIRO-005: binding.shifted must be formatted, not used raw.
@@ -3285,6 +3275,42 @@ class TestCairoSvgCompatibility:
         )
         dark_ratio = dark_pixels / len(pixels)
 
-        assert (
-            dark_ratio < 0.1
-        ), f"CairoSVG rendered {dark_ratio:.1%} dark pixels - likely artifact bug"
+        assert dark_ratio < 0.1, (
+            f"CairoSVG rendered {dark_ratio:.1%} dark pixels - likely artifact bug"
+        )
+
+
+class TestErrorHandling:
+    """Tests for error handling in SVG generator."""
+
+    def test_layout_factory_failure(self, sample_layer, mocker):
+        """Test that layout_factory failure produces actionable error."""
+        from glove80_visualizer.config import VisualizerConfig
+        from glove80_visualizer.svg_generator import generate_layer_svg
+
+        # Mock layout_factory to raise an exception
+        mocker.patch(
+            "glove80_visualizer.svg_generator.layout_factory",
+            side_effect=Exception("Unknown keyboard type"),
+        )
+
+        import pytest
+
+        with pytest.raises(ValueError, match="Failed to create physical layout"):
+            generate_layer_svg(sample_layer, config=VisualizerConfig())
+
+    def test_keymap_drawer_failure(self, sample_layer, mocker):
+        """Test that KeymapDrawer failure produces actionable error."""
+        from glove80_visualizer.config import VisualizerConfig
+        from glove80_visualizer.svg_generator import generate_layer_svg
+
+        # Mock KeymapDrawer to raise an exception
+        mocker.patch(
+            "glove80_visualizer.svg_generator.KeymapDrawer",
+            side_effect=Exception("Invalid keymap data"),
+        )
+
+        import pytest
+
+        with pytest.raises(RuntimeError, match="Failed to generate SVG"):
+            generate_layer_svg(sample_layer, config=VisualizerConfig())

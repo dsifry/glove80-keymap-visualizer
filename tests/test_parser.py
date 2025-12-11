@@ -93,7 +93,6 @@ class TestParseZmkKeymap:
         yaml_data = yaml.safe_load(result)
         layer_names = list(yaml_data["layers"].keys())
         # Layers should NOT be alphabetically sorted - they should be in keymap order
-        sorted_names = sorted(layer_names)
         # If they happen to be in alphabetical order already, this test isn't definitive
         # But we want to ensure the parser doesn't force alphabetical ordering
         # The multi_layer_keymap fixture has layers that are not alphabetical
@@ -250,7 +249,9 @@ class TestParseCombos:
 
         for combo in thumb_combos:
             # Name should use LT/RT format
-            assert "LT" in combo.name or "RT" in combo.name, f"Expected LT/RT in name, got {combo.name}"
+            assert "LT" in combo.name or "RT" in combo.name, (
+                f"Expected LT/RT in name, got {combo.name}"
+            )
 
     @pytest.mark.slow
     def test_combo_layers_filtering(self, daves_keymap_path):
@@ -264,11 +265,10 @@ class TestParseCombos:
 
         # Some combos have layer restrictions, some don't
         restricted = [c for c in combos if c.layers is not None]
-        unrestricted = [c for c in combos if c.layers is None]
 
         # Dave's keymap has both types
         assert len(restricted) > 0, "Should have layer-restricted combos"
-        # There may or may not be unrestricted combos
+        # There may or may not be unrestricted combos (not checked)
 
     @pytest.mark.slow
     def test_combo_gaming_toggle(self, daves_keymap_path):

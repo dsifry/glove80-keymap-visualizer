@@ -5,12 +5,14 @@ This module takes KLE JSON and renders it to PNG/PDF using
 keyboard-layout-editor.com via a headless browser (Playwright).
 """
 
-import json
 import tempfile
 from pathlib import Path
+from typing import Any
 
-from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeout
+from playwright.sync_api import TimeoutError as PlaywrightTimeout  # type: ignore[import-not-found]
+from playwright.sync_api import sync_playwright  # type: ignore[import-not-found]
 
+from glove80_visualizer.models import Combo, Layer
 
 # The KLE website URL
 KLE_URL = "https://www.keyboard-layout-editor.com/"
@@ -150,7 +152,7 @@ def _png_to_pdf(png_path: Path, pdf_path: Path) -> None:
     try:
         from PIL import Image
 
-        img = Image.open(png_path)
+        img: Any = Image.open(png_path)
         # Convert to RGB if necessary (PDF doesn't support alpha)
         if img.mode == "RGBA":
             background = Image.new("RGB", img.size, (255, 255, 255))
@@ -165,11 +167,11 @@ def _png_to_pdf(png_path: Path, pdf_path: Path) -> None:
 
 
 def render_layer_kle(
-    layer,
+    layer: Layer,
     output_path: Path | str,
     output_format: str = "png",
-    combos: list | None = None,
-    **kwargs,
+    combos: list[Combo] | None = None,
+    **kwargs: Any,
 ) -> Path:
     """
     Convenience function to render a Layer object to KLE output.
@@ -195,11 +197,11 @@ def render_layer_kle(
 
 
 def render_all_layers_kle(
-    layers: list,
+    layers: list[Layer],
     output_dir: Path | str,
     output_format: str = "png",
-    combos: list | None = None,
-    **kwargs,
+    combos: list[Combo] | None = None,
+    **kwargs: Any,
 ) -> list[Path]:
     """
     Render all layers to KLE output files.
@@ -228,10 +230,10 @@ def render_all_layers_kle(
 
 
 def create_combined_pdf_kle(
-    layers: list,
+    layers: list[Layer],
     output_path: Path | str,
-    combos: list | None = None,
-    **kwargs,
+    combos: list[Combo] | None = None,
+    **kwargs: Any,
 ) -> Path:
     """
     Render all layers and combine into a single PDF.
@@ -246,6 +248,7 @@ def create_combined_pdf_kle(
         Path to the combined PDF
     """
     import tempfile
+
     from PyPDF2 import PdfMerger
 
     output_path = Path(output_path)

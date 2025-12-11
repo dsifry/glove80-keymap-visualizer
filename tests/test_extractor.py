@@ -6,7 +6,6 @@ Write these tests FIRST (TDD), then implement the extractor to pass them.
 """
 
 
-
 class TestExtractLayers:
     """Tests for extracting layers from parsed YAML."""
 
