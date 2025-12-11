@@ -1,0 +1,18 @@
+{
+  "name": "glove80-viz",
+  "version": "1.0.0",
+  "description": "Glove80 Keymap Visualizer skills for PR handling, worktree management, and multi-agent coordination",
+  "author": "Dave Sifry",
+  "skills": [
+    {
+      "name": "handling-pr-comments",
+      "description": "Use when addressing PR review feedback, after receiving review comments from CodeRabbit or human reviewers - ensures systematic responses to each comment thread with proper attribution and thread resolution",
+      "path": "skills/handling-pr-comments/SKILL.md"
+    },
+    {
+      "name": "pr-shepherd",
+      "description": "Use when a PR has been created and needs to be monitored through to merge - handles CI failures, review comments, and thread resolution automatically until all checks pass and all threads are resolved",
+      "path": "skills/pr-shepherd/SKILL.md"
+    }
+  ]
+}
