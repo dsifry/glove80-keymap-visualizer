@@ -95,11 +95,14 @@ These skills auto-activate based on context - you don't need to invoke them manu
 
 | Skill                            | When It Activates                  | What It Does                                                                               |
 | -------------------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------ |
+| `glove80-viz:monitoring-ci-after-push` | **MANDATORY after every `git push`** | Monitors CI until complete, fixes failures immediately |
 | `glove80-viz:pr-shepherd`        | After PR creation or on-demand     | Monitors PR through merge: CI/CD, reviews, auto-fixes, thread resolution                   |
 | `glove80-viz:handling-pr-comments` | When addressing PR review feedback | Ensures systematic responses to each comment thread with proper attribution and resolution |
 | `glove80-viz:maintaining-service-registry` | When modifying functions in `src/` | Ensures Google-style docstrings and registry updates |
 | `glove80-viz:maintaining-mock-registry` | When modifying fixtures in `tests/conftest.py` | Ensures fixture documentation and registry updates |
 | `glove80-viz:registry-verification` | Before completing any task | Validates registries are current and error-free |
+
+**CRITICAL**: After any `git push`, you MUST use `monitoring-ci-after-push` to wait for CI and fix any failures before continuing.
 
 Skills are defined in `.claude/plugins/glove80-viz/skills/`.
 

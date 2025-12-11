@@ -60,7 +60,27 @@ If you modified code in `src/` or fixtures in `tests/conftest.py`:
 
 **CRITICAL**: Registry validation is part of CI. Failing to update registries will fail the PR.
 
-### 5. Functionality Preservation
+### 5. CI Monitoring After Push (MANDATORY)
+
+After every `git push`, you MUST monitor CI until all checks complete:
+
+- [ ] Run `gh pr checks <pr-number>` or `gh run list --branch <branch>` to monitor
+- [ ] Wait for ALL checks to complete (not just start)
+- [ ] If any check fails, investigate immediately with `gh run view <id> --log-failed`
+- [ ] Fix failures locally, push fix, and re-monitor
+- [ ] Only proceed when ALL checks are green
+
+**CRITICAL**: Do NOT move on to other tasks while CI is pending or failing. Fix issues while context is fresh.
+
+```bash
+# Monitor CI status
+gh pr checks <pr-number>
+
+# Get failed job logs
+gh run view <run-id> --log-failed
+```
+
+### 6. Functionality Preservation
 
 - [ ] Existing functionality remains intact
 - [ ] No regression in related features
