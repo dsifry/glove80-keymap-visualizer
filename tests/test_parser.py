@@ -93,7 +93,6 @@ class TestParseZmkKeymap:
         yaml_data = yaml.safe_load(result)
         layer_names = list(yaml_data["layers"].keys())
         # Layers should NOT be alphabetically sorted - they should be in keymap order
-        sorted_names = sorted(layer_names)
         # If they happen to be in alphabetical order already, this test isn't definitive
         # But we want to ensure the parser doesn't force alphabetical ordering
         # The multi_layer_keymap fixture has layers that are not alphabetical

@@ -10,6 +10,7 @@ from typing import Any
 
 from keymap_drawer.config import Config as KDConfig
 from keymap_drawer.draw.draw import KeymapDrawer
+from keymap_drawer.physical_layout import layout_factory
 
 from glove80_visualizer.colors import ColorScheme, categorize_key
 from glove80_visualizer.config import VisualizerConfig
@@ -17,7 +18,46 @@ from glove80_visualizer.models import KeyBinding, Layer
 
 # MDI Fingerprint icon path (from Material Design Icons)
 # Inlined for CairoSVG compatibility (doesn't handle <use> with nested SVGs well)
-FINGERPRINT_PATH = "M17.81,4.47C17.73,4.47 17.65,4.45 17.58,4.41C15.66,3.42 14,3 12,3C10.03,3 8.15,3.47 6.44,4.41C6.2,4.54 5.9,4.45 5.76,4.21C5.63,3.97 5.72,3.66 5.96,3.53C7.82,2.5 9.86,2 12,2C14.14,2 16,2.47 18.04,3.5C18.29,3.65 18.38,3.95 18.25,4.19C18.16,4.37 18,4.47 17.81,4.47M3.5,9.72C3.4,9.72 3.3,9.69 3.21,9.63C3,9.47 2.93,9.16 3.09,8.93C4.08,7.53 5.34,6.43 6.84,5.66C10,4.04 14,4.03 17.15,5.65C18.65,6.42 19.91,7.5 20.9,8.9C21.06,9.12 21,9.44 20.78,9.6C20.55,9.76 20.24,9.71 20.08,9.5C19.18,8.22 18.04,7.23 16.69,6.54C13.82,5.07 10.15,5.07 7.29,6.55C5.93,7.25 4.79,8.25 3.89,9.5C3.81,9.65 3.66,9.72 3.5,9.72M9.75,21.79C9.62,21.79 9.5,21.74 9.4,21.64C8.53,20.77 8.06,20.21 7.39,19C6.7,17.77 6.34,16.27 6.34,14.66C6.34,11.69 8.88,9.27 12,9.27C15.12,9.27 17.66,11.69 17.66,14.66A0.5,0.5 0 0,1 17.16,15.16A0.5,0.5 0 0,1 16.66,14.66C16.66,12.24 14.57,10.27 12,10.27C9.43,10.27 7.34,12.24 7.34,14.66C7.34,16.1 7.66,17.43 8.27,18.5C8.91,19.66 9.35,20.15 10.12,20.93C10.31,21.13 10.31,21.44 10.12,21.64C10,21.74 9.88,21.79 9.75,21.79M16.92,19.94C15.73,19.94 14.68,19.64 13.82,19.05C12.33,18.04 11.44,16.4 11.44,14.66A0.5,0.5 0 0,1 11.94,14.16A0.5,0.5 0 0,1 12.44,14.66C12.44,16.07 13.16,17.4 14.38,18.22C15.09,18.7 15.92,18.93 16.92,18.93C17.16,18.93 17.56,18.9 17.96,18.83C18.23,18.78 18.5,18.96 18.54,19.24C18.59,19.5 18.41,19.77 18.13,19.82C17.56,19.93 17.06,19.94 16.92,19.94M14.91,22C14.87,22 14.82,22 14.78,22C13.19,21.54 12.15,20.95 11.06,19.88C9.66,18.5 8.89,16.64 8.89,14.66C8.89,13.04 10.27,11.72 11.97,11.72C13.67,11.72 15.05,13.04 15.05,14.66C15.05,15.73 16,16.6 17.13,16.6C18.28,16.6 19.21,15.73 19.21,14.66C19.21,10.89 15.96,7.83 11.96,7.83C9.12,7.83 6.5,9.41 5.35,11.86C4.96,12.67 4.76,13.62 4.76,14.66C4.76,15.44 4.83,16.67 5.43,18.27C5.53,18.53 5.4,18.82 5.14,18.91C4.88,19 4.59,18.87 4.5,18.62C4,17.31 3.77,16 3.77,14.66C3.77,13.46 4,12.37 4.45,11.42C5.78,8.63 8.73,6.82 11.96,6.82C16.5,6.82 20.21,10.33 20.21,14.65C20.21,16.27 18.83,17.59 17.13,17.59C15.43,17.59 14.05,16.27 14.05,14.65C14.05,13.58 13.12,12.71 11.97,12.71C10.82,12.71 9.89,13.58 9.89,14.65C9.89,16.36 10.55,17.96 11.76,19.16C12.71,20.1 13.62,20.62 15.03,21C15.3,21.08 15.45,21.36 15.38,21.62C15.33,21.85 15.12,22 14.91,22Z"
+# fmt: off
+FINGERPRINT_PATH = (
+    "M17.81,4.47C17.73,4.47 17.65,4.45 17.58,4.41C15.66,3.42 14,3 12,3"
+    "C10.03,3 8.15,3.47 6.44,4.41C6.2,4.54 5.9,4.45 5.76,4.21"
+    "C5.63,3.97 5.72,3.66 5.96,3.53C7.82,2.5 9.86,2 12,2C14.14,2 16,2.47 18.04,3.5"
+    "C18.29,3.65 18.38,3.95 18.25,4.19C18.16,4.37 18,4.47 17.81,4.47"
+    "M3.5,9.72C3.4,9.72 3.3,9.69 3.21,9.63C3,9.47 2.93,9.16 3.09,8.93"
+    "C4.08,7.53 5.34,6.43 6.84,5.66C10,4.04 14,4.03 17.15,5.65"
+    "C18.65,6.42 19.91,7.5 20.9,8.9C21.06,9.12 21,9.44 20.78,9.6"
+    "C20.55,9.76 20.24,9.71 20.08,9.5C19.18,8.22 18.04,7.23 16.69,6.54"
+    "C13.82,5.07 10.15,5.07 7.29,6.55C5.93,7.25 4.79,8.25 3.89,9.5"
+    "C3.81,9.65 3.66,9.72 3.5,9.72"
+    "M9.75,21.79C9.62,21.79 9.5,21.74 9.4,21.64C8.53,20.77 8.06,20.21 7.39,19"
+    "C6.7,17.77 6.34,16.27 6.34,14.66C6.34,11.69 8.88,9.27 12,9.27"
+    "C15.12,9.27 17.66,11.69 17.66,14.66A0.5,0.5 0 0,1 17.16,15.16"
+    "A0.5,0.5 0 0,1 16.66,14.66C16.66,12.24 14.57,10.27 12,10.27"
+    "C9.43,10.27 7.34,12.24 7.34,14.66C7.34,16.1 7.66,17.43 8.27,18.5"
+    "C8.91,19.66 9.35,20.15 10.12,20.93C10.31,21.13 10.31,21.44 10.12,21.64"
+    "C10,21.74 9.88,21.79 9.75,21.79"
+    "M16.92,19.94C15.73,19.94 14.68,19.64 13.82,19.05"
+    "C12.33,18.04 11.44,16.4 11.44,14.66A0.5,0.5 0 0,1 11.94,14.16"
+    "A0.5,0.5 0 0,1 12.44,14.66C12.44,16.07 13.16,17.4 14.38,18.22"
+    "C15.09,18.7 15.92,18.93 16.92,18.93C17.16,18.93 17.56,18.9 17.96,18.83"
+    "C18.23,18.78 18.5,18.96 18.54,19.24C18.59,19.5 18.41,19.77 18.13,19.82"
+    "C17.56,19.93 17.06,19.94 16.92,19.94"
+    "M14.91,22C14.87,22 14.82,22 14.78,22C13.19,21.54 12.15,20.95 11.06,19.88"
+    "C9.66,18.5 8.89,16.64 8.89,14.66C8.89,13.04 10.27,11.72 11.97,11.72"
+    "C13.67,11.72 15.05,13.04 15.05,14.66C15.05,15.73 16,16.6 17.13,16.6"
+    "C18.28,16.6 19.21,15.73 19.21,14.66C19.21,10.89 15.96,7.83 11.96,7.83"
+    "C9.12,7.83 6.5,9.41 5.35,11.86C4.96,12.67 4.76,13.62 4.76,14.66"
+    "C4.76,15.44 4.83,16.67 5.43,18.27C5.53,18.53 5.4,18.82 5.14,18.91"
+    "C4.88,19 4.59,18.87 4.5,18.62C4,17.31 3.77,16 3.77,14.66"
+    "C3.77,13.46 4,12.37 4.45,11.42C5.78,8.63 8.73,6.82 11.96,6.82"
+    "C16.5,6.82 20.21,10.33 20.21,14.65C20.21,16.27 18.83,17.59 17.13,17.59"
+    "C15.43,17.59 14.05,16.27 14.05,14.65C14.05,13.58 13.12,12.71 11.97,12.71"
+    "C10.82,12.71 9.89,13.58 9.89,14.65C9.89,16.36 10.55,17.96 11.76,19.16"
+    "C12.71,20.1 13.62,20.62 15.03,21C15.3,21.08 15.45,21.36 15.38,21.62"
+    "C15.33,21.85 15.12,22 14.91,22Z"
+)
+# fmt: on
 
 # OS-specific modifier mappings
 MODIFIER_SYMBOLS = {
@@ -104,24 +144,49 @@ SHIFTED_KEY_PAIRS = {
 # Used for mod-morph shifted character resolution
 ZMK_KEY_TO_CHAR = {
     # Numbers
-    "N1": "1", "N2": "2", "N3": "3", "N4": "4", "N5": "5",
-    "N6": "6", "N7": "7", "N8": "8", "N9": "9", "N0": "0",
+    "N1": "1",
+    "N2": "2",
+    "N3": "3",
+    "N4": "4",
+    "N5": "5",
+    "N6": "6",
+    "N7": "7",
+    "N8": "8",
+    "N9": "9",
+    "N0": "0",
     # Symbols
-    "LPAR": "(", "RPAR": ")",
-    "LT": "<", "GT": ">",
-    "LBKT": "[", "RBKT": "]",
-    "LBRC": "{", "RBRC": "}",
-    "PIPE": "|", "BSLH": "\\",
-    "EQUAL": "=", "PLUS": "+",
-    "MINUS": "-", "UNDER": "_",
-    "GRAVE": "`", "TILDE": "~",
-    "SQT": "'", "DQT": '"',
-    "SEMI": ";", "COLON": ":",
-    "COMMA": ",", "DOT": ".",
-    "FSLH": "/", "QMARK": "?",
-    "EXCL": "!", "AT": "@",
-    "HASH": "#", "DLLR": "$", "PRCNT": "%",
-    "CARET": "^", "AMPS": "&", "ASTRK": "*",
+    "LPAR": "(",
+    "RPAR": ")",
+    "LT": "<",
+    "GT": ">",
+    "LBKT": "[",
+    "RBKT": "]",
+    "LBRC": "{",
+    "RBRC": "}",
+    "PIPE": "|",
+    "BSLH": "\\",
+    "EQUAL": "=",
+    "PLUS": "+",
+    "MINUS": "-",
+    "UNDER": "_",
+    "GRAVE": "`",
+    "TILDE": "~",
+    "SQT": "'",
+    "DQT": '"',
+    "SEMI": ";",
+    "COLON": ":",
+    "COMMA": ",",
+    "DOT": ".",
+    "FSLH": "/",
+    "QMARK": "?",
+    "EXCL": "!",
+    "AT": "@",
+    "HASH": "#",
+    "DLLR": "$",
+    "PRCNT": "%",
+    "CARET": "^",
+    "AMPS": "&",
+    "ASTRK": "*",
 }
 
 # Reverse mapping: display character to ZMK key code
@@ -353,7 +418,7 @@ def generate_layer_svg(
         config = VisualizerConfig()
 
     # Get os_style from config if not specified
-    if hasattr(config, 'os_style') and config.os_style:
+    if hasattr(config, "os_style") and config.os_style:
         os_style = config.os_style
 
     # Find held positions for this layer
@@ -368,13 +433,16 @@ def generate_layer_svg(
     if resolve_trans and base_layer:
         working_layer = _resolve_transparent_keys(layer, base_layer)
 
-    # Convert Layer to keymap-drawer format
-    keymap_data = _layer_to_keymap_drawer_format(
-        working_layer, config, os_style, held_positions, mod_morphs
-    )
-
     # Create keymap-drawer config
     kd_config = KDConfig()
+
+    # Pre-build the physical layout using layout_factory (API changed in keymap-drawer 0.18+)
+    physical_layout = layout_factory(config=kd_config.draw_config, qmk_keyboard=config.keyboard)
+
+    # Convert Layer to keymap-drawer format
+    keymap_data = _layer_to_keymap_drawer_format(
+        working_layer, config, os_style, held_positions, mod_morphs, physical_layout
+    )
 
     # Increase glyph size for held key indicators (fingerprint in tap position)
     # Default tap size is 14, but we want a more prominent indicator
@@ -383,7 +451,7 @@ def generate_layer_svg(
     # Typography spacing - increase inner padding for better vertical breathing room
     # This moves shifted/hold text slightly inward from key edges
     kd_config.draw_config.inner_pad_h = 4.0  # default is 2.0
-    kd_config.draw_config.small_pad = 3.0   # default is 2.0
+    kd_config.draw_config.small_pad = 3.0  # default is 2.0
 
     # Override default font to include better Unicode symbol support
     # Arial Unicode MS has extensive Unicode coverage and works well with CairoSVG
@@ -447,7 +515,7 @@ text.centered-label {
 
     # Generate SVG
     out = StringIO()
-    drawer = KeymapDrawer(config=kd_config, out=out, **keymap_data)
+    drawer = KeymapDrawer(config=kd_config.draw_config, out=out, **keymap_data)
     drawer.print_board(draw_layers=[working_layer.name])
 
     svg_content = out.getvalue()
@@ -545,7 +613,7 @@ def format_key_label(key: str, os_style: str = "mac") -> str:
         return _format_behavior(key_normalized, os_style)
 
     # Handle modifier combos like LS(LEFT) or LG(RIGHT)
-    combo_match = re.match(r'^([LR][SGAC])\((.+)\)$', key_normalized, re.IGNORECASE)
+    combo_match = re.match(r"^([LR][SGAC])\((.+)\)$", key_normalized, re.IGNORECASE)
     if combo_match:
         modifier_code, inner_key = combo_match.groups()
         modifier_label = _get_modifier_label(modifier_code.upper(), os_style)
@@ -553,13 +621,13 @@ def format_key_label(key: str, os_style: str = "mac") -> str:
         return f"{modifier_label}{inner_label}"
 
     # Handle MEH(key) and HYPER(key) combos
-    meh_match = re.match(r'^MEH\((.+)\)$', key_normalized, re.IGNORECASE)
+    meh_match = re.match(r"^MEH\((.+)\)$", key_normalized, re.IGNORECASE)
     if meh_match:
         inner_key = meh_match.group(1)
         inner_label = format_key_label(inner_key, os_style)
         return f"{_get_meh_label(os_style, as_prefix=True)}{inner_label}"
 
-    hyper_match = re.match(r'^HYPER\((.+)\)$', key_normalized, re.IGNORECASE)
+    hyper_match = re.match(r"^HYPER\((.+)\)$", key_normalized, re.IGNORECASE)
     if hyper_match:
         inner_key = hyper_match.group(1)
         inner_label = format_key_label(inner_key, os_style)
@@ -613,13 +681,13 @@ def _format_behavior(behavior: str, os_style: str) -> str:
         return _format_world_macro(behavior)
 
     # Handle finger tap behaviors (left_pinky_tap, right_index_tap, etc.)
-    finger_tap_match = re.match(r'^&(left|right)_(pinky|ringy|middy|index)_tap\s+(.+)$', behavior)
+    finger_tap_match = re.match(r"^&(left|right)_(pinky|ringy|middy|index)_tap\s+(.+)$", behavior)
     if finger_tap_match:
         key = finger_tap_match.group(3)
         return format_key_label(key, os_style)
 
     # Handle finger hold behaviors (right_index_hold LSFT, left_middy_hold LGUI, etc.)
-    finger_hold_match = re.match(r'^&(left|right)_(pinky|ringy|middy|index)_hold\s+(.+)$', behavior)
+    finger_hold_match = re.match(r"^&(left|right)_(pinky|ringy|middy|index)_hold\s+(.+)$", behavior)
     if finger_hold_match:
         modifier = finger_hold_match.group(3)
         return format_key_label(modifier, os_style)
@@ -707,7 +775,7 @@ def _format_behavior(behavior: str, os_style: str) -> str:
 def _format_emoji_macro(behavior: str) -> str:
     """Convert emoji macro names to actual emoji characters."""
     # Extract emoji name: &emoji_heart_macro -> heart
-    match = re.match(r'^&emoji_(.+)_macro$', behavior)
+    match = re.match(r"^&emoji_(.+)_macro$", behavior)
     if not match:
         return "😀"
 
@@ -827,7 +895,7 @@ def _format_emoji_preset(behavior: str) -> str:
 def _format_world_macro(behavior: str) -> str:
     """Convert world/international macro names to actual characters."""
     # Extract character description: &world_a_acute_lower_macro -> a_acute_lower
-    match = re.match(r'^&world_(.+)_macro$', behavior)
+    match = re.match(r"^&world_(.+)_macro$", behavior)
     if not match:
         return "?"
 
@@ -1140,12 +1208,13 @@ def _layer_to_keymap_drawer_format(
     os_style: str = "mac",
     held_positions: set[int] | None = None,
     mod_morphs: dict[str, dict[str, str]] | None = None,
+    physical_layout: Any = None,
 ) -> dict[str, Any]:
     """
-    Convert a Layer to keymap-drawer's expected YAML format.
+    Convert a Layer to keymap-drawer's expected format.
 
     keymap-drawer expects:
-    - layout: {zmk_keyboard: 'glove80'}
+    - layout: PhysicalLayout object (pre-built via layout_factory)
     - layers: {LayerName: [[row1], [row2], ...]}
 
     Glove80 has 80 keys arranged in 8 rows of 10 keys each.
@@ -1156,10 +1225,10 @@ def _layer_to_keymap_drawer_format(
         os_style: OS style for modifier symbols
         held_positions: Set of key positions that are held to activate this layer
         mod_morphs: Custom shift mappings from mod-morph behaviors
+        physical_layout: Pre-built PhysicalLayout object from layout_factory
     """
-    keys_per_row = 10
+    keys_per_row = 10  # noqa: F841 - kept for documentation
     total_keys = 80
-    num_rows = 8
 
     # Check if show_shifted is enabled
     show_shifted = config.show_shifted if config else False
@@ -1183,7 +1252,7 @@ def _layer_to_keymap_drawer_format(
         rows.append(all_keys[i : i + keys_per_row])
 
     return {
-        "layout": {"zmk_keyboard": config.keyboard},
+        "layout": physical_layout,
         "layers": {layer.name: rows},
     }
 
@@ -1400,13 +1469,13 @@ def _generate_color_legend(scheme: ColorScheme) -> str:
         f'rx="4" ry="4" fill="white" fill-opacity="0.9"/>'
     )
 
-    return f'''
+    return f"""
 <!-- Color Legend -->
 <g class="color-legend" transform="translate(30, 0)">
 {background}
 {legend_content}
 </g>
-'''
+"""
 
 
 def _add_color_legend(svg_content: str, scheme: ColorScheme) -> str:
@@ -1457,19 +1526,14 @@ def _increase_svg_height(svg_content: str, min_height: int) -> str:
         return svg_content
 
     # Update height attribute
-    svg_content = re.sub(
-        r'height="(\d+)"',
-        f'height="{min_height}"',
-        svg_content,
-        count=1
-    )
+    svg_content = re.sub(r'height="(\d+)"', f'height="{min_height}"', svg_content, count=1)
 
     # Update viewBox height
     svg_content = re.sub(
         r'viewBox="(\d+)\s+(\d+)\s+(\d+)\s+(\d+)"',
         lambda m: f'viewBox="{m.group(1)} {m.group(2)} {m.group(3)} {min_height}"',
         svg_content,
-        count=1
+        count=1,
     )
 
     return svg_content
@@ -1499,8 +1563,9 @@ def _center_layer_label(svg_content: str, layer_name: str) -> str:
 
     # Pattern to match the layer label
     # Note: The label includes a colon after the layer name
+    escaped_name = re.escape(layer_name)
     label_pattern = re.compile(
-        rf'<text x="0" y="28" class="label" id="{re.escape(layer_name)}">{re.escape(layer_name)}:</text>'
+        rf'<text x="0" y="28" class="label" id="{escaped_name}">{escaped_name}:</text>'
     )
 
     # Replacement with centered position and middle anchor
@@ -1527,9 +1592,7 @@ def _add_title_to_svg(svg_content: str, title: str) -> str:
     if style_end != -1:
         insert_pos = style_end + len("</style>")
         title_element = f'\n<text x="30" y="30" class="label">{title}</text>'
-        svg_content = (
-            svg_content[:insert_pos] + title_element + svg_content[insert_pos:]
-        )
+        svg_content = svg_content[:insert_pos] + title_element + svg_content[insert_pos:]
 
     return svg_content
 
@@ -1592,18 +1655,20 @@ def _inline_fingerprint_glyphs(svg_content: str) -> str:
         Modified SVG content with inlined fingerprint paths
     """
     # Pattern to match the <use> element for fingerprint glyphs
-    # Example: <use href="#mdi:fingerprint" xlink:href="#mdi:fingerprint" x="-16" y="-16" height="32" width="32.0" class="..."/>
+    # Example: <use href="#mdi:fingerprint" xlink:href="#mdi:fingerprint"
+    #          x="-16" y="-16" height="32" width="32.0" class="..."/>
     use_pattern = re.compile(
         r'<use\s+href="#mdi:fingerprint"[^>]*'
         r'x="([^"]*)"[^>]*y="([^"]*)"[^>]*'
         r'height="([^"]*)"[^>]*width="([^"]*)"[^>]*/>'
     )
 
-    def replace_with_inline(match):
+    def replace_with_inline(match: re.Match[str]) -> str:
         x = float(match.group(1))
         y = float(match.group(2))
         height = float(match.group(3))
-        width = float(match.group(4).rstrip('.0'))
+        # width is captured but not used (fingerprint uses square aspect ratio)
+        _ = float(match.group(4).rstrip(".0"))
 
         # The fingerprint icon has a viewBox of 0 0 24 24
         # We need to scale and translate it to fit the specified dimensions
@@ -1613,27 +1678,28 @@ def _inline_fingerprint_glyphs(svg_content: str) -> str:
         return (
             f'<g transform="translate({x}, {y}) scale({scale})">'
             f'<path d="{FINGERPRINT_PATH}" fill="currentColor"/>'
-            f'</g>'
+            f"</g>"
         )
 
     svg_content = use_pattern.sub(replace_with_inline, svg_content)
 
     # Also remove the nested SVG definitions that keymap-drawer adds for glyphs
     # These are no longer needed and can cause rendering issues
-    # keymap-drawer wraps glyphs like: <svg id="mdi:fingerprint"><svg xmlns="..."><path/></svg></svg>
+    # keymap-drawer wraps glyphs like:
+    #   <svg id="mdi:fingerprint"><svg xmlns="..."><path/></svg></svg>
     # First try the double-nested pattern
     svg_content = re.sub(
         r'<svg\s+id="mdi:fingerprint">\s*<svg[^>]*>.*?</svg>\s*</svg>\s*',
-        '',
+        "",
         svg_content,
-        flags=re.DOTALL
+        flags=re.DOTALL,
     )
     # Also handle single-nested pattern (for simpler test cases)
     svg_content = re.sub(
         r'<svg\s+id="mdi:fingerprint">[^<]*<path[^/]*/>\s*</svg>\s*',
-        '',
+        "",
         svg_content,
-        flags=re.DOTALL
+        flags=re.DOTALL,
     )
 
     return svg_content
@@ -1660,8 +1726,8 @@ def _adjust_tap_positions_for_shifted(svg_content: str) -> str:
     import re
 
     # Pattern to match a key group
-    def adjust_key_group(match: re.Match) -> str:
-        group_content = match.group(0)
+    def adjust_key_group(match: re.Match[str]) -> str:
+        group_content: str = match.group(0)
 
         # Check if this group has a shifted text element
         has_shifted = re.search(r'class="[^"]*\bshifted\b', group_content)
@@ -1672,27 +1738,19 @@ def _adjust_tap_positions_for_shifted(svg_content: str) -> str:
             # Case 1: Shifted + no hold (like "1"/"!")
             # Move tap down, shifted down from edge for balanced pair
             group_content = re.sub(
-                r'(<text[^>]*) y="0" (class="[^"]*\btap\b)',
-                r'\1 y="8" \2',
-                group_content
+                r'(<text[^>]*) y="0" (class="[^"]*\btap\b)', r'\1 y="8" \2', group_content
             )
             group_content = re.sub(
-                r'(<text[^>]*) y="-21" (class="[^"]*\bshifted\b)',
-                r'\1 y="-14" \2',
-                group_content
+                r'(<text[^>]*) y="-21" (class="[^"]*\bshifted\b)', r'\1 y="-14" \2', group_content
             )
         elif has_hold and not has_shifted:
             # Case 2: Hold + no shifted (like "RGB"/"Magic")
             # Move tap up slightly, hold up from bottom edge for balanced pair
             group_content = re.sub(
-                r'(<text[^>]*) y="0" (class="[^"]*\btap\b)',
-                r'\1 y="-6" \2',
-                group_content
+                r'(<text[^>]*) y="0" (class="[^"]*\btap\b)', r'\1 y="-6" \2', group_content
             )
             group_content = re.sub(
-                r'(<text[^>]*) y="21" (class="[^"]*\bhold\b)',
-                r'\1 y="16" \2',
-                group_content
+                r'(<text[^>]*) y="21" (class="[^"]*\bhold\b)', r'\1 y="16" \2', group_content
             )
 
         return group_content
@@ -1702,7 +1760,7 @@ def _adjust_tap_positions_for_shifted(svg_content: str) -> str:
         r'<g transform="[^"]*" class="key[^"]*keypos-\d+"[^>]*>.*?</g>',
         adjust_key_group,
         svg_content,
-        flags=re.DOTALL
+        flags=re.DOTALL,
     )
 
     return svg_content
@@ -1744,8 +1802,7 @@ def _add_held_key_indicators(svg_content: str, held_positions: set[int]) -> str:
     # Add a comment marker so tests can detect held indicators are present
     # The actual visual change is in the CSS above
     svg_content = svg_content.replace(
-        "</svg>",
-        f"<!-- held-key-positions: {sorted(held_positions)} -->\n</svg>"
+        "</svg>", f"<!-- held-key-positions: {sorted(held_positions)} -->\n</svg>"
     )
 
     return svg_content

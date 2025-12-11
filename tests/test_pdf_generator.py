@@ -5,7 +5,6 @@ These tests define the expected behavior of PDF generation.
 Write these tests FIRST (TDD), then implement the generator to pass them.
 """
 
-
 import pytest
 
 
@@ -67,7 +66,7 @@ class TestMergePdfs:
         from glove80_visualizer.pdf_generator import merge_pdfs, svg_to_pdf
 
         # Create SVGs with text that requires font embedding
-        svg_with_text = '''<?xml version="1.0" encoding="UTF-8"?>
+        svg_with_text = """<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600">
 <style>
     text { font-family: SFMono-Regular,Consolas,Liberation Mono,Menlo,monospace; font-size: 14px; }
@@ -75,16 +74,16 @@ class TestMergePdfs:
 <text x="100" y="50" class="label">Layer 20: Emoji</text>
 <text x="100" y="100">Test text with ellipsis…</text>
 <text x="100" y="150">Symbol: ⇧ ⌃ ⌥ ⌘</text>
-</svg>'''
+</svg>"""
 
-        svg_different = '''<?xml version="1.0" encoding="UTF-8"?>
+        svg_different = """<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600">
 <style>
     text { font-family: SFMono-Regular,Consolas,Liberation Mono,Menlo,monospace; font-size: 14px; }
 </style>
 <text x="100" y="50" class="label">Layer 30: Lower</text>
 <text x="100" y="100">Different content here</text>
-</svg>'''
+</svg>"""
 
         # Convert to PDFs
         pdf1 = svg_to_pdf(svg_with_text)
@@ -104,7 +103,6 @@ class TestMergePdfs:
         # Each page should have resources with fonts
         for i, page in enumerate(pdf.pages):
             assert "/Resources" in page, f"Page {i} missing resources"
-            resources = page["/Resources"]
             # Font resources should be present (though implementation may vary)
             # The key thing is pages aren't blank or corrupted
 
@@ -161,9 +159,7 @@ class TestPdfWithToc:
         from glove80_visualizer.pdf_generator import generate_pdf_with_toc
 
         svgs = [sample_svg] * len(sample_layers)
-        pdf_bytes = generate_pdf_with_toc(
-            layers=sample_layers, svgs=svgs, include_toc=True
-        )
+        pdf_bytes = generate_pdf_with_toc(layers=sample_layers, svgs=svgs, include_toc=True)
         assert len(pdf_bytes) > 0
         assert pdf_bytes.startswith(b"%PDF")
 
@@ -172,9 +168,7 @@ class TestPdfWithToc:
         from glove80_visualizer.pdf_generator import generate_pdf_with_toc
 
         svgs = [sample_svg] * len(sample_layers)
-        pdf_bytes = generate_pdf_with_toc(
-            layers=sample_layers, svgs=svgs, include_toc=False
-        )
+        pdf_bytes = generate_pdf_with_toc(layers=sample_layers, svgs=svgs, include_toc=False)
         assert pdf_bytes.startswith(b"%PDF")
 
     def test_pdf_large_document(self, sample_svg):
