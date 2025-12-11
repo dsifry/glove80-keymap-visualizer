@@ -8,7 +8,7 @@ Monitor a PR from creation through merge, handling CI failures, review comments,
 
 ## Usage
 
-```
+```bash
 /project:pr-shepherd [pr-number]
 ```
 
