@@ -3054,13 +3054,13 @@ class TestCairoSvgCompatibility:
 
         for input_val, expected in test_cases:
             result = format_key_label(input_val, "mac")
-            assert not result.startswith(
-                "&"
-            ), f"format_key_label({input_val!r}) returned {result!r} which starts with &"
+            assert not result.startswith("&"), (
+                f"format_key_label({input_val!r}) returned {result!r} which starts with &"
+            )
             if expected is not None:
-                assert (
-                    result == expected
-                ), f"format_key_label({input_val!r}) = {result!r}, expected {expected!r}"
+                assert result == expected, (
+                    f"format_key_label({input_val!r}) = {result!r}, expected {expected!r}"
+                )
 
     def test_format_key_label_unknown_behavior_truncated(self):
         """SPEC-CAIRO-003: Unknown &behaviors are truncated without & prefix."""
@@ -3275,6 +3275,6 @@ class TestCairoSvgCompatibility:
         )
         dark_ratio = dark_pixels / len(pixels)
 
-        assert (
-            dark_ratio < 0.1
-        ), f"CairoSVG rendered {dark_ratio:.1%} dark pixels - likely artifact bug"
+        assert dark_ratio < 0.1, (
+            f"CairoSVG rendered {dark_ratio:.1%} dark pixels - likely artifact bug"
+        )

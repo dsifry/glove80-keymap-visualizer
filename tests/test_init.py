@@ -5,7 +5,6 @@ Tests error recovery paths and edge cases.
 """
 
 
-
 class TestGenerateVisualization:
     """Tests for the generate_visualization function."""
 
