@@ -34,6 +34,19 @@ class MutuallyExclusiveOption(click.Option):
     def handle_parse_result(  # type: ignore[override]
         self, ctx: click.Context, opts: dict[str, object], args: list[str]
     ) -> tuple[object, list[str]]:
+        """Handle parse result and check for mutually exclusive options.
+
+        Args:
+            ctx: Click context object
+            opts: Dictionary of parsed options
+            args: Remaining command line arguments
+
+        Returns:
+            Tuple of (parsed value, remaining args)
+
+        Raises:
+            click.UsageError: If mutually exclusive options are both set
+        """
         current_opt = self.name in opts and opts[self.name]
 
         for mutex_opt in self.mutually_exclusive:
