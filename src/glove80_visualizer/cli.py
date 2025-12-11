@@ -12,6 +12,7 @@ import click
 from glove80_visualizer import __version__
 from glove80_visualizer.config import VisualizerConfig
 from glove80_visualizer.extractor import extract_layer_activators, extract_layers
+from glove80_visualizer.models import Combo
 from glove80_visualizer.parser import KeymapParseError, parse_combos, parse_zmk_keymap
 from glove80_visualizer.pdf_generator import generate_pdf_with_toc
 from glove80_visualizer.svg_generator import generate_layer_svg
@@ -153,11 +154,12 @@ class MutuallyExclusiveOption(click.Option):
     is_flag=True,
     help="Hide shifted characters on keys (shown by default)",
 )
+# TODO: Wire up color scheme to KLE generation (currently only sunaku template exists)
 @click.option(
     "--kle-color-scheme",
     type=click.Choice(["sunaku", "everforest"]),
     default="sunaku",
-    help="Color scheme for KLE output (default: sunaku)",
+    help="Color scheme for KLE output (default: sunaku) [WIP - not yet implemented]",
 )
 @click.version_option(version=__version__)
 def main(
@@ -317,9 +319,14 @@ def main(
         log(f"Found {len(activators)} layer activators")
 
     # Parse combos for KLE output
-    combos = parse_combos(keymap)
-    if combos and verbose:
-        log(f"Found {len(combos)} combos")
+    combos: list[Combo] = []
+    try:
+        combos = parse_combos(keymap)
+        if combos and verbose:
+            log(f"Found {len(combos)} combos")
+    except KeymapParseError as e:
+        # Combos are optional, log warning and continue
+        log(f"Warning: Could not parse combos: {e}", force=True)
 
     # Generate SVGs
     svgs: list[str | None] = []
@@ -384,6 +391,7 @@ def main(
                 layer,
                 title=layer.name,
                 combos=combos,
+                os_style=os_style,
             )
             json_path = output / f"{layer.name}.json"
             json_path.write_text(kle_json)
@@ -402,6 +410,7 @@ def main(
                 layer,
                 title=layer.name,
                 combos=combos,
+                os_style=os_style,
             )
             png_path = output / f"{layer.name}.png"
             try:
@@ -421,7 +430,9 @@ def main(
 
         log("Generating KLE PDF via headless browser...")
         try:
-            create_combined_pdf_kle(extracted_layers, output, combos=combos)
+            create_combined_pdf_kle(
+                extracted_layers, output, combos=combos, os_style=os_style
+            )
             if not quiet:
                 click.echo(f"Generated KLE PDF: {output}")
         except Exception as e:

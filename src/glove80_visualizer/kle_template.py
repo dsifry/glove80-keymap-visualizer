@@ -262,6 +262,7 @@ def generate_kle_from_template(
     layer: Layer,
     title: str | None = None,
     combos: list[Combo] | None = None,
+    os_style: str = "mac",
 ) -> str:
     """
     Generate KLE JSON using Sunaku's template.
@@ -270,6 +271,7 @@ def generate_kle_from_template(
         layer: Layer object with bindings
         title: Optional title (uses layer.name if not provided)
         combos: Optional list of combos to display in text blocks
+        os_style: OS style for modifier symbols ("mac", "windows", or "linux")
 
     Returns:
         KLE JSON string
@@ -310,7 +312,7 @@ def generate_kle_from_template(
         if row_idx < len(kle_data):
             row = kle_data[row_idx]
             if isinstance(row, list) and item_idx < len(row):
-                label = _format_binding_label(binding)
+                label = _format_binding_label(binding, os_style)
                 row[item_idx] = label
 
                 # Check if preceding item is a property dict with ghost flag
@@ -324,15 +326,15 @@ def generate_kle_from_template(
     return json.dumps(kle_data, indent=2)
 
 
-def _format_binding_label(binding: KeyBinding) -> str:
+def _format_binding_label(binding: KeyBinding, os_style: str = "mac") -> str:
     """Format a binding as a KLE label string."""
     tap = binding.tap or ""
     hold = binding.hold if binding.hold and binding.hold != "None" else ""
     shifted = binding.shifted if binding.shifted and binding.shifted != "None" else ""
 
     # Format for nice display
-    tap_fmt = format_key_label(tap, "mac") if tap else ""
-    hold_fmt = format_key_label(hold, "mac") if hold else ""
+    tap_fmt = format_key_label(tap, os_style) if tap else ""
+    hold_fmt = format_key_label(hold, os_style) if hold else ""
 
     # Auto-calculate shifted character if not already provided
     # This adds shifted characters for numbers (1→!, 2→@) and punctuation

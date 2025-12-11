@@ -305,3 +305,334 @@ class TestParseCombos:
         combo = caps_combos[0]
         assert combo.name == "LT6+RT6"
         assert "Caps" in combo.action
+
+    def test_parse_combos_file_not_found(self):
+        """Parser raises FileNotFoundError when parsing combos from missing file."""
+        from glove80_visualizer.parser import parse_combos
+
+        with pytest.raises(FileNotFoundError):
+            parse_combos(Path("/nonexistent/keymap.keymap"))
+
+    def test_parse_combos_invalid_file(self, tmp_path):
+        """Parser raises KeymapParseError when parsing combos from invalid file."""
+        from glove80_visualizer.parser import KeymapParseError, parse_combos
+
+        bad_file = tmp_path / "bad.keymap"
+        bad_file.write_text("invalid { syntax")
+
+        with pytest.raises(KeymapParseError, match="Failed to parse keymap for combos"):
+            parse_combos(bad_file)
+
+
+class TestPositionsToName:
+    """Tests for _positions_to_name helper function."""
+
+    def test_thumb_key_positions(self):
+        """Thumb key positions are converted to human-readable names."""
+        from glove80_visualizer.parser import _positions_to_name
+
+        # Left thumb upper row
+        assert _positions_to_name([52]) == "LT1"
+        assert _positions_to_name([53]) == "LT2"
+        assert _positions_to_name([54]) == "LT3"
+
+        # Left thumb lower row
+        assert _positions_to_name([69]) == "LT4"
+        assert _positions_to_name([70]) == "LT5"
+        assert _positions_to_name([71]) == "LT6"
+
+        # Right thumb upper row
+        assert _positions_to_name([57]) == "RT1"
+        assert _positions_to_name([56]) == "RT2"
+        assert _positions_to_name([55]) == "RT3"
+
+        # Right thumb lower row
+        assert _positions_to_name([74]) == "RT4"
+        assert _positions_to_name([73]) == "RT5"
+        assert _positions_to_name([72]) == "RT6"
+
+    def test_multiple_thumb_positions(self):
+        """Multiple thumb positions are joined with +."""
+        from glove80_visualizer.parser import _positions_to_name
+
+        assert _positions_to_name([54, 71]) == "LT3+LT6"
+        assert _positions_to_name([71, 72]) == "LT6+RT6"
+
+    def test_non_thumb_positions(self):
+        """Non-thumb positions use numeric representation."""
+        from glove80_visualizer.parser import _positions_to_name
+
+        assert _positions_to_name([10]) == "10"
+        assert _positions_to_name([25, 26]) == "25+26"
+
+    def test_mixed_thumb_and_non_thumb(self):
+        """Mixed thumb and non-thumb positions are combined."""
+        from glove80_visualizer.parser import _positions_to_name
+
+        assert _positions_to_name([10, 52]) == "10+LT1"
+        assert _positions_to_name([25, 71, 72]) == "25+LT6+RT6"
+
+    def test_positions_are_sorted(self):
+        """Positions are sorted before conversion."""
+        from glove80_visualizer.parser import _positions_to_name
+
+        # Unsorted input should be sorted in output
+        assert _positions_to_name([71, 54]) == "LT3+LT6"
+        assert _positions_to_name([72, 71]) == "LT6+RT6"
+
+
+class TestFormatComboAction:
+    """Tests for _format_combo_action helper function."""
+
+    def test_simple_string_binding(self):
+        """Simple key name strings are formatted."""
+        from glove80_visualizer.parser import _format_combo_action
+
+        assert _format_combo_action("CAPSLOCK") == "Caps Lock"
+        assert _format_combo_action("CAPS") == "Caps Lock"
+
+    def test_mod_tab_chord_lgui(self):
+        """Mod-tab-chord with LGUI is formatted as Cmd+Tab."""
+        from glove80_visualizer.parser import _format_combo_action
+
+        assert _format_combo_action("&mod_tab_chord LGUI 17") == "Cmd+Tab"
+        assert _format_combo_action("&mod_tab_chord GUI 17") == "Cmd+Tab"
+
+    def test_mod_tab_chord_lctl(self):
+        """Mod-tab-chord with LCTL is formatted as Ctrl+Tab."""
+        from glove80_visualizer.parser import _format_combo_action
+
+        assert _format_combo_action("&mod_tab_chord LCTL 17") == "Ctrl+Tab"
+        assert _format_combo_action("&mod_tab_chord CTL 17") == "Ctrl+Tab"
+
+    def test_mod_tab_chord_lalt(self):
+        """Mod-tab-chord with LALT is formatted as Alt+Tab."""
+        from glove80_visualizer.parser import _format_combo_action
+
+        assert _format_combo_action("&mod_tab_chord LALT 17") == "Alt+Tab"
+        assert _format_combo_action("&mod_tab_chord ALT 17") == "Alt+Tab"
+
+    def test_mod_tab_chord_generic(self):
+        """Mod-tab-chord without recognized modifier is formatted generically."""
+        from glove80_visualizer.parser import _format_combo_action
+
+        assert _format_combo_action("&mod_tab_chord UNKNOWN 17") == "Tab Switcher"
+
+    def test_custom_behavior_with_combo_name(self):
+        """Custom behavior with combo name uses name derivation."""
+        from glove80_visualizer.parser import _format_combo_action
+
+        result = _format_combo_action("&custom_behavior", combo_name="combo_caps_lock")
+        assert result == "Caps Lock"
+
+    def test_custom_behavior_without_combo_name(self):
+        """Custom behavior without combo name returns raw binding."""
+        from glove80_visualizer.parser import _format_combo_action
+
+        result = _format_combo_action("&unknown_behavior")
+        assert result == "&unknown_behavior"
+
+    def test_dict_toggle_layer(self):
+        """Dictionary binding with toggle hold is formatted."""
+        from glove80_visualizer.parser import _format_combo_action
+
+        key_data = {"t": "Gaming", "h": "toggle"}
+        assert _format_combo_action(key_data) == "Toggle Gaming"
+
+    def test_dict_sticky_shift(self):
+        """Dictionary binding with sticky shift is formatted."""
+        from glove80_visualizer.parser import _format_combo_action
+
+        key_data = {"t": "LSHFT", "h": "sticky"}
+        assert _format_combo_action(key_data) == "Sticky Shift"
+
+    def test_dict_tap_only(self):
+        """Dictionary binding with only tap uses tap value."""
+        from glove80_visualizer.parser import _format_combo_action
+
+        key_data = {"t": "CAPSLOCK"}
+        assert _format_combo_action(key_data) == "Caps Lock"
+
+    def test_dict_no_tap_with_combo_name(self):
+        """Dictionary without tap falls back to combo name."""
+        from glove80_visualizer.parser import _format_combo_action
+
+        key_data = {"h": "some_hold"}
+        result = _format_combo_action(key_data, combo_name="combo_test")
+        assert result == "Test"
+
+    def test_dict_no_tap_no_combo_name(self):
+        """Dictionary without tap or combo name returns string representation."""
+        from glove80_visualizer.parser import _format_combo_action
+
+        key_data = {"h": "some_hold"}
+        result = _format_combo_action(key_data)
+        assert result == str(key_data)
+
+    def test_fallback_to_combo_name(self):
+        """Unknown binding type falls back to combo name."""
+        from glove80_visualizer.parser import _format_combo_action
+
+        result = _format_combo_action(None, combo_name="combo_special")
+        assert result == "Special"
+
+
+class TestFormatStickyKey:
+    """Tests for _format_sticky_key helper function."""
+
+    def test_sticky_hyper(self):
+        """Sticky Hyper key (Gui+Alt+Ctl+Shift) is formatted correctly."""
+        from glove80_visualizer.parser import _format_sticky_key
+
+        assert _format_sticky_key("Gui+Alt+Ctl+LSHFT") == "Sticky Hyper"
+        assert _format_sticky_key("GUI+ALT+CTL+SHFT") == "Sticky Hyper"
+
+    def test_sticky_meh(self):
+        """Sticky Meh key (Alt+Ctl+Shift) is formatted correctly."""
+        from glove80_visualizer.parser import _format_sticky_key
+
+        assert _format_sticky_key("Alt+Ctl+LSHFT") == "Sticky Meh"
+        assert _format_sticky_key("ALT+CTL+SHFT") == "Sticky Meh"
+
+    def test_sticky_altgr(self):
+        """Sticky AltGr key is formatted correctly."""
+        from glove80_visualizer.parser import _format_sticky_key
+
+        assert _format_sticky_key("RALT") == "Sticky AltGr"
+        assert _format_sticky_key("ralt") == "Sticky AltGr"
+
+    def test_sticky_lalt(self):
+        """Sticky left Alt key is formatted correctly."""
+        from glove80_visualizer.parser import _format_sticky_key
+
+        assert _format_sticky_key("LALT") == "Sticky Alt"
+        assert _format_sticky_key("lalt") == "Sticky Alt"
+
+    def test_sticky_shift(self):
+        """Sticky Shift key is formatted correctly."""
+        from glove80_visualizer.parser import _format_sticky_key
+
+        assert _format_sticky_key("LSHFT") == "Sticky Shift"
+        assert _format_sticky_key("RSHFT") == "Sticky Shift"
+        assert _format_sticky_key("shft") == "Sticky Shift"
+
+    def test_sticky_ctrl(self):
+        """Sticky Ctrl key is formatted correctly."""
+        from glove80_visualizer.parser import _format_sticky_key
+
+        assert _format_sticky_key("LCTL") == "Sticky Ctrl"
+        assert _format_sticky_key("RCTL") == "Sticky Ctrl"
+        assert _format_sticky_key("ctl") == "Sticky Ctrl"
+
+    def test_sticky_cmd(self):
+        """Sticky Cmd/GUI key is formatted correctly."""
+        from glove80_visualizer.parser import _format_sticky_key
+
+        assert _format_sticky_key("LGUI") == "Sticky Cmd"
+        assert _format_sticky_key("RGUI") == "Sticky Cmd"
+        assert _format_sticky_key("gui") == "Sticky Cmd"
+
+    def test_sticky_generic(self):
+        """Unknown sticky key is formatted with Sticky prefix."""
+        from glove80_visualizer.parser import _format_sticky_key
+
+        assert _format_sticky_key("UNKNOWN") == "Sticky UNKNOWN"
+
+
+class TestDeriveActionFromName:
+    """Tests for _derive_action_from_name helper function."""
+
+    def test_combo_prefix_removal(self):
+        """Combo prefix 'combo_' is removed."""
+        from glove80_visualizer.parser import _derive_action_from_name
+
+        assert _derive_action_from_name("combo_caps_lock") == "Caps Lock"
+        assert _derive_action_from_name("combo_gaming_toggle") == "Gaming Toggle"
+
+    def test_cmb_prefix_removal(self):
+        """Combo prefix 'cmb_' is removed."""
+        from glove80_visualizer.parser import _derive_action_from_name
+
+        assert _derive_action_from_name("cmb_caps_lock") == "Caps Lock"
+        assert _derive_action_from_name("cmb_gaming_toggle") == "Gaming Toggle"
+
+    def test_no_prefix(self):
+        """Names without prefix are processed as-is."""
+        from glove80_visualizer.parser import _derive_action_from_name
+
+        assert _derive_action_from_name("caps_lock") == "Caps Lock"
+        assert _derive_action_from_name("gaming_toggle") == "Gaming Toggle"
+
+    def test_modifier_capitalization(self):
+        """Modifier names (alt, ctrl, shift, gui, cmd, tab) are capitalized."""
+        from glove80_visualizer.parser import _derive_action_from_name
+
+        assert _derive_action_from_name("combo_alt_tab_switcher") == "Alt Tab Switcher"
+        assert _derive_action_from_name("combo_ctrl_shift_tab") == "Ctrl Shift Tab"
+        assert _derive_action_from_name("combo_gui_cmd_space") == "Gui Cmd Space"
+
+    def test_altgr_special_case(self):
+        """AltGr is formatted with special capitalization."""
+        from glove80_visualizer.parser import _derive_action_from_name
+
+        assert _derive_action_from_name("combo_altgr_key") == "AltGr Key"
+
+    def test_regular_words(self):
+        """Non-modifier words are title-cased."""
+        from glove80_visualizer.parser import _derive_action_from_name
+
+        assert _derive_action_from_name("combo_gaming_toggle") == "Gaming Toggle"
+        assert _derive_action_from_name("combo_special_action") == "Special Action"
+
+    def test_underscores_to_spaces(self):
+        """Underscores are converted to spaces."""
+        from glove80_visualizer.parser import _derive_action_from_name
+
+        assert _derive_action_from_name("combo_multi_word_action") == "Multi Word Action"
+
+
+class TestFormatKeyName:
+    """Tests for _format_key_name helper function."""
+
+    def test_capslock_variations(self):
+        """CAPSLOCK and CAPS are formatted as 'Caps Lock'."""
+        from glove80_visualizer.parser import _format_key_name
+
+        assert _format_key_name("CAPSLOCK") == "Caps Lock"
+        assert _format_key_name("CAPS") == "Caps Lock"
+        assert _format_key_name("capslock") == "Caps Lock"
+
+    def test_gui_keys(self):
+        """GUI keys are formatted with Cmd prefix."""
+        from glove80_visualizer.parser import _format_key_name
+
+        assert _format_key_name("LGUI") == "Left Cmd"
+        assert _format_key_name("RGUI") == "Right Cmd"
+
+    def test_alt_keys(self):
+        """Alt keys are formatted correctly."""
+        from glove80_visualizer.parser import _format_key_name
+
+        assert _format_key_name("LALT") == "Left Alt"
+        assert _format_key_name("RALT") == "AltGr"
+
+    def test_ctrl_keys(self):
+        """Ctrl keys are formatted correctly."""
+        from glove80_visualizer.parser import _format_key_name
+
+        assert _format_key_name("LCTL") == "Left Ctrl"
+        assert _format_key_name("RCTL") == "Right Ctrl"
+
+    def test_shift_keys(self):
+        """Shift keys are formatted correctly."""
+        from glove80_visualizer.parser import _format_key_name
+
+        assert _format_key_name("LSHFT") == "Left Shift"
+        assert _format_key_name("RSHFT") == "Right Shift"
+
+    def test_unknown_key(self):
+        """Unknown keys are returned as-is."""
+        from glove80_visualizer.parser import _format_key_name
+
+        assert _format_key_name("UNKNOWN") == "UNKNOWN"
+        assert _format_key_name("CUSTOM_KEY") == "CUSTOM_KEY"

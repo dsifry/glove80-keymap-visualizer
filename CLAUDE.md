@@ -39,6 +39,8 @@ CLI tool that generates PDF visualizations of Glove80 keyboard layers from ZMK `
 1. **TDD Required**: Write failing test → implement → refactor. Tests live in `tests/test_*.py`
 2. **Type Hints**: All public functions must have type hints. No `Any` without justification.
 3. **Error Handling**: Every external call (file I/O, keymap-drawer, CairoSVG) needs explicit error handling with actionable messages.
+4. **100% Test Coverage**: Target 100% coverage for new code. Minimum ≥95% for any module. Run `make test-cov` to verify.
+5. **Dependency Injection**: Services must be mockable. No hardcoded dependencies. Use constructor injection for external services.
 
 ## Critical Guidelines
 
