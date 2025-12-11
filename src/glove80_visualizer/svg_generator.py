@@ -437,7 +437,15 @@ def generate_layer_svg(
     kd_config = KDConfig()
 
     # Pre-build the physical layout using layout_factory (API changed in keymap-drawer 0.18+)
-    physical_layout = layout_factory(config=kd_config.draw_config, qmk_keyboard=config.keyboard)
+    try:
+        physical_layout = layout_factory(
+            config=kd_config.draw_config, qmk_keyboard=config.keyboard
+        )
+    except Exception as e:
+        raise ValueError(
+            f"Failed to create physical layout for keyboard '{config.keyboard}'. "
+            f"Ensure the keyboard name is valid for keymap-drawer. Error: {e}"
+        ) from e
 
     # Convert Layer to keymap-drawer format
     keymap_data = _layer_to_keymap_drawer_format(
@@ -515,8 +523,14 @@ text.centered-label {
 
     # Generate SVG
     out = StringIO()
-    drawer = KeymapDrawer(config=kd_config.draw_config, out=out, **keymap_data)
-    drawer.print_board(draw_layers=[working_layer.name])
+    try:
+        drawer = KeymapDrawer(config=kd_config.draw_config, out=out, **keymap_data)
+        drawer.print_board(draw_layers=[working_layer.name])
+    except Exception as e:
+        raise RuntimeError(
+            f"Failed to generate SVG for layer '{working_layer.name}'. "
+            f"Check layer data and keymap-drawer configuration. Error: {e}"
+        ) from e
 
     svg_content = out.getvalue()
 

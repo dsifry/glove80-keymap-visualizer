@@ -87,10 +87,24 @@ def _svg_to_pdf_rsvg(svg_content: str) -> bytes:
 
 def _svg_to_pdf_cairosvg(svg_content: str) -> bytes:
     """Convert SVG to PDF using CairoSVG (fallback)."""
-    import cairosvg  # type: ignore[import-untyped]
+    try:
+        import cairosvg  # type: ignore[import-untyped]
+    except ImportError as e:  # pragma: no cover
+        raise RuntimeError(
+            "CairoSVG is required to convert SVG to PDF but is not installed. "
+            "Install it with 'pip install cairosvg' or ensure it is available "
+            "in your environment."
+        ) from e
 
-    result: bytes = cairosvg.svg2pdf(bytestring=svg_content.encode("utf-8"))
-    return result
+    try:
+        result: bytes = cairosvg.svg2pdf(bytestring=svg_content.encode("utf-8"))
+        return result
+    except Exception as e:
+        raise RuntimeError(
+            "Failed to convert SVG to PDF using CairoSVG. "
+            "Verify that the SVG content is valid and that CairoSVG is functioning "
+            "correctly."
+        ) from e
 
 
 def svg_to_pdf_file(
