@@ -1,9 +1,17 @@
 meta:
-  generated: "2025-12-11T08:59:35.241872+00:00"
+  generated: "2025-12-11T17:41:39.581006+00:00"
   generator: scripts/generate_registries.py
   version: "1.0"
-factories[0]:
-fixtures[12]{name,description,returns,location}:
+factories[2]:
+  name: PlaywrightMockFactory
+  purpose: Factory for creating Playwright browser mocks.
+  location: /Users/dsifry/Developer/glove80-keymap-visualizer/tests/conftest.py
+  fixtures[0]:
+  name: PILMockFactory
+  purpose: Factory for creating PIL/Pillow Image mocks.
+  location: /Users/dsifry/Developer/glove80-keymap-visualizer/tests/conftest.py
+  fixtures[0]:
+fixtures[16]{name,description,returns,location}:
   fixtures_dir,Return the path to the test fixtures directory.,Path,/Users/dsifry/Developer/glove80-keymap-visualizer/tests/conftest.py
   simple_keymap_path,Return path to the simple single-layer keymap fixture.,Path,/Users/dsifry/Developer/glove80-keymap-visualizer/tests/conftest.py
   multi_layer_keymap_path,Return path to the multi-layer keymap fixture.,Path,/Users/dsifry/Developer/glove80-keymap-visualizer/tests/conftest.py
@@ -16,3 +24,7 @@ fixtures[12]{name,description,returns,location}:
   sample_pdf_pages,Return a list of sample PDF bytes for testing merging.,list,/Users/dsifry/Developer/glove80-keymap-visualizer/tests/conftest.py
   runner,Return a Click CLI test runner.,"",/Users/dsifry/Developer/glove80-keymap-visualizer/tests/conftest.py
   tmp_output_dir,Create a temporary directory for test outputs.,Path,/Users/dsifry/Developer/glove80-keymap-visualizer/tests/conftest.py
+  playwright_mocks,Create a complete set of Playwright mocks for browser testing.,"tuple[MagicMock, MagicMock, MagicMock]",/Users/dsifry/Developer/glove80-keymap-visualizer/tests/conftest.py
+  pil_image_mock,Create a mock PIL Image for testing image operations.,MagicMock,/Users/dsifry/Developer/glove80-keymap-visualizer/tests/conftest.py
+  pil_module_mock,Create a mock PIL.Image module for patching.,MagicMock,/Users/dsifry/Developer/glove80-keymap-visualizer/tests/conftest.py
+  kle_renderer_mocks,Complete set of mocks for testing kle_renderer.py.,"dict[str, Any]",/Users/dsifry/Developer/glove80-keymap-visualizer/tests/conftest.py

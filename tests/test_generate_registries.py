@@ -358,10 +358,10 @@ class TestValidation:
             tmpdir_path = Path(tmpdir)
             src_dir = tmpdir_path / "src"
             src_dir.mkdir()
-            (src_dir / "example.py").write_text('''
+            (src_dir / "example.py").write_text("""
 def undocumented_func():
     pass
-''')
+""")
 
             registry, errors = generate_service_registry(src_dir, tmpdir_path)
 
@@ -436,13 +436,13 @@ def temp_file(tmp_path):
         with tempfile.TemporaryDirectory() as tmpdir:
             tmpdir_path = Path(tmpdir)
             conftest = tmpdir_path / "conftest.py"
-            conftest.write_text('''
+            conftest.write_text("""
 import pytest
 
 @pytest.fixture
 def undocumented_fixture():
     return 42
-''')
+""")
 
             registry, errors = generate_mock_registry(conftest)
 
