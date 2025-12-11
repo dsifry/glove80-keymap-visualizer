@@ -15,8 +15,7 @@ from glove80_visualizer.svg_generator import format_key_label, get_shifted_char
 
 # Template file location
 TEMPLATE_PATH = (
-    Path(__file__).parent.parent.parent
-    / "tests" / "fixtures" / "kle" / "sunaku-base-layer.json"
+    Path(__file__).parent.parent.parent / "tests" / "fixtures" / "kle" / "sunaku-base-layer.json"
 )
 
 
@@ -33,44 +32,44 @@ def load_template() -> list[Any]:
 TEMPLATE_POSITIONS = [
     # Main body keys (slots 0-54)
     # Row 4 (JSON index 4): Number row inner 2-5, 6-9
-    (4, 1),   # slot 0: 2
-    (4, 2),   # slot 1: 3
-    (4, 3),   # slot 2: 4
-    (4, 4),   # slot 3: 5
-    (4, 6),   # slot 4: 6
-    (4, 7),   # slot 5: 7
-    (4, 8),   # slot 6: 8
-    (4, 9),   # slot 7: 9
+    (4, 1),  # slot 0: 2
+    (4, 2),  # slot 1: 3
+    (4, 3),  # slot 2: 4
+    (4, 4),  # slot 3: 5
+    (4, 6),  # slot 4: 6
+    (4, 7),  # slot 5: 7
+    (4, 8),  # slot 6: 8
+    (4, 9),  # slot 7: 9
     # Row 5 (JSON index 5): Number row outer 1, 0
-    (5, 5),   # slot 8: 1
-    (5, 7),   # slot 9: 0
+    (5, 5),  # slot 8: 1
+    (5, 7),  # slot 9: 0
     # Row 6 (JSON index 6): QWERTY inner W,E,R,T | Y,U,I,O
-    (6, 1),   # slot 10: W
-    (6, 2),   # slot 11: E
-    (6, 3),   # slot 12: R
-    (6, 4),   # slot 13: T
-    (6, 6),   # slot 14: Y
-    (6, 7),   # slot 15: U
-    (6, 8),   # slot 16: I
-    (6, 9),   # slot 17: O
+    (6, 1),  # slot 10: W
+    (6, 2),  # slot 11: E
+    (6, 3),  # slot 12: R
+    (6, 4),  # slot 13: T
+    (6, 6),  # slot 14: Y
+    (6, 7),  # slot 15: U
+    (6, 8),  # slot 16: I
+    (6, 9),  # slot 17: O
     # Row 7 (JSON index 7): QWERTY outer Q | P
-    (7, 5),   # slot 18: Q
-    (7, 7),   # slot 19: P
-    (7, 9),   # slot 20: - (legacy comment, but actually used for ZMK 33 backslash)
+    (7, 5),  # slot 18: Q
+    (7, 7),  # slot 19: P
+    (7, 9),  # slot 20: - (legacy comment, but actually used for ZMK 33 backslash)
     # Row 8 (JSON index 8): Home row inner S,D,F,G | H,J,K,L
-    (8, 1),   # slot 21: S
-    (8, 3),   # slot 22: D
-    (8, 5),   # slot 23: F
-    (8, 7),   # slot 24: G
-    (8, 9),   # slot 25: H
+    (8, 1),  # slot 21: S
+    (8, 3),  # slot 22: D
+    (8, 5),  # slot 23: F
+    (8, 7),  # slot 24: G
+    (8, 9),  # slot 25: H
     (8, 11),  # slot 26: J
     (8, 13),  # slot 27: K
     (8, 15),  # slot 28: L
     # Row 9 (JSON index 9): Home row outer =,A | ;,'
-    (9, 3),   # slot 29: =
-    (9, 5),   # slot 30: A
-    (9, 7),   # slot 31: ;
-    (9, 9),   # slot 32: '
+    (9, 3),  # slot 29: =
+    (9, 5),  # slot 30: A
+    (9, 7),  # slot 31: ;
+    (9, 9),  # slot 32: '
     # Row 10 (JSON index 10): Bottom inner X,C,V,B | N,M,<,>
     # Note: [0]=props, [1]=key, [2]=props, [3-5]=keys, [6]=gap props, [7-10]=keys
     (10, 1),  # slot 33: X
@@ -80,7 +79,7 @@ TEMPLATE_POSITIONS = [
     (10, 7),  # slot 37: N (skip [6] which is gap props)
     (10, 8),  # slot 38: M
     (10, 9),  # slot 39: ,
-    (10, 10), # slot 40: .
+    (10, 10),  # slot 40: .
     # Row 11 (JSON index 11): Bottom outer Lower,Z | /,Lower
     (11, 3),  # slot 41: Lower_L
     (11, 5),  # slot 42: Z
@@ -115,22 +114,22 @@ TEMPLATE_POSITIONS = [
     (36, 1),  # slot 65: T1 upper - ZMK 57 (ENTER/System)
     (37, 1),  # slot 66: T1 lower - ZMK 74 (SPACE/Symbol)
     # Outer column slots (slots 67-69) - added for full keyboard support
-    (5, 9),   # slot 67: R2C6 right (-/_) - ZMK 21
-    (7, 3),   # slot 68: R3C6 left (Tab) - ZMK 22
-    (9, 3),   # slot 69: R4C6 left (Caps) - ZMK 34 (alternate to slot 29)
+    (5, 9),  # slot 67: R2C6 right (-/_) - ZMK 21
+    (7, 3),  # slot 68: R3C6 left (Tab) - ZMK 22
+    (9, 3),  # slot 69: R4C6 left (Caps) - ZMK 34 (alternate to slot 29)
     # Function row R1 (slots 70-79) - ZMK 0-9
     # Left side R1: ZMK 0-4 (C6 to C2)
-    (2, 1),   # slot 70: R1C4 left - ZMK 2
-    (2, 2),   # slot 71: R1C3 left - ZMK 3
-    (2, 3),   # slot 72: R1C2 left - ZMK 4
-    (3, 3),   # slot 73: R1C1 left - ZMK 5 (inner)
-    (3, 4),   # slot 74: Extra left slot
+    (2, 1),  # slot 70: R1C4 left - ZMK 2
+    (2, 2),  # slot 71: R1C3 left - ZMK 3
+    (2, 3),  # slot 72: R1C2 left - ZMK 4
+    (3, 3),  # slot 73: R1C1 left - ZMK 5 (inner)
+    (3, 4),  # slot 74: Extra left slot
     # Right side R1: ZMK 5-9 (C2 to C6)
-    (3, 6),   # slot 75: R1C1 right - ZMK 6 (inner)
-    (3, 7),   # slot 76: Extra right slot
-    (2, 7),   # slot 77: R1C2 right - ZMK 7
-    (2, 8),   # slot 78: R1C3 right - ZMK 8
-    (2, 9),   # slot 79: R1C4 right - ZMK 9
+    (3, 6),  # slot 75: R1C1 right - ZMK 6 (inner)
+    (3, 7),  # slot 76: Extra right slot
+    (2, 7),  # slot 77: R1C2 right - ZMK 7
+    (2, 8),  # slot 78: R1C3 right - ZMK 8
+    (2, 9),  # slot 79: R1C4 right - ZMK 9
 ]
 
 # ZMK to template slot mapping
@@ -148,31 +147,29 @@ ZMK_TO_SLOT = {
     # Function row (ZMK 0-9): R1 - now mapped to slots 70-79
     # ZMK 0-4: Left side (C6 to C2), ZMK 5-9: Right side (C2 to C6)
     # Note: ZMK 0, 1 have no visual slots (outer edges)
-    2: 70,   # ZMK 2 -> slot 70 (R1C4 left)
-    3: 71,   # ZMK 3 -> slot 71 (R1C3 left)
-    4: 72,   # ZMK 4 -> slot 72 (R1C2 left)
-    5: 73,   # ZMK 5 -> slot 73 (R1C1 left)
-    6: 75,   # ZMK 6 -> slot 75 (R1C1 right)
-    7: 77,   # ZMK 7 -> slot 77 (R1C2 right)
-    8: 78,   # ZMK 8 -> slot 78 (R1C3 right)
-    9: 79,   # ZMK 9 -> slot 79 (R1C4 right)
-
+    2: 70,  # ZMK 2 -> slot 70 (R1C4 left)
+    3: 71,  # ZMK 3 -> slot 71 (R1C3 left)
+    4: 72,  # ZMK 4 -> slot 72 (R1C2 left)
+    5: 73,  # ZMK 5 -> slot 73 (R1C1 left)
+    6: 75,  # ZMK 6 -> slot 75 (R1C1 right)
+    7: 77,  # ZMK 7 -> slot 77 (R1C2 right)
+    8: 78,  # ZMK 8 -> slot 78 (R1C3 right)
+    9: 79,  # ZMK 9 -> slot 79 (R1C4 right)
     # Number row (ZMK 10-21)
     # ZMK: 10=`/~, 11=1, 12=2, 13=3, 14=4, 15=5 | 16=6, 17=7, 18=8, 19=9, 20=0, 21=-
     # Note: ZMK 21 (minus) has no dedicated slot - Sunaku's template doesn't show it
     10: 29,  # `/~ -> = position (slot 29)
-    11: 8,   # 1 -> slot 8
-    12: 0,   # 2 -> slot 0
-    13: 1,   # 3 -> slot 1
-    14: 2,   # 4 -> slot 2
-    15: 3,   # 5 -> slot 3
-    16: 4,   # 6 -> slot 4
-    17: 5,   # 7 -> slot 5
-    18: 6,   # 8 -> slot 6
-    19: 7,   # 9 -> slot 7
-    20: 9,   # 0 -> slot 9
+    11: 8,  # 1 -> slot 8
+    12: 0,  # 2 -> slot 0
+    13: 1,  # 3 -> slot 1
+    14: 2,  # 4 -> slot 2
+    15: 3,  # 5 -> slot 3
+    16: 4,  # 6 -> slot 4
+    17: 5,  # 7 -> slot 5
+    18: 6,  # 8 -> slot 6
+    19: 7,  # 9 -> slot 7
+    20: 9,  # 0 -> slot 9
     21: 67,  # - -> slot 67 (R2C6 right)
-
     # QWERTY row (ZMK 22-33)
     # ZMK: 22=Tab, 23=Q, 24=W, 25=E, 26=R, 27=T | 28=Y, 29=U, 30=I, 31=O, 32=P, 33=\
     22: 68,  # Tab -> slot 68 (R3C6 left)
@@ -187,7 +184,6 @@ ZMK_TO_SLOT = {
     31: 17,  # O -> slot 17
     32: 19,  # P -> slot 19
     33: 20,  # \ -> slot 20 (QWERTY outer right - position (7, 9))
-
     # Home row (ZMK 34-45)
     # ZMK: 34=Caps, 35=A, 36=S, 37=D, 38=F, 39=G | 40=H, 41=J, 42=K, 43=L, 44=;, 45='
     # Caps (34) has no main slot in template
@@ -202,7 +198,6 @@ ZMK_TO_SLOT = {
     43: 28,  # L -> slot 28
     44: 31,  # ; -> slot 31
     45: 32,  # ' -> slot 32
-
     # Bottom row + left thumb (ZMK 46-63)
     # ZMK 46-51: Lower,Z,X,C,V,B (left bottom)
     # ZMK 52-57: left thumb (Esc,App,Lower,Lower,Ins,Enter)
@@ -227,7 +222,6 @@ ZMK_TO_SLOT = {
     61: 40,  # . -> slot 40
     62: 43,  # / -> slot 43
     63: 44,  # Lower -> slot 44
-
     # Lower row + right thumb (ZMK 64-79)
     # ZMK 64-68: RGB,`,{,[,Scroll (left lower)
     # ZMK 69-74: right thumb (Bksp,Del,Home,End,Tab,Space)

@@ -430,9 +430,7 @@ def main(
 
         log("Generating KLE PDF via headless browser...")
         try:
-            create_combined_pdf_kle(
-                extracted_layers, output, combos=combos, os_style=os_style
-            )
+            create_combined_pdf_kle(extracted_layers, output, combos=combos, os_style=os_style)
             if not quiet:
                 click.echo(f"Generated KLE PDF: {output}")
         except Exception as e:

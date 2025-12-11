@@ -256,25 +256,6 @@ def pil_module_mock(pil_image_mock: MagicMock) -> MagicMock:
     return PILMockFactory.create_image_module_mock(pil_image_mock)
 
 
-class PdfMergerMockFactory:
-    """Factory for creating PyPDF2 PdfMerger mocks."""
-
-    @staticmethod
-    def create_merger_mock() -> MagicMock:
-        """Create a mock PdfMerger."""
-        mock_merger = MagicMock()
-        mock_merger.append = MagicMock()
-        mock_merger.write = MagicMock()
-        mock_merger.close = MagicMock()
-        return mock_merger
-
-
-@pytest.fixture
-def pdf_merger_mock() -> MagicMock:
-    """Create a mock PyPDF2 PdfMerger for testing PDF operations."""
-    return PdfMergerMockFactory.create_merger_mock()
-
-
 # =============================================================================
 # Composite Fixtures for Common Test Scenarios
 # =============================================================================
@@ -284,7 +265,6 @@ def pdf_merger_mock() -> MagicMock:
 def kle_renderer_mocks(
     playwright_mocks: tuple[MagicMock, MagicMock, MagicMock],
     pil_module_mock: MagicMock,
-    pdf_merger_mock: MagicMock,
 ) -> dict[str, Any]:
     """
     Complete set of mocks for testing kle_renderer.py.
@@ -294,7 +274,6 @@ def kle_renderer_mocks(
     - browser: The browser mock
     - page: The page mock
     - pil_image: The PIL.Image module mock
-    - pdf_merger: The PdfMerger mock
 
     Usage:
         def test_kle_render(kle_renderer_mocks, mocker):
@@ -310,5 +289,4 @@ def kle_renderer_mocks(
         "browser": mock_browser,
         "page": mock_page,
         "pil_image": pil_module_mock,
-        "pdf_merger": pdf_merger_mock,
     }

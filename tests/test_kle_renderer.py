@@ -52,9 +52,7 @@ class TestRenderKleToPng:
         )
 
         output_path = tmp_path / "test.png"
-        render_kle_to_png(
-            '["A"]', output_path, width=1280, height=720, scale=1.5
-        )
+        render_kle_to_png('["A"]', output_path, width=1280, height=720, scale=1.5)
 
         # Verify viewport was set
         mock_browser.new_context.assert_called_once()
@@ -252,9 +250,7 @@ class TestRenderKleToPdf:
         assert result == output_path
         assert output_path.exists()
 
-    def test_render_kle_to_pdf_cleans_temp_png(
-        self, tmp_path: Path, mocker
-    ) -> None:
+    def test_render_kle_to_pdf_cleans_temp_png(self, tmp_path: Path, mocker) -> None:
         """Should clean up temporary PNG file after conversion."""
         from PIL import Image
 
@@ -280,9 +276,7 @@ class TestRenderKleToPdf:
         assert temp_png_path is not None
         assert not temp_png_path.exists()
 
-    def test_render_kle_to_pdf_string_path(
-        self, tmp_path: Path, mocker
-    ) -> None:
+    def test_render_kle_to_pdf_string_path(self, tmp_path: Path, mocker) -> None:
         """Should accept string path."""
         from PIL import Image
 
@@ -311,9 +305,7 @@ class TestRenderLayerKle:
         bindings = [KeyBinding(position=i, tap=chr(65 + i)) for i in range(10)]
         return Layer(name="Test", index=0, bindings=bindings)
 
-    def test_render_layer_kle_png(
-        self, tmp_path: Path, test_layer: Layer, mocker
-    ) -> None:
+    def test_render_layer_kle_png(self, tmp_path: Path, test_layer: Layer, mocker) -> None:
         """Should render layer to PNG format."""
         mock_render_png = mocker.patch(
             "glove80_visualizer.kle_renderer.render_kle_to_png",
@@ -330,9 +322,7 @@ class TestRenderLayerKle:
         assert result == output_path
         mock_render_png.assert_called_once()
 
-    def test_render_layer_kle_pdf(
-        self, tmp_path: Path, test_layer: Layer, mocker
-    ) -> None:
+    def test_render_layer_kle_pdf(self, tmp_path: Path, test_layer: Layer, mocker) -> None:
         """Should render layer to PDF format."""
         mock_render_pdf = mocker.patch(
             "glove80_visualizer.kle_renderer.render_kle_to_pdf",
@@ -349,9 +339,7 @@ class TestRenderLayerKle:
         assert result == output_path
         mock_render_pdf.assert_called_once()
 
-    def test_render_layer_kle_with_combos(
-        self, tmp_path: Path, test_layer: Layer, mocker
-    ) -> None:
+    def test_render_layer_kle_with_combos(self, tmp_path: Path, test_layer: Layer, mocker) -> None:
         """Should pass combos to template generator."""
         mocker.patch(
             "glove80_visualizer.kle_renderer.render_kle_to_png",
@@ -421,9 +409,7 @@ class TestRenderAllLayersKle:
             layers.append(Layer(name=f"Layer{i}", index=i, bindings=bindings))
         return layers
 
-    def test_render_all_layers_png(
-        self, tmp_path: Path, test_layers: list[Layer], mocker
-    ) -> None:
+    def test_render_all_layers_png(self, tmp_path: Path, test_layers: list[Layer], mocker) -> None:
         """Should render all layers to PNG files."""
 
         def mock_render(layer, output_path, **kwargs):
@@ -444,9 +430,7 @@ class TestRenderAllLayersKle:
             assert result.suffix == ".png"
             assert f"Layer{i}" in result.name
 
-    def test_render_all_layers_pdf(
-        self, tmp_path: Path, test_layers: list[Layer], mocker
-    ) -> None:
+    def test_render_all_layers_pdf(self, tmp_path: Path, test_layers: list[Layer], mocker) -> None:
         """Should render all layers to PDF files."""
 
         def mock_render(layer, output_path, **kwargs):
@@ -642,9 +626,7 @@ class TestCreateCombinedPdfKle:
 
         assert isinstance(result, Path)
 
-    def test_create_combined_pdf_single_layer(
-        self, tmp_path: Path, mocker
-    ) -> None:
+    def test_create_combined_pdf_single_layer(self, tmp_path: Path, mocker) -> None:
         """Should handle single layer."""
         from PIL import Image
 

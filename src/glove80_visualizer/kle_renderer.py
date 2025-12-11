@@ -228,8 +228,12 @@ def render_all_layers_kle(
         suffix = ".pdf" if output_format.lower() == "pdf" else ".png"
         output_path = output_dir / f"{layer.name}{suffix}"
         render_layer_kle(
-            layer, output_path,
-            output_format=output_format, combos=combos, os_style=os_style, **kwargs
+            layer,
+            output_path,
+            output_format=output_format,
+            combos=combos,
+            os_style=os_style,
+            **kwargs,
         )
         output_paths.append(output_path)
 
@@ -258,7 +262,7 @@ def create_combined_pdf_kle(
     """
     import tempfile
 
-    from PyPDF2 import PdfMerger
+    from glove80_visualizer.pdf_generator import merge_pdfs
 
     output_path = Path(output_path)
 
@@ -276,12 +280,11 @@ def create_combined_pdf_kle(
             **kwargs,
         )
 
-        # Merge PDFs
-        merger = PdfMerger()
-        for pdf_path in pdf_paths:
-            merger.append(str(pdf_path))
+        # Read all PDFs as bytes and merge using pikepdf
+        pdf_bytes_list = [path.read_bytes() for path in pdf_paths]
+        merged_pdf = merge_pdfs(pdf_bytes_list)
 
-        merger.write(str(output_path))
-        merger.close()
+        # Write merged PDF to output
+        output_path.write_bytes(merged_pdf)
 
     return output_path

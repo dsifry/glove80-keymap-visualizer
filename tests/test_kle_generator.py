@@ -69,15 +69,13 @@ class TestKLEKeyProperties:
         parsed = json.loads(result)
         # Look for R1, C1 labels which should be decorative
         found_decorative = False
-        decorative_labels = (
-            "R1", "R2", "R3", "R4", "R5", "R6", "C1", "C2", "C3", "C4", "C5", "C6"
-        )
+        decorative_labels = ("R1", "R2", "R3", "R4", "R5", "R6", "C1", "C2", "C3", "C4", "C5", "C6")
         for row in parsed[1:]:
             for i, item in enumerate(row):
                 if isinstance(item, str) and item in decorative_labels:
                     # Previous item should be a dict with d: true
-                    if i > 0 and isinstance(row[i-1], dict):
-                        assert row[i-1].get("d") is True, f"Label {item} should be decorative"
+                    if i > 0 and isinstance(row[i - 1], dict):
+                        assert row[i - 1].get("d") is True, f"Label {item} should be decorative"
                         found_decorative = True
         assert found_decorative, "No decorative labels found"
 
@@ -373,7 +371,7 @@ class TestKLEKeyMapping:
 
         result = generate_kle_from_template(layer)
         # Should have pipe above backslash (shifted)
-        assert '"|\\n' in result or "'" + '|\\n' in result or '\\\\' in result
+        assert '"|\\n' in result or "'" + "|\\n" in result or "\\\\" in result
 
 
 class TestKLEEdgeCases:
@@ -502,8 +500,10 @@ class TestKLEComboTextBlocks:
         # sample_layer has name "TestLayer"
         combos = [
             Combo(
-                name="LT3+LT6", positions=[54, 71],
-                action="Toggle Gaming", layers=["TestLayer", "Gaming"]
+                name="LT3+LT6",
+                positions=[54, 71],
+                action="Toggle Gaming",
+                layers=["TestLayer", "Gaming"],
             ),
             # Not on this layer:
             Combo(name="LT1+LT4", positions=[52, 69], action="Cmd+Tab", layers=["Symbol"]),
