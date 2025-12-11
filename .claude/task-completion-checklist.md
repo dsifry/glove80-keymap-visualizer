@@ -49,7 +49,18 @@ make test
 - [ ] Run `make test` - ALL tests pass
 - [ ] Ensure code follows patterns in existing codebase
 
-### 4. Functionality Preservation
+### 4. Registry Verification
+
+If you modified code in `src/` or fixtures in `tests/conftest.py`:
+
+- [ ] Run `python scripts/generate_registries.py --check` - NO errors
+- [ ] Run `python scripts/generate_registries.py` to regenerate registries
+- [ ] Check `git diff service-registry.toon mock-registry.toon` for changes
+- [ ] Include registry files in commit if they changed
+
+**CRITICAL**: Registry validation is part of CI. Failing to update registries will fail the PR.
+
+### 5. Functionality Preservation
 
 - [ ] Existing functionality remains intact
 - [ ] No regression in related features
@@ -94,13 +105,19 @@ If any answer is "no", continue working on the task.
 
 ```bash
 # Full validation (run before marking complete)
-make lint && make typecheck && make test
+make lint && make typecheck && make test && python scripts/generate_registries.py --check
 
 # Quick test run
 make test
 
 # Format and lint fix
 make format
+
+# Registry validation
+python scripts/generate_registries.py --check
+
+# Regenerate registries
+python scripts/generate_registries.py
 ```
 
 ## Remember

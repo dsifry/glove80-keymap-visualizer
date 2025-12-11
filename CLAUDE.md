@@ -97,8 +97,47 @@ These skills auto-activate based on context - you don't need to invoke them manu
 | -------------------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------ |
 | `glove80-viz:pr-shepherd`        | After PR creation or on-demand     | Monitors PR through merge: CI/CD, reviews, auto-fixes, thread resolution                   |
 | `glove80-viz:handling-pr-comments` | When addressing PR review feedback | Ensures systematic responses to each comment thread with proper attribution and resolution |
+| `glove80-viz:maintaining-service-registry` | When modifying functions in `src/` | Ensures Google-style docstrings and registry updates |
+| `glove80-viz:maintaining-mock-registry` | When modifying fixtures in `tests/conftest.py` | Ensures fixture documentation and registry updates |
+| `glove80-viz:registry-verification` | Before completing any task | Validates registries are current and error-free |
 
 Skills are defined in `.claude/plugins/glove80-viz/skills/`.
+
+## Service & Mock Registries
+
+This project maintains auto-generated registries of all functions and mocks:
+
+| File | Contents |
+|------|----------|
+| `service-registry.toon` | All functions, classes, and services in `src/` |
+| `mock-registry.toon` | All fixtures from `tests/conftest.py` |
+
+### Registry Requirements
+
+- All functions must have **Google-style docstrings** with Args, Returns, Raises sections
+- All fixtures must have docstrings describing their purpose
+- CI fails if registries are out of date or have docstring errors
+
+### Registry Commands
+
+```bash
+# Validate docstrings (errors fail, warnings OK)
+python scripts/generate_registries.py --check
+
+# Regenerate registries
+python scripts/generate_registries.py
+
+# Verbose output
+python scripts/generate_registries.py --verbose
+```
+
+### Before Completing Tasks
+
+Add to your validation sequence:
+
+```bash
+make lint && make typecheck && make test && python scripts/generate_registries.py --check
+```
 
 ## Worktree Development
 
