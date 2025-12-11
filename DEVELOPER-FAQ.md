@@ -570,7 +570,8 @@ This project requires Test-Driven Development:
 
 ### Q10: How do I add a new feature?
 
-1. **Create a spec** in `docs/{branch}/specs/` describing the feature
+1. **Create a spec** in `docs/{branch-name}/specs/` describing the feature
+   - Use hyphens instead of slashes: branch `feature/my-feature` → `docs/feature-my-feature/specs/`
 2. **Write tests** in `tests/test_*.py` that fail
 3. **Implement** minimal code in `src/glove80_visualizer/`
 4. **Refactor** while tests stay green

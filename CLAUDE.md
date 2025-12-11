@@ -53,11 +53,13 @@ CLI tool that generates PDF visualizations of Glove80 keyboard layers from ZMK `
 |------|---------|
 | `src/glove80_visualizer/` | Main source code |
 | `tests/` | Test files |
-| `tests/conftest.py` | Pytest fixtures |
+| `tests/conftest.py` | Pytest fixtures and mock factories |
 | `tests/fixtures/*.keymap` | Test keymap files |
-| `docs/{branch}/plans/` | Implementation plans |
-| `docs/{branch}/specs/` | TDD specifications |
-| `docs/{branch}/reviews/` | CTO-level reviews (timestamped) |
+| `docs/{branch-name}/plans/` | Implementation plans |
+| `docs/{branch-name}/specs/` | TDD specifications |
+| `docs/{branch-name}/reviews/` | CTO-level reviews (timestamped) |
+
+**Note:** `{branch-name}` uses hyphens instead of slashes. For branch `feature/my-feature`, use `docs/feature-my-feature/`.
 
 ## Custom Slash Commands
 
