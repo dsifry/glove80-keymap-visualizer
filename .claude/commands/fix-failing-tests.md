@@ -1,10 +1,14 @@
+---
+description: Systematically fix failing tests using proper debugging and testing patterns
+---
+
 # Fix Failing Tests
 
 Systematically fix failing tests using proper debugging and testing patterns.
 
 ## Usage
 
-```
+```bash
 /project:fix-failing-tests
 ```
 

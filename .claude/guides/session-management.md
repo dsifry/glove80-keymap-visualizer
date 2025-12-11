@@ -15,19 +15,19 @@ The session management system allows you to:
 
 ### Save Current Session
 
-```
+```bash
 /project:save-session "Implementing layer filtering"
 ```
 
 ### Load Previous Session
 
-```
+```bash
 /project:load-session filter
 ```
 
 ### List Recent Sessions
 
-```
+```bash
 /project:list-sessions --recent 5
 ```
 
@@ -71,21 +71,21 @@ Examples:
 
 ### Search by Content
 
-```
+```bash
 /project:list-sessions --search "SVG generation"
 /project:list-sessions --search "parse_keymap()"
 ```
 
 ### Filter by Branch
 
-```
+```bash
 /project:list-sessions --branch feature/colors
 /project:list-sessions --branch main --recent 10
 ```
 
 ### Filter by Date
 
-```
+```bash
 /project:list-sessions --date today
 /project:list-sessions --date 2024-01-03
 /project:list-sessions --date this-week
@@ -93,7 +93,7 @@ Examples:
 
 ### Filter by Tags
 
-```
+```bash
 /project:list-sessions --tag bugfix
 /project:list-sessions --tag parser --tag urgent
 ```
@@ -102,7 +102,7 @@ Examples:
 
 ### 1. Starting Work
 
-```
+```bash
 # Check for previous related sessions
 /project:list-sessions --branch current
 
@@ -112,14 +112,14 @@ Examples:
 
 ### 2. During Work
 
-```
+```bash
 # Save at natural breakpoints
 /project:save-session "Completed SVG caching"
 ```
 
 ### 3. Ending Work
 
-```
+```bash
 # Save comprehensive session
 /project:save-session "Parser refactor - ready for review"
 
@@ -133,7 +133,7 @@ Examples:
 
 ### 4. Resuming Work
 
-```
+```bash
 # Next day/session
 /project:load-session yesterday
 
@@ -158,7 +158,7 @@ Different templates for different work types:
 
 Consider saving session before major commits:
 
-```
+```bash
 /project:save-session "Pre-commit: <commit-message>"
 ```
 
@@ -166,7 +166,7 @@ Consider saving session before major commits:
 
 Save session before switching branches:
 
-```
+```bash
 /project:save-session "Switching to work on hotfix"
 git checkout main
 ```
@@ -175,7 +175,7 @@ git checkout main
 
 Sessions automatically link to PRs when created:
 
-```
+```bash
 /project:create-pr
 # Session will include PR number in metadata
 ```
@@ -204,7 +204,7 @@ For multi-day features, create linked sessions:
 
 When interrupted:
 
-```
+```bash
 /project:save-session "WIP: Debugging PDF issue"
 # Work on urgent task
 /project:load-session WIP

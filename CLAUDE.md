@@ -28,7 +28,7 @@ CLI tool that generates PDF visualizations of Glove80 keyboard layers from ZMK `
 
 ## Architecture (5-stage pipeline)
 
-```
+```text
 .keymap → Parser → YAML → Extractor → Layers → SVG Generator → PDF Generator → .pdf
               ↓                              ↓                    ↓
         keymap-drawer                  keymap-drawer          CairoSVG + pikepdf
@@ -163,7 +163,7 @@ These guides contain detailed patterns - load them with `@` when working in thei
 
 ## Documentation Structure
 
-```
+```text
 docs/
 └── {git-branch-name}/           # e.g., feature-layer-filtering
     ├── specs/

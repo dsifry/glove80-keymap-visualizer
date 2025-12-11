@@ -8,7 +8,7 @@ Load a previously saved conversation session to continue where you left off.
 
 ## Usage
 
-```
+```bash
 /project:load-session [identifier]
 ```
 
@@ -37,19 +37,19 @@ If multiple sessions match, you'll be prompted to select one.
 
 ### By ID (Exact Match)
 
-```
+```bash
 /project:load-session 2024-01-03-feature-parser
 ```
 
 ### By Name (Partial Match)
 
-```
+```bash
 /project:load-session "PDF generation"
 ```
 
 ### By Date (All from Date)
 
-```
+```bash
 /project:load-session 2024-01-03
 ```
 
@@ -57,7 +57,7 @@ Shows all sessions from January 3, 2024.
 
 ### By Branch
 
-```
+```bash
 /project:load-session feature/parser
 ```
 
@@ -65,7 +65,7 @@ Shows all sessions from the specified branch.
 
 ### By Tag
 
-```
+```bash
 /project:load-session #bugfix
 ```
 
@@ -73,7 +73,7 @@ Shows all sessions tagged with "bugfix".
 
 ### Interactive Mode
 
-```
+```bash
 /project:load-session
 ```
 
@@ -83,7 +83,7 @@ Without identifier, shows recent sessions for selection.
 
 When loading a session, you'll see:
 
-```
+```text
 SESSION: Layer filtering complete
 Date: 2024-01-03 10:30 AM
 Branch: feature/layer-filtering (current: main)
@@ -120,7 +120,7 @@ Related:
 
 If on a different branch, you'll be asked:
 
-```
+```text
 Session was on branch 'feature/layer-filtering' but you're on 'main'.
 Would you like to:
 1. Switch to feature/layer-filtering
@@ -140,7 +140,7 @@ Automatically shows:
 
 ### Load Most Recent
 
-```
+```bash
 /project:load-session
 ```
 
@@ -148,7 +148,7 @@ Shows last 5 sessions for interactive selection.
 
 ### Load by Partial Name
 
-```
+```bash
 /project:load-session parser
 ```
 
@@ -156,7 +156,7 @@ Finds all sessions with "parser" in the name.
 
 ### Load Today's Sessions
 
-```
+```bash
 /project:load-session today
 ```
 

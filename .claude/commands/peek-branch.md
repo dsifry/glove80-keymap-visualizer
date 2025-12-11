@@ -8,7 +8,7 @@ View file contents from another branch without changing your working directory.
 
 ## Usage
 
-```
+```bash
 /project:peek-branch main src/glove80_visualizer/parser.py
 /project:peek-branch feature/other-pr pyproject.toml
 ```
@@ -35,6 +35,7 @@ View file contents from another branch without changing your working directory.
    ```
 
 4. **Optionally show diff** if user wants comparison:
+
    ```bash
    git diff HEAD.."$BRANCH" -- "$FILE_PATH"
    ```

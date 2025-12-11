@@ -1,10 +1,14 @@
+---
+description: Handle review comments on pull requests with appropriate responses and resolutions
+---
+
 # Handle PR Comments
 
 Handle review comments on pull requests with appropriate responses and resolutions.
 
 ## Usage
 
-```
+```bash
 /project:handle-pr-comments <pr-number>
 ```
 

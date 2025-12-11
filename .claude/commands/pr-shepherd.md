@@ -21,7 +21,7 @@ If no PR number is provided, uses the PR associated with the current branch.
 3. **Auto-fixes simple issues** - Lint, format, type errors
 4. **Asks before complex fixes** - Presents options with pros/cons for approval
 5. **Handles review comments** - Delegates to `handling-pr-comments` skill
-6. **Checkpoints at 4 hours** - Asks if you want to continue or handoff
+6. **Checkpoints at 4 hours** - Asks if you want to continue or hand off
 
 ## Steps
 

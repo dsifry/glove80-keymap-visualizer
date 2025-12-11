@@ -8,7 +8,7 @@ Organize, archive, and maintain saved conversation sessions.
 
 ## Usage
 
-```
+```bash
 /project:manage-sessions <action> [options]
 ```
 
@@ -16,7 +16,7 @@ Organize, archive, and maintain saved conversation sessions.
 
 ### Archive Old Sessions
 
-```
+```bash
 /project:manage-sessions archive --older-than 30d
 /project:manage-sessions archive --older-than 60d
 ```
@@ -25,7 +25,7 @@ Moves old sessions to `.claude/sessions/archive/YYYY/MM/`.
 
 ### Delete Sessions
 
-```
+```bash
 /project:manage-sessions delete <session-id>
 /project:manage-sessions delete --older-than 90d --dry-run
 /project:manage-sessions delete --older-than 90d
@@ -35,7 +35,7 @@ Use `--dry-run` first to preview what will be deleted.
 
 ### Clean Up Empty Sessions
 
-```
+```bash
 /project:manage-sessions cleanup --remove-empty
 ```
 
@@ -43,7 +43,7 @@ Removes sessions with no meaningful content.
 
 ### Merge Sessions
 
-```
+```bash
 /project:manage-sessions merge <session-id-1> <session-id-2>
 ```
 
@@ -51,7 +51,7 @@ Combines two related sessions into one.
 
 ### Export Sessions
 
-```
+```bash
 /project:manage-sessions export --format json
 /project:manage-sessions export --format markdown --output sessions-backup.md
 ```
@@ -60,7 +60,7 @@ Exports sessions for backup or external use.
 
 ### Show Storage Stats
 
-```
+```bash
 /project:manage-sessions stats
 ```
 
@@ -73,7 +73,7 @@ Shows:
 
 ## Archive Structure
 
-```
+```text
 .claude/sessions/
 ├── 2024-01-03-feature-parser.md           # Active
 ├── 2024-01-02-main-hotfix.md              # Active
@@ -88,7 +88,7 @@ Shows:
 
 ### Monthly Cleanup
 
-```
+```bash
 # Preview what will be archived
 /project:manage-sessions archive --older-than 30d --dry-run
 
@@ -98,14 +98,14 @@ Shows:
 
 ### Find and Remove Duplicates
 
-```
+```bash
 /project:manage-sessions cleanup --find-duplicates
 /project:manage-sessions delete <duplicate-session-id>
 ```
 
 ### Backup Before Major Work
 
-```
+```bash
 /project:manage-sessions export --format json --output backup-$(date +%Y%m%d).json
 ```
 

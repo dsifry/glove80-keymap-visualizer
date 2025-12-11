@@ -69,7 +69,7 @@ When making commits with Claude's assistance:
 
 Example commit message:
 
-```
+```text
 feat: add layer visualization enhancements
 
 - Implement smart caching for SVG generation

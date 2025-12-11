@@ -84,7 +84,7 @@ When a task needs user action:
 
 ### Example 1: Complex Feature Implementation
 
-```
+```text
 User: I want to add support for custom color schemes. Make sure you run the tests when you're done!
 ```
 
@@ -92,7 +92,7 @@ User: I want to add support for custom color schemes. Make sure you run the test
 
 ### Example 2: Multiple Features
 
-```
+```text
 User: I need to implement these features: custom colors, layer filtering, and SVG export.
 ```
 
@@ -100,7 +100,7 @@ User: I need to implement these features: custom colors, layer filtering, and SV
 
 ### Example 3: Performance Optimization
 
-```
+```text
 User: Can you help optimize the PDF generation? It's slow for large keymaps.
 ```
 
@@ -108,7 +108,7 @@ User: Can you help optimize the PDF generation? It's slow for large keymaps.
 
 ### Example 4: Rename Across Codebase
 
-```
+```text
 User: Help me rename the function parse_keymap to parse_zmk_keymap across the project
 ```
 
@@ -118,7 +118,7 @@ User: Help me rename the function parse_keymap to parse_zmk_keymap across the pr
 
 ### Example 1: Simple Question
 
-```
+```text
 User: How do I run the tests?
 ```
 
@@ -126,7 +126,7 @@ User: How do I run the tests?
 
 ### Example 2: Information Request
 
-```
+```text
 User: What does the --verbose flag do?
 ```
 
@@ -134,7 +134,7 @@ User: What does the --verbose flag do?
 
 ### Example 3: Single Edit
 
-```
+```text
 User: Can you add a docstring to the parse_keymap function?
 ```
 
@@ -142,7 +142,7 @@ User: Can you add a docstring to the parse_keymap function?
 
 ### Example 4: Single Command
 
-```
+```text
 User: Run make test for me and tell me what happens.
 ```
 
@@ -158,7 +158,7 @@ User: Run make test for me and tell me what happens.
 
 ## Todo Workflow Example
 
-```
+```text
 1. TodoRead - Check current status
 2. Identify new task from user request
 3. TodoWrite - Add new tasks to list
