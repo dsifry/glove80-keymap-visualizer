@@ -230,6 +230,35 @@ make format
 2. **Brainstorm before coding** - Clarify design before writing code
 3. **Verify before completing** - Run all checks, confirm output
 4. **Use skills, don't skip them** - Skills exist because they work
+5. **100% test coverage target** - All new code should be fully covered
+6. **Dependency Injection for testability** - No hardcoded dependencies in services
+
+### Architecture Best Practices
+
+**Dependency Injection (DI) Requirements:**
+- No hardcoded external dependencies (file paths, URLs, API clients)
+- Components must be testable in isolation
+- Configuration should be injectable (constructor or method parameters)
+- Use abstract interfaces when possible for external services
+
+**Example of mockable service:**
+```python
+class KeymapRenderer:
+    def __init__(self, drawer_factory: Callable[..., KeymapDrawer]):
+        """Inject drawer factory for testability."""
+        self._drawer_factory = drawer_factory
+
+    def render(self, keymap: Keymap) -> str:
+        drawer = self._drawer_factory(keymap=keymap)
+        return drawer.draw()
+```
+
+**Test Coverage Requirements:**
+- **Hard requirement: 100% test coverage** - No exceptions
+- Use mocks for slow dependencies (browsers, network, external APIs)
+- Create common mock factories in `tests/conftest.py` for reuse
+- Use `make test-cov` to verify coverage before every commit
+- PRs with <100% coverage will not be merged
 
 ---
 

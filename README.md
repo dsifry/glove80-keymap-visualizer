@@ -62,6 +62,15 @@ cd glove80-keymap-visualizer
 pip install .
 ```
 
+### Step 2.5: Install Browser for KLE Output (Optional)
+
+For KLE PNG/PDF output (using keyboard-layout-editor.com styling), install Chromium:
+```bash
+playwright install chromium
+```
+
+This is only needed if you want to use `--format kle-png` or `--format kle-pdf`.
+
 ### Step 3: Export Your Keymap
 
 1. Go to [my.glove80.com](https://my.glove80.com/)
@@ -102,6 +111,15 @@ glove80-viz keymap.keymap -o output.pdf --layers Base,Symbol,Cursor
 # Generate SVG files instead of PDF
 glove80-viz keymap.keymap -o ./svg-folder --format svg
 
+# Generate KLE JSON (for keyboard-layout-editor.com)
+glove80-viz keymap.keymap -o ./kle-folder --format kle
+
+# Generate KLE-style PNG via headless browser (requires Chromium)
+glove80-viz keymap.keymap -o ./png-folder --format kle-png
+
+# Generate KLE-style combined PDF via headless browser
+glove80-viz keymap.keymap -o output.pdf --format kle-pdf
+
 # List all available layers in your keymap
 glove80-viz keymap.keymap --list-layers
 ```
@@ -119,13 +137,14 @@ glove80-viz keymap.keymap --list-layers
 - **Transparent key resolution** — Optionally show inherited keys instead of "trans" markers
 - **Table of contents** — PDF includes clickable TOC for easy navigation
 - **Layer filtering** — Generate only the layers you want
+- **KLE output** — Export to keyboard-layout-editor.com JSON or render via headless browser to PNG/PDF
 
 ## All CLI Options
 
 | Option | Description |
 |--------|-------------|
-| `-o, --output` | Output file (PDF) or directory (SVG) |
-| `--format` | Output format: `pdf` (default) or `svg` |
+| `-o, --output` | Output file (PDF) or directory (SVG/KLE) |
+| `--format` | Output format: `pdf` (default), `svg`, `kle`, `kle-png`, `kle-pdf` |
 | `--layers` | Comma-separated list of layers to include |
 | `--exclude-layers` | Comma-separated list of layers to exclude |
 | `--list-layers` | List available layers and exit |
@@ -186,11 +205,17 @@ glove80-viz keymap.keymap -o output.pdf --config my-config.yaml
 # Install with dev dependencies
 pip install -e ".[dev]"
 
+# Install browsers for KLE rendering tests
+playwright install chromium
+
 # Run tests
 pytest
 
 # Run tests with coverage
 pytest --cov
+
+# Run fast tests only (skip slow browser tests)
+pytest -m "not slow"
 
 # Format code
 ruff format .
@@ -205,6 +230,27 @@ ruff check .
 2. **Extract** — Extracts layer info, key bindings, hold behaviors, and layer activators
 3. **Generate SVG** — Creates SVG diagrams with keymap-drawer's layout engine
 4. **Convert to PDF** — Combines SVGs into a PDF with TOC using CairoSVG and pikepdf
+
+## Developer Resources
+
+### Developer FAQ
+
+For questions about development setup, testing, CI/CD, and common troubleshooting, see **[DEVELOPER-FAQ.md](DEVELOPER-FAQ.md)**.
+
+Topics covered:
+- Setting up your development environment
+- Running tests and achieving coverage
+- Understanding the codebase architecture
+- Common issues and solutions
+
+### Superpowers (AI-Assisted Development)
+
+This project uses Claude Code with custom skills for AI-assisted development. See **[SUPERPOWERS.md](SUPERPOWERS.md)** for details on:
+
+- Using Claude Code effectively with this codebase
+- Available AI skills and workflows
+- TDD and debugging patterns
+- Code review and PR processes
 
 ## Credits
 

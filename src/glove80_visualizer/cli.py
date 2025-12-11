@@ -12,7 +12,8 @@ import click
 from glove80_visualizer import __version__
 from glove80_visualizer.config import VisualizerConfig
 from glove80_visualizer.extractor import extract_layer_activators, extract_layers
-from glove80_visualizer.parser import KeymapParseError, parse_zmk_keymap
+from glove80_visualizer.models import Combo
+from glove80_visualizer.parser import KeymapParseError, parse_combos, parse_zmk_keymap
 from glove80_visualizer.pdf_generator import generate_pdf_with_toc
 from glove80_visualizer.svg_generator import generate_layer_svg
 
@@ -59,9 +60,9 @@ class MutuallyExclusiveOption(click.Option):
 @click.option(
     "--format",
     "output_format",
-    type=click.Choice(["pdf", "svg"]),
+    type=click.Choice(["pdf", "svg", "kle", "kle-png", "kle-pdf"]),
     default="pdf",
-    help="Output format (default: pdf)",
+    help="Output format: pdf (default), svg, kle (JSON), kle-png, kle-pdf",
 )
 @click.option(
     "--layers",
@@ -153,6 +154,13 @@ class MutuallyExclusiveOption(click.Option):
     is_flag=True,
     help="Hide shifted characters on keys (shown by default)",
 )
+# TODO: Wire up color scheme to KLE generation (currently only sunaku template exists)
+@click.option(
+    "--kle-color-scheme",
+    type=click.Choice(["sunaku", "everforest"]),
+    default="sunaku",
+    help="Color scheme for KLE output (default: sunaku) [WIP - not yet implemented]",
+)
 @click.version_option(version=__version__)
 def main(
     keymap: Path,
@@ -174,6 +182,7 @@ def main(
     color: bool,
     no_legend: bool,
     no_shifted: bool,
+    kle_color_scheme: str,
 ) -> None:
     """
     Generate PDF/SVG visualizations of Glove80 keyboard layers.
@@ -187,6 +196,12 @@ def main(
 
         # Generate SVG files
         glove80-viz my-keymap.keymap -o ./svgs --format svg
+
+        # Generate KLE JSON files (for keyboard-layout-editor.com)
+        glove80-viz my-keymap.keymap -o ./kle --format kle
+
+        # Generate Sunaku-style PNG via headless browser
+        glove80-viz my-keymap.keymap -o ./pngs --format kle-png
 
         # Generate specific layers only
         glove80-viz my-keymap.keymap -o layers.pdf --layers QWERTY,Symbol,Cursor
@@ -262,8 +277,17 @@ def main(
         # Default output name based on input
         if output_format == "pdf":
             output = keymap.with_suffix(".pdf")
-        else:
+        elif output_format == "svg":
             output = keymap.parent / f"{keymap.stem}_svgs"
+        elif output_format == "kle":
+            output = keymap.parent / f"{keymap.stem}_kle"
+        elif output_format == "kle-png":
+            output = keymap.parent / f"{keymap.stem}_kle_pngs"
+        elif output_format == "kle-pdf":
+            output = keymap.with_name(f"{keymap.stem}_kle.pdf")
+
+    # At this point output should be set (Click validates output_format choices)
+    assert output is not None, "Output path should be set"
 
     log(f"Found {len(extracted_layers)} layers")
 
@@ -293,6 +317,16 @@ def main(
     activators = extract_layer_activators(yaml_content)
     if activators and verbose:
         log(f"Found {len(activators)} layer activators")
+
+    # Parse combos for KLE output
+    combos: list[Combo] = []
+    try:
+        combos = parse_combos(keymap)
+        if combos and verbose:
+            log(f"Found {len(combos)} combos")
+    except KeymapParseError as e:
+        # Combos are optional, log warning and continue
+        log(f"Warning: Could not parse combos: {e}", force=True)
 
     # Generate SVGs
     svgs: list[str | None] = []
@@ -346,8 +380,64 @@ def main(
             log(f"  Wrote: {svg_path}")
         if not quiet:
             click.echo(f"Generated {len(filtered_svgs)} SVG files in {output}")
+    elif output_format == "kle":
+        # Generate KLE JSON files using Sunaku's template
+        from glove80_visualizer.kle_template import generate_kle_from_template
+
+        output.mkdir(parents=True, exist_ok=True)
+        for layer in extracted_layers:
+            log(f"  Generating KLE JSON for layer: {layer.name}")
+            kle_json = generate_kle_from_template(
+                layer,
+                title=layer.name,
+                combos=combos,
+                os_style=os_style,
+            )
+            json_path = output / f"{layer.name}.json"
+            json_path.write_text(kle_json)
+            log(f"  Wrote: {json_path}")
+        if not quiet:
+            click.echo(f"Generated {len(extracted_layers)} KLE JSON files in {output}")
+    elif output_format == "kle-png":
+        # Generate KLE PNG files via headless browser using Sunaku's template
+        from glove80_visualizer.kle_renderer import render_kle_to_png
+        from glove80_visualizer.kle_template import generate_kle_from_template
+
+        output.mkdir(parents=True, exist_ok=True)
+        for layer in extracted_layers:
+            log(f"  Rendering KLE PNG for layer: {layer.name}")
+            kle_json = generate_kle_from_template(
+                layer,
+                title=layer.name,
+                combos=combos,
+                os_style=os_style,
+            )
+            png_path = output / f"{layer.name}.png"
+            try:
+                render_kle_to_png(kle_json, png_path)
+                log(f"  Wrote: {png_path}")
+            except Exception as e:
+                if continue_on_error:
+                    log(f"  Warning: Failed to render {layer.name}: {e}", force=True)
+                else:
+                    error(f"Failed to render layer {layer.name}: {e}")
+                    sys.exit(1)
+        if not quiet:
+            click.echo(f"Generated KLE PNG files in {output}")
+    elif output_format == "kle-pdf":
+        # Generate combined PDF via KLE headless browser
+        from glove80_visualizer.kle_renderer import create_combined_pdf_kle
+
+        log("Generating KLE PDF via headless browser...")
+        try:
+            create_combined_pdf_kle(extracted_layers, output, combos=combos, os_style=os_style)
+            if not quiet:
+                click.echo(f"Generated KLE PDF: {output}")
+        except Exception as e:
+            error(f"Failed to generate KLE PDF: {e}")
+            sys.exit(1)
     else:
-        # Generate PDF
+        # Generate PDF (default)
         log("Generating PDF...")
         pdf_bytes = generate_pdf_with_toc(
             layers=extracted_layers,

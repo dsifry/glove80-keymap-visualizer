@@ -1,0 +1,723 @@
+[
+  {
+    "css": "/* legend */\n.keylabel10 div { \n    font-size: xx-small;\n    font-style: italic;\n    font-weight: bolder;\n    text-shadow: 1px 1px 2px yellow;\n}\n/* title */\ncenter h1 {\n    font-weight: bold;\n}\ncenter h2 {\n    margin-top: -0.5ex;\n    font-weight: bold;\n}\ncenter ul, ul.combos {\n    padding: 0;\n}\ncenter ul {\n    margin-top: 1em;\n    padding-top: 1em;\n    font-size: smaller;\n}\ncenter ul li, .combos li {\n    margin-top: 1ex;\n    list-style-type: none;\n}\ncenter ul li a {\n    font-weight: bold;\n}"
+  },
+  [
+    {
+      "x": 1,
+      "t": "#9E9E9E",
+      "p": "CHICKLET",
+      "sm": "kailh-choc",
+      "sb": "kailh",
+      "st": "Kailh Choc v1",
+      "a": 7,
+      "f": 5,
+      "d": true
+    },
+    "C6",
+    {
+      "d": true
+    },
+    "C5",
+    {
+      "d": true
+    },
+    "C4",
+    {
+      "d": true
+    },
+    "C3",
+    {
+      "d": true
+    },
+    "C2",
+    {
+      "d": true
+    },
+    "C1",
+    {
+      "x": 7.25,
+      "d": true
+    },
+    "C1",
+    {
+      "d": true
+    },
+    "C2",
+    {
+      "d": true
+    },
+    "C3",
+    {
+      "d": true
+    },
+    "C4",
+    {
+      "d": true
+    },
+    "C5",
+    {
+      "d": true
+    },
+    "C6"
+  ],
+  [
+    {
+      "x": 3,
+      "t": "#000000",
+      "g": true,
+      "f": 3
+    },
+    "",
+    "",
+    "",
+    {
+      "x": 9.25
+    },
+    "",
+    "",
+    ""
+  ],
+  [
+    {
+      "y": -0.5,
+      "t": "#9E9E9E",
+      "g": false,
+      "f": 5,
+      "d": true
+    },
+    "R1",
+    {
+      "t": "#000000",
+      "g": true,
+      "f": 6
+    },
+    "",
+    "",
+    {
+      "x": 15.25,
+      "f": 3
+    },
+    "",
+    "",
+    {
+      "t": "#9E9E9E",
+      "g": false,
+      "f": 5,
+      "d": true
+    },
+    "R1"
+  ],
+  [
+    {
+      "y": -0.8500000000000001,
+      "x": 7,
+      "c": "#FFF3E0",
+      "t": "#000000",
+      "a": 4,
+      "w": 7.25,
+      "h": 4,
+      "d": true
+    },
+    "<center><h1>Cursor Layer</h1><p>MoErgo Glove80 keyboard</p><ul><li><a href='https://github.com/manna-harbour/miryoku'>Miryoku</a> layers & home row mods</li><li><a href='https://github.com/sunaku/glove80-keymaps'>Glorious Engrammer</a> keymap</li><li>See <a href='https://is.gd/sunaku_glove80'>is.gd/sunaku_glove80</a></li></ul></center>"
+  ],
+  [
+    {
+      "y": -0.6499999999999999,
+      "x": 3,
+      "c": "#ffccbc",
+      "a": 7,
+      "f": 3
+    },
+    "Insert",
+    "Shift-Tab",
+    "Delete",
+    {
+      "c": "#cccccc",
+      "g": true
+    },
+    "",
+    {
+      "x": 7.25
+    },
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    {
+      "y": -0.5,
+      "t": "#9E9E9E",
+      "g": false,
+      "f": 5,
+      "d": true
+    },
+    "R2",
+    {
+      "t": "#000000",
+      "g": true,
+      "f": 6
+    },
+    "",
+    {
+      "c": "#ffccbc",
+      "g": false,
+      "f": 3
+    },
+    "Escape",
+    {
+      "x": 15.25,
+      "c": "#cccccc",
+      "g": true
+    },
+    "",
+    "",
+    {
+      "t": "#9E9E9E",
+      "g": false,
+      "f": 5,
+      "d": true
+    },
+    "R2"
+  ],
+  [
+    {
+      "y": -0.5,
+      "x": 3,
+      "c": "#ffccbc",
+      "t": "#000000",
+      "f": 3
+    },
+    "Space",
+    "Tab",
+    "Back space",
+    {
+      "c": "#ffecb3"
+    },
+    "Cut<br><i class='fa fa-cut'></i>",
+    {
+      "x": 7.25
+    },
+    "Cut<br><i class='fa fa-cut'></i>",
+    {
+      "c": "#ffccbc"
+    },
+    "Shift-Tab",
+    {
+      "c": "#d1c4e9"
+    },
+    "Undo <i class='fa fa-undo'></i>",
+    "Redo <i class='fa fa-repeat'></i>"
+  ],
+  [
+    {
+      "y": -0.5,
+      "c": "#cccccc",
+      "t": "#9E9E9E",
+      "f": 5,
+      "d": true
+    },
+    "R3",
+    {
+      "t": "#000000",
+      "g": true,
+      "f": 6
+    },
+    "",
+    {
+      "c": "#ffccbc",
+      "g": false,
+      "f": 3
+    },
+    "Enter",
+    {
+      "x": 15.25
+    },
+    "Tab",
+    {
+      "c": "#cccccc",
+      "g": true
+    },
+    "",
+    {
+      "t": "#9E9E9E",
+      "g": false,
+      "f": 5,
+      "d": true
+    },
+    "R3"
+  ],
+  [
+    {
+      "y": -0.5,
+      "x": 3,
+      "c": "#D7CCC8",
+      "t": "#000000",
+      "p": "SPACE",
+      "f": 3
+    },
+    "Alt\n\n\n\nAlt",
+    "Ctrl\n\n\n\nCtrl",
+    {
+      "n": true
+    },
+    "Shift\n\n\n\nShift",
+    {
+      "c": "#ffecb3",
+      "p": "CHICKLET"
+    },
+    "Copy <i class='fa fa-copy'></i>",
+    {
+      "x": 7.25
+    },
+    "Copy <i class='fa fa-copy'></i>",
+    {
+      "c": "#e0f2f1",
+      "f": 6,
+      "n": true
+    },
+    "<i class='fa fa-caret-left'></i>\n\n\n\nShift",
+    "<i class='fa fa-caret-up'></i>\n\n\n\nCtrl",
+    "<i class='fa fa-caret-down'></i>\n\n\n\nAlt"
+  ],
+  [
+    {
+      "y": -0.5,
+      "c": "#cccccc",
+      "t": "#9E9E9E",
+      "f": 5,
+      "d": true
+    },
+    "R4",
+    {
+      "c": "#D7CCC8",
+      "t": "#000000",
+      "p": "SPACE",
+      "a": 5,
+      "f": 3,
+      "fa": [
+        2
+      ]
+    },
+    "sticky\n\n\n\nShift\n\nShift",
+    {
+      "a": 7,
+      "f": 3
+    },
+    "Win\n\n\n\nWin",
+    {
+      "x": 15.25,
+      "c": "#e0f2f1",
+      "p": "CHICKLET",
+      "f": 6
+    },
+    "<i class='fa fa-caret-right'></i>\n\n\n\nWin",
+    {
+      "c": "#D7CCC8",
+      "p": "SPACE",
+      "a": 5,
+      "f": 3,
+      "fa": [
+        2
+      ]
+    },
+    "sticky\n\n\n\nShift\n\nShift",
+    {
+      "c": "#cccccc",
+      "t": "#9E9E9E",
+      "p": "CHICKLET",
+      "a": 7,
+      "f": 5,
+      "d": true
+    },
+    "R4"
+  ],
+  [
+    {
+      "y": -0.5,
+      "x": 3,
+      "c": "#dcedc8",
+      "t": "#000000",
+      "f": 3
+    },
+    "Select line",
+    "Select word",
+    {
+      "c": "#d1c4e9"
+    },
+    "Find<br> <i class='fa fa-search'></i>",
+    {
+      "c": "#ffecb3"
+    },
+    "Paste <i class='fa fa-paste'></i>",
+    {
+      "x": 7.25
+    },
+    "Paste <i class='fa fa-paste'></i>",
+    {
+      "c": "#e0f2f1",
+      "a": 5,
+      "fa": [
+        1,
+        1
+      ]
+    },
+    "&nbsp;\n(⌘+Left)\n\n\n\n\nHome",
+    {
+      "a": 7,
+      "f": 3
+    },
+    "Page up",
+    {
+      "f": 3
+    },
+    "Page down\n\n\n\nAltGr"
+  ],
+  [
+    {
+      "y": -0.5,
+      "c": "#cccccc",
+      "t": "#9E9E9E",
+      "f": 5,
+      "d": true
+    },
+    "R5",
+    {
+      "c": "#ffcdd2",
+      "t": "#000000",
+      "f": 3
+    },
+    "<small>Address</small> bar <i class='fa fa-terminal'></i>",
+    {
+      "c": "#dcedc8"
+    },
+    "Select all",
+    {
+      "x": 15.25,
+      "c": "#e0f2f1",
+      "a": 5,
+      "fa": [
+        1,
+        1
+      ]
+    },
+    "&nbsp;\n(⌘+Right)\n\n\n\n\nEnd",
+    {
+      "c": "#ffcdd2",
+      "a": 7,
+      "f": 3
+    },
+    "<small>Address</small> bar <i class='fa fa-terminal'></i>",
+    {
+      "c": "#cccccc",
+      "t": "#9E9E9E",
+      "f": 5,
+      "d": true
+    },
+    "R5"
+  ],
+  [
+    {
+      "y": -0.5,
+      "x": 3,
+      "c": "#d1c4e9",
+      "t": "#000000",
+      "f": 3
+    },
+    "Redo <i class='fa fa-repeat'></i>",
+    "Find prev",
+    "Find next",
+    {
+      "x": 9.25
+    },
+    "Find<br> <i class='fa fa-search'></i>",
+    "Find prev",
+    "Find next"
+  ],
+  [
+    {
+      "y": -0.5,
+      "c": "#cccccc",
+      "t": "#9E9E9E",
+      "f": 5,
+      "d": true
+    },
+    "R6",
+    {
+      "c": "#ffcdd2",
+      "t": "#000000",
+      "f": 3
+    },
+    "Search bar <i class='fa fa-terminal'></i>\n\n\n\nSymbol",
+    {
+      "c": "#d1c4e9"
+    },
+    "Undo <i class='fa fa-undo'></i>",
+    {
+      "x": 15.25
+    },
+    "Find & replace\n\n\n\nMouse",
+    {
+      "c": "#ffcdd2"
+    },
+    "Search bar <i class='fa fa-terminal'></i>\n\n\n\nSymbol",
+    {
+      "c": "#cccccc",
+      "t": "#9E9E9E",
+      "f": 5,
+      "d": true
+    },
+    "R6"
+  ],
+  [
+    {
+      "y": 0.25,
+      "x": 1,
+      "t": "#000000",
+      "f": 3,
+      "w": 4.75,
+      "h": 3.75,
+      "d": true
+    },
+    "<ul class=\"combos\"><li>Hold T4 to activate this layer.</li><li>Release T4 to deactivate this layer.</li><li>Tap T4 to unlock this layer, if locked.</li></ul>",
+    {
+      "x": 9.75,
+      "w": 4.75,
+      "h": 3.75,
+      "d": true
+    },
+    ""
+  ],
+  [
+    {
+      "r": 25,
+      "rx": 6.25,
+      "ry": 9,
+      "y": -3.9749999999999996,
+      "x": -0.40000000000000036,
+      "t": "#9E9E9E",
+      "f": 5,
+      "d": true
+    },
+    "T1"
+  ],
+  [
+    {
+      "y": -0.27500000000000036,
+      "x": -0.40000000000000036,
+      "t": "#000000",
+      "g": true,
+      "f": 3
+    },
+    "Shift-Tab\n\n\n\nFunction"
+  ],
+  [
+    {
+      "y": 0.09999999999999964,
+      "x": -1,
+      "c": "#ffff8d",
+      "g": false,
+      "p": "SA SPACE"
+    },
+    "<img src=\"https://openclipart.org/download/278214/fingerprint.svg\" width=\"36\" height=\"36\" />\n\n\n\nCursor"
+  ],
+  [
+    {
+      "y": -0.20000000000000018,
+      "x": -1,
+      "c": "#cccccc",
+      "t": "#9E9E9E",
+      "p": "CHICKLET",
+      "f": 5,
+      "d": true
+    },
+    "T4"
+  ],
+  [
+    {
+      "r": 35,
+      "y": -3.675,
+      "x": 0.2599999999999998,
+      "d": true
+    },
+    "T2"
+  ],
+  [
+    {
+      "y": -0.27500000000000036,
+      "x": 0.25,
+      "t": "#000000",
+      "g": true,
+      "f": 3
+    },
+    "Tab"
+  ],
+  [
+    {
+      "y": 0.15000000000000036,
+      "x": -0.15000000000000036
+    },
+    "\n\n\n\nNumber"
+  ],
+  [
+    {
+      "y": -0.20000000000000018,
+      "x": -0.15000000000000036,
+      "t": "#9E9E9E",
+      "g": false,
+      "f": 5,
+      "d": true
+    },
+    "T5"
+  ],
+  [
+    {
+      "r": 45,
+      "y": -3.825,
+      "x": 0.9000000000000004,
+      "d": true
+    },
+    "T3"
+  ],
+  [
+    {
+      "y": -0.27500000000000036,
+      "x": 0.9000000000000004,
+      "t": "#000000",
+      "g": true,
+      "f": 3
+    },
+    "Lower\n\n\n\nLower"
+  ],
+  [
+    {
+      "y": 0.15000000000000036,
+      "x": 0.7000000000000002,
+      "f": 4
+    },
+    "Raw\n\n\n\nTyping"
+  ],
+  [
+    {
+      "y": -0.20000000000000018,
+      "x": 0.7000000000000002,
+      "t": "#9E9E9E",
+      "g": false,
+      "f": 5,
+      "d": true
+    },
+    "T6"
+  ],
+  [
+    {
+      "r": -45,
+      "rx": 15,
+      "y": -4.175,
+      "x": -1.9000000000000004,
+      "d": true
+    },
+    "T3"
+  ],
+  [
+    {
+      "y": -0.27500000000000036,
+      "x": -1.9000000000000004,
+      "c": "#dcedc8",
+      "t": "#000000",
+      "f": 3
+    },
+    "Select none\n\n\n\nLower"
+  ],
+  [
+    {
+      "y": 0.15000000000000036,
+      "x": -1.6999999999999993
+    },
+    "Select all"
+  ],
+  [
+    {
+      "y": -0.20000000000000018,
+      "x": -1.6999999999999993,
+      "c": "#cccccc",
+      "t": "#9E9E9E",
+      "f": 5,
+      "d": true
+    },
+    "T6"
+  ],
+  [
+    {
+      "r": -35,
+      "y": -3.5250000000000004,
+      "x": -1.2599999999999998,
+      "d": true
+    },
+    "T2"
+  ],
+  [
+    {
+      "y": -0.27500000000000036,
+      "x": -1.25,
+      "c": "#dcedc8",
+      "t": "#000000",
+      "f": 3
+    },
+    "Extend line"
+  ],
+  [
+    {
+      "y": 0.15000000000000036,
+      "x": -0.8499999999999996
+    },
+    "Select line\n\n\n\nMouse"
+  ],
+  [
+    {
+      "y": -0.20000000000000018,
+      "x": -0.8499999999999996,
+      "c": "#cccccc",
+      "t": "#9E9E9E",
+      "f": 5,
+      "d": true
+    },
+    "T5"
+  ],
+  [
+    {
+      "r": -25,
+      "y": -3.625,
+      "x": -0.5999999999999996,
+      "d": true
+    },
+    "T1"
+  ],
+  [
+    {
+      "y": -0.27500000000000036,
+      "x": -0.5999999999999996,
+      "c": "#dcedc8",
+      "t": "#000000",
+      "f": 3
+    },
+    "Extend word\n\n\n\nSystem"
+  ],
+  [
+    {
+      "y": 0.09999999999999964,
+      "n": true
+    },
+    "Select word\n\n\n\nSymbol"
+  ],
+  [
+    {
+      "y": -0.20000000000000018,
+      "c": "#cccccc",
+      "t": "#9E9E9E",
+      "f": 5,
+      "d": true
+    },
+    "T4"
+  ]
+]
