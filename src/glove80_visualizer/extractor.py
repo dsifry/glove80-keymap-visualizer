@@ -80,14 +80,16 @@ def extract_layers(
     return result
 
 
-def _flatten_bindings(bindings_data: list) -> list:
+def _flatten_bindings(
+    bindings_data: list[str | dict | list | None],
+) -> list[str | dict | None]:
     """
     Flatten potentially nested binding data into a flat list.
 
     keymap-drawer returns bindings as rows (list of lists).
     This flattens them while preserving order.
     """
-    result = []
+    result: list[str | dict | None] = []
 
     for item in bindings_data:
         if isinstance(item, list):

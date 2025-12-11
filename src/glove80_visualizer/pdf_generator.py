@@ -56,6 +56,7 @@ def _svg_to_pdf_rsvg(svg_content: str) -> bytes:
         svg_file.write(svg_content)
         svg_path = svg_file.name
 
+    pdf_path: str | None = None
     try:
         with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as pdf_file:
             pdf_path = pdf_file.name
@@ -77,10 +78,11 @@ def _svg_to_pdf_rsvg(svg_content: str) -> bytes:
             os.unlink(svg_path)
         except OSError:  # pragma: no cover
             pass
-        try:
-            os.unlink(pdf_path)
-        except OSError:  # pragma: no cover
-            pass
+        if pdf_path is not None:
+            try:
+                os.unlink(pdf_path)
+            except OSError:  # pragma: no cover
+                pass
 
 
 def _svg_to_pdf_cairosvg(svg_content: str) -> bytes:

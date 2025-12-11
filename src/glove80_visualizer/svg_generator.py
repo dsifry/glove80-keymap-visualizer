@@ -10,7 +10,7 @@ from typing import Any
 
 from keymap_drawer.config import Config as KDConfig
 from keymap_drawer.draw.draw import KeymapDrawer
-from keymap_drawer.physical_layout import layout_factory
+from keymap_drawer.physical_layout import PhysicalLayout, layout_factory
 
 from glove80_visualizer.colors import ColorScheme, categorize_key
 from glove80_visualizer.config import VisualizerConfig
@@ -1208,7 +1208,7 @@ def _layer_to_keymap_drawer_format(
     os_style: str = "mac",
     held_positions: set[int] | None = None,
     mod_morphs: dict[str, dict[str, str]] | None = None,
-    physical_layout: Any = None,
+    physical_layout: PhysicalLayout | None = None,
 ) -> dict[str, Any]:
     """
     Convert a Layer to keymap-drawer's expected format.
