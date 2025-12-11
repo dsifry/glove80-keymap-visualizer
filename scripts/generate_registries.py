@@ -472,11 +472,13 @@ def _parse_class(node: ast.ClassDef, module_name: str) -> ClassInfo:
 
 def parse_conftest_fixtures(
     conftest_path: Path,
+    root_dir: Path | None = None,
 ) -> tuple[list[FixtureInfo], list[FactoryInfo]]:
     """Parse pytest fixtures and mock factories from conftest.py.
 
     Args:
         conftest_path: Path to conftest.py file
+        root_dir: Optional root directory for relative path calculation
 
     Returns:
         Tuple of (list of FixtureInfo, list of FactoryInfo)
@@ -492,6 +494,12 @@ def parse_conftest_fixtures(
     except SyntaxError as e:
         print(f"Warning: Syntax error in {conftest_path}: {e}")
         return [], []
+
+    # Use relative path if root_dir provided
+    if root_dir:
+        location_path = str(conftest_path.relative_to(root_dir))
+    else:
+        location_path = str(conftest_path)
 
     fixtures: list[FixtureInfo] = []
     factories: list[FactoryInfo] = []
@@ -526,7 +534,7 @@ def parse_conftest_fixtures(
                         name=node.name,
                         description=doc_info.description,
                         returns=returns,
-                        location=str(conftest_path),
+                        location=location_path,
                     )
                     fixtures.append(fixture)
                     break
@@ -540,7 +548,7 @@ def parse_conftest_fixtures(
                 factory = FactoryInfo(
                     name=node.name,
                     purpose=doc_info.description,
-                    location=str(conftest_path),
+                    location=location_path,
                     fixtures=[],  # Would need more analysis to determine
                 )
                 factories.append(factory)
@@ -685,16 +693,18 @@ def generate_service_registry(
 
 def generate_mock_registry(
     conftest_path: Path,
+    root_dir: Path | None = None,
 ) -> tuple[dict[str, Any], list[ValidationError]]:
     """Generate mock registry from conftest.py.
 
     Args:
         conftest_path: Path to tests/conftest.py
+        root_dir: Optional root directory for relative path calculation
 
     Returns:
         Tuple of (registry dict for TOON, list of validation errors)
     """
-    fixtures, factories = parse_conftest_fixtures(conftest_path)
+    fixtures, factories = parse_conftest_fixtures(conftest_path, root_dir)
     errors: list[ValidationError] = []
 
     # Validate fixtures have docstrings
@@ -781,7 +791,7 @@ def main() -> int:
     # Generate mock registry
     if args.verbose:
         print("Generating mock registry...")
-    mock_registry, mock_errors = generate_mock_registry(conftest_path)
+    mock_registry, mock_errors = generate_mock_registry(conftest_path, root)
     all_errors.extend(mock_errors)
 
     if args.verbose:
