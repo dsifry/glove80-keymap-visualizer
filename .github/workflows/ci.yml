@@ -120,7 +120,10 @@ jobs:
       - name: Check registries are up-to-date
         run: |
           python scripts/generate_registries.py
-          if ! git diff --exit-code service-registry.toon mock-registry.toon; then
+          # Ignore the 'generated' timestamp line when comparing
+          # Only fail if there are non-timestamp changes
+          if git diff service-registry.toon mock-registry.toon | grep -v "^[-+]  generated:" | grep -q "^[-+]"; then
             echo "::error::Registry files are out of date. Run 'python scripts/generate_registries.py' and commit the changes."
+            git diff service-registry.toon mock-registry.toon | head -50
             exit 1
           fi
