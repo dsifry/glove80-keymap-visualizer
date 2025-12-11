@@ -52,11 +52,14 @@ npx @anthropic-ai/claude-code
 
 ### Step 2: Install the Superpowers Plugin
 
-Navigate to any project directory and run:
+Start Claude Code and run these commands inside the Claude session:
 
-```bash
-claude /install-plugin superpowers-marketplace/superpowers
 ```
+/plugin marketplace add obra/superpowers-marketplace
+/plugin install superpowers@superpowers-marketplace
+```
+
+**Note:** These are slash commands that run *inside* Claude Code, not shell commands. You must start Claude first, then type these commands.
 
 The plugin installs globally and is available in all projects.
 
@@ -250,8 +253,10 @@ Remind Claude:
 
 ### Updating Superpowers
 
-```bash
-claude /update-plugin superpowers-marketplace/superpowers
+Inside a Claude Code session, run:
+
+```
+/plugin update superpowers@superpowers-marketplace
 ```
 
 ---
