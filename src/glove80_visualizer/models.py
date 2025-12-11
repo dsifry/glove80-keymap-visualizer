@@ -99,6 +99,47 @@ class LayerActivator:
 
 
 @dataclass
+class Combo:
+    """
+    Represents a keyboard combo (chord) - multiple keys pressed simultaneously.
+
+    Attributes:
+        name: Human-readable key names (e.g., "LT3+LT6", "RT1+RT4")
+        positions: The ZMK key positions that trigger this combo
+        action: Description of what the combo does (e.g., "Toggle Gaming")
+        layers: List of layer names where combo is active, or None for all layers
+    """
+
+    name: str
+    positions: list[int]
+    action: str
+    layers: list[str] | None = None
+
+    def is_active_on_layer(self, layer_name: str) -> bool:
+        """Check if this combo is active on the given layer."""
+        if self.layers is None:
+            return True
+        return layer_name in self.layers
+
+    @property
+    def is_left_hand(self) -> bool:
+        """Check if combo uses only left thumb keys."""
+        left_thumb = {52, 53, 54, 69, 70, 71}
+        return all(p in left_thumb for p in self.positions)
+
+    @property
+    def is_right_hand(self) -> bool:
+        """Check if combo uses only right thumb keys."""
+        right_thumb = {55, 56, 57, 72, 73, 74}
+        return all(p in right_thumb for p in self.positions)
+
+    @property
+    def is_cross_hand(self) -> bool:
+        """Check if combo spans both hands."""
+        return not self.is_left_hand and not self.is_right_hand
+
+
+@dataclass
 class VisualizationResult:
     """
     Result of a visualization operation.

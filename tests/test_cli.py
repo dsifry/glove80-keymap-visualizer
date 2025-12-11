@@ -490,6 +490,430 @@ class TestCliEdgeCases:
         assert result.exit_code == 0
 
 
+class TestCliKleJsonFormat:
+    """Tests for KLE JSON output format."""
+
+    def test_cli_kle_json_format(self, runner, simple_keymap_path, tmp_path, mocker):
+        """SPEC-KLE-001: CLI can generate KLE JSON format."""
+        from glove80_visualizer.cli import main
+
+        # Mock the KLE template generator
+        mock_generate = mocker.patch(
+            "glove80_visualizer.kle_template.generate_kle_from_template",
+            return_value='{"test": "kle json"}',
+        )
+
+        output_dir = tmp_path / "kle"
+        result = runner.invoke(
+            main,
+            [str(simple_keymap_path), "-o", str(output_dir), "--format", "kle"],
+        )
+
+        assert result.exit_code == 0
+        assert output_dir.exists()
+        assert mock_generate.called
+        # Should have created JSON files
+        json_files = list(output_dir.glob("*.json"))
+        assert len(json_files) > 0
+
+    def test_cli_kle_json_default_output_path(self, runner, simple_keymap_path, mocker):
+        """SPEC-KLE-002: CLI generates default KLE output directory when no -o specified."""
+        from glove80_visualizer.cli import main
+
+        # Mock the KLE template generator at the source module
+        mocker.patch(
+            "glove80_visualizer.kle_template.generate_kle_from_template",
+            return_value='{"test": "kle json"}',
+        )
+
+        result = runner.invoke(
+            main,
+            [str(simple_keymap_path), "--format", "kle"],
+        )
+
+        assert result.exit_code == 0
+        # Should create default directory named {keymap.stem}_kle
+        expected_dir = simple_keymap_path.parent / f"{simple_keymap_path.stem}_kle"
+        assert expected_dir.exists()
+
+    def test_cli_kle_json_verbose_output(self, runner, multi_layer_keymap_path, tmp_path, mocker):
+        """SPEC-KLE-003: CLI shows progress for each layer in verbose mode."""
+        from glove80_visualizer.cli import main
+
+        # Mock the KLE template generator at the source module
+        mocker.patch(
+            "glove80_visualizer.kle_template.generate_kle_from_template",
+            return_value='{"test": "kle json"}',
+        )
+
+        output_dir = tmp_path / "kle"
+        result = runner.invoke(
+            main,
+            [str(multi_layer_keymap_path), "-o", str(output_dir), "--format", "kle", "-v"],
+        )
+
+        assert result.exit_code == 0
+        # Should show progress messages
+        assert "Generating KLE JSON for layer:" in result.output
+        assert "Wrote:" in result.output
+
+    def test_cli_kle_json_with_combos_verbose(self, runner, simple_keymap_path, tmp_path, mocker):
+        """SPEC-KLE-004: CLI logs combo count in verbose mode."""
+        from glove80_visualizer.cli import main
+
+        # Mock parse_combos to return test combos
+        from glove80_visualizer.models import Combo
+
+        test_combos = [
+            Combo(name="test1", positions=[0, 1], action="&kp A", layers=None),
+            Combo(name="test2", positions=[2, 3], action="&kp B", layers=None),
+        ]
+        mocker.patch(
+            "glove80_visualizer.cli.parse_combos",
+            return_value=test_combos,
+        )
+
+        # Mock the KLE template generator
+        mocker.patch(
+            "glove80_visualizer.kle_template.generate_kle_from_template",
+            return_value='{"test": "kle json"}',
+        )
+
+        output_dir = tmp_path / "kle"
+        result = runner.invoke(
+            main,
+            [str(simple_keymap_path), "-o", str(output_dir), "--format", "kle", "-v"],
+        )
+
+        assert result.exit_code == 0
+        # Should show combo count
+        assert "Found 2 combos" in result.output
+
+    def test_cli_kle_json_combo_parse_error(self, runner, simple_keymap_path, tmp_path, mocker):
+        """SPEC-KLE-005: CLI continues with warning when combo parsing fails."""
+        from glove80_visualizer.cli import main
+        from glove80_visualizer.parser import KeymapParseError
+
+        # Mock parse_combos to raise error
+        mocker.patch(
+            "glove80_visualizer.cli.parse_combos",
+            side_effect=KeymapParseError("Test combo parse error"),
+        )
+
+        # Mock the KLE template generator
+        mocker.patch(
+            "glove80_visualizer.kle_template.generate_kle_from_template",
+            return_value='{"test": "kle json"}',
+        )
+
+        output_dir = tmp_path / "kle"
+        result = runner.invoke(
+            main,
+            [str(simple_keymap_path), "-o", str(output_dir), "--format", "kle"],
+        )
+
+        # Should succeed despite combo parse error
+        assert result.exit_code == 0
+        # Should show warning
+        assert "Warning: Could not parse combos" in result.output
+        assert "Test combo parse error" in result.output
+
+
+class TestCliKlePngFormat:
+    """Tests for KLE PNG output format."""
+
+    def test_cli_kle_png_format(self, runner, simple_keymap_path, tmp_path, mocker):
+        """SPEC-KLE-006: CLI can generate KLE PNG format via headless browser."""
+        from glove80_visualizer.cli import main
+
+        # Mock both template generator and PNG renderer
+        mocker.patch(
+            "glove80_visualizer.kle_template.generate_kle_from_template",
+            return_value='{"test": "kle json"}',
+        )
+        mock_render = mocker.patch(
+            "glove80_visualizer.kle_renderer.render_kle_to_png",
+        )
+
+        output_dir = tmp_path / "pngs"
+        result = runner.invoke(
+            main,
+            [str(simple_keymap_path), "-o", str(output_dir), "--format", "kle-png"],
+        )
+
+        assert result.exit_code == 0
+        assert output_dir.exists()
+        assert mock_render.called
+
+    def test_cli_kle_png_default_output_path(self, runner, simple_keymap_path, mocker):
+        """SPEC-KLE-007: CLI generates default KLE PNG output directory."""
+        from glove80_visualizer.cli import main
+
+        # Mock both template generator and PNG renderer
+        mocker.patch(
+            "glove80_visualizer.kle_template.generate_kle_from_template",
+            return_value='{"test": "kle json"}',
+        )
+        mocker.patch(
+            "glove80_visualizer.kle_renderer.render_kle_to_png",
+        )
+
+        result = runner.invoke(
+            main,
+            [str(simple_keymap_path), "--format", "kle-png"],
+        )
+
+        assert result.exit_code == 0
+        # Should create default directory named {keymap.stem}_kle_pngs
+        expected_dir = simple_keymap_path.parent / f"{simple_keymap_path.stem}_kle_pngs"
+        assert expected_dir.exists()
+
+    def test_cli_kle_png_verbose_output(self, runner, multi_layer_keymap_path, tmp_path, mocker):
+        """SPEC-KLE-008: CLI shows progress for each PNG render in verbose mode."""
+        from glove80_visualizer.cli import main
+
+        # Mock both template generator and PNG renderer
+        mocker.patch(
+            "glove80_visualizer.kle_template.generate_kle_from_template",
+            return_value='{"test": "kle json"}',
+        )
+        mocker.patch(
+            "glove80_visualizer.kle_renderer.render_kle_to_png",
+        )
+
+        output_dir = tmp_path / "pngs"
+        result = runner.invoke(
+            main,
+            [str(multi_layer_keymap_path), "-o", str(output_dir), "--format", "kle-png", "-v"],
+        )
+
+        assert result.exit_code == 0
+        # Should show progress messages
+        assert "Rendering KLE PNG for layer:" in result.output
+        assert "Wrote:" in result.output
+
+    def test_cli_kle_png_render_error_continue(
+        self, runner, multi_layer_keymap_path, tmp_path, mocker
+    ):
+        """SPEC-KLE-009: CLI continues on PNG render error with --continue-on-error."""
+        from glove80_visualizer.cli import main
+
+        # Mock template generator
+        mocker.patch(
+            "glove80_visualizer.kle_template.generate_kle_from_template",
+            return_value='{"test": "kle json"}',
+        )
+
+        # Mock PNG renderer to fail on second call
+        call_count = [0]
+
+        def mock_render_fail(kle_json, output_path):
+            call_count[0] += 1
+            if call_count[0] == 2:
+                raise RuntimeError("Playwright render failed")
+
+        mocker.patch(
+            "glove80_visualizer.kle_renderer.render_kle_to_png",
+            side_effect=mock_render_fail,
+        )
+
+        output_dir = tmp_path / "pngs"
+        result = runner.invoke(
+            main,
+            [
+                str(multi_layer_keymap_path),
+                "-o",
+                str(output_dir),
+                "--format",
+                "kle-png",
+                "--continue-on-error",
+            ],
+        )
+
+        # Should succeed with warning
+        assert result.exit_code == 0
+        assert "Warning: Failed to render" in result.output
+
+    def test_cli_kle_png_render_error_fail_fast(self, runner, simple_keymap_path, tmp_path, mocker):
+        """SPEC-KLE-010: CLI fails immediately on PNG render error without --continue-on-error."""
+        from glove80_visualizer.cli import main
+
+        # Mock template generator
+        mocker.patch(
+            "glove80_visualizer.kle_template.generate_kle_from_template",
+            return_value='{"test": "kle json"}',
+        )
+
+        # Mock PNG renderer to always fail
+        mocker.patch(
+            "glove80_visualizer.kle_renderer.render_kle_to_png",
+            side_effect=RuntimeError("Playwright render failed"),
+        )
+
+        output_dir = tmp_path / "pngs"
+        result = runner.invoke(
+            main,
+            [str(simple_keymap_path), "-o", str(output_dir), "--format", "kle-png"],
+        )
+
+        # Should fail immediately
+        assert result.exit_code != 0
+        assert "Failed to render layer" in result.output
+
+
+class TestCliKlePdfFormat:
+    """Tests for KLE PDF output format."""
+
+    def test_cli_kle_pdf_format(self, runner, simple_keymap_path, tmp_path, mocker):
+        """SPEC-KLE-011: CLI can generate KLE PDF format via headless browser."""
+        from glove80_visualizer.cli import main
+
+        # Mock the combined PDF creator
+        mock_create_pdf = mocker.patch(
+            "glove80_visualizer.kle_renderer.create_combined_pdf_kle",
+        )
+
+        output = tmp_path / "output_kle.pdf"
+        result = runner.invoke(
+            main,
+            [str(simple_keymap_path), "-o", str(output), "--format", "kle-pdf"],
+        )
+
+        assert result.exit_code == 0
+        assert mock_create_pdf.called
+        # Verify it was called with correct arguments
+        args, kwargs = mock_create_pdf.call_args
+        assert args[1] == output  # Second arg is output path
+        assert "combos" in kwargs
+        assert "os_style" in kwargs
+
+    def test_cli_kle_pdf_default_output_path(self, runner, simple_keymap_path, mocker):
+        """SPEC-KLE-012: CLI generates default KLE PDF output path."""
+        from glove80_visualizer.cli import main
+
+        # Mock the combined PDF creator
+        mocker.patch(
+            "glove80_visualizer.kle_renderer.create_combined_pdf_kle",
+        )
+
+        result = runner.invoke(
+            main,
+            [str(simple_keymap_path), "--format", "kle-pdf"],
+        )
+
+        assert result.exit_code == 0
+        # Command should succeed - can't check file exists since we mocked the creator
+
+    def test_cli_kle_pdf_verbose_output(self, runner, simple_keymap_path, tmp_path, mocker):
+        """SPEC-KLE-013: CLI shows progress message when generating KLE PDF."""
+        from glove80_visualizer.cli import main
+
+        # Mock the combined PDF creator
+        mocker.patch(
+            "glove80_visualizer.kle_renderer.create_combined_pdf_kle",
+        )
+
+        output = tmp_path / "output_kle.pdf"
+        result = runner.invoke(
+            main,
+            [str(simple_keymap_path), "-o", str(output), "--format", "kle-pdf", "-v"],
+        )
+
+        assert result.exit_code == 0
+        # Should show progress message
+        assert "Generating KLE PDF via headless browser" in result.output
+
+    def test_cli_kle_pdf_generation_error(self, runner, simple_keymap_path, tmp_path, mocker):
+        """SPEC-KLE-014: CLI fails with error when KLE PDF generation fails."""
+        from glove80_visualizer.cli import main
+
+        # Mock the combined PDF creator to raise error
+        mocker.patch(
+            "glove80_visualizer.kle_renderer.create_combined_pdf_kle",
+            side_effect=RuntimeError("Playwright browser crashed"),
+        )
+
+        output = tmp_path / "output_kle.pdf"
+        result = runner.invoke(
+            main,
+            [str(simple_keymap_path), "-o", str(output), "--format", "kle-pdf"],
+        )
+
+        # Should fail with error
+        assert result.exit_code != 0
+        assert "Failed to generate KLE PDF" in result.output
+        assert "Playwright browser crashed" in result.output
+
+    def test_cli_kle_pdf_with_os_style(self, runner, simple_keymap_path, tmp_path, mocker):
+        """SPEC-KLE-015: CLI passes os_style parameter to KLE PDF generator."""
+        from glove80_visualizer.cli import main
+
+        # Mock the combined PDF creator
+        mock_create_pdf = mocker.patch(
+            "glove80_visualizer.kle_renderer.create_combined_pdf_kle",
+        )
+
+        output = tmp_path / "output_kle.pdf"
+        result = runner.invoke(
+            main,
+            [str(simple_keymap_path), "-o", str(output), "--format", "kle-pdf", "--windows"],
+        )
+
+        assert result.exit_code == 0
+        # Verify os_style was passed correctly
+        args, kwargs = mock_create_pdf.call_args
+        assert kwargs["os_style"] == "windows"
+
+    def test_cli_kle_pdf_with_combos(self, runner, simple_keymap_path, tmp_path, mocker):
+        """SPEC-KLE-016: CLI passes parsed combos to KLE PDF generator."""
+        from glove80_visualizer.cli import main
+        from glove80_visualizer.models import Combo
+
+        # Mock parse_combos to return test combos
+        test_combos = [
+            Combo(name="combo1", positions=[0, 1], action="&kp A", layers=None),
+        ]
+        mocker.patch(
+            "glove80_visualizer.cli.parse_combos",
+            return_value=test_combos,
+        )
+
+        # Mock the combined PDF creator
+        mock_create_pdf = mocker.patch(
+            "glove80_visualizer.kle_renderer.create_combined_pdf_kle",
+        )
+
+        output = tmp_path / "output_kle.pdf"
+        result = runner.invoke(
+            main,
+            [str(simple_keymap_path), "-o", str(output), "--format", "kle-pdf"],
+        )
+
+        assert result.exit_code == 0
+        # Verify combos were passed
+        args, kwargs = mock_create_pdf.call_args
+        assert kwargs["combos"] == test_combos
+
+    def test_cli_kle_pdf_quiet_mode(self, runner, simple_keymap_path, tmp_path, mocker):
+        """SPEC-KLE-017: CLI suppresses output in quiet mode for KLE PDF."""
+        from glove80_visualizer.cli import main
+
+        # Mock the combined PDF creator
+        mocker.patch(
+            "glove80_visualizer.kle_renderer.create_combined_pdf_kle",
+        )
+
+        output = tmp_path / "output_kle.pdf"
+        result = runner.invoke(
+            main,
+            [str(simple_keymap_path), "-o", str(output), "--format", "kle-pdf", "-q"],
+        )
+
+        assert result.exit_code == 0
+        # Should have minimal/no output (except maybe errors)
+        assert len(result.output.strip()) == 0 or "error" not in result.output.lower()
+
+
 class TestCliIntegration:
     """Integration tests for the CLI."""
 

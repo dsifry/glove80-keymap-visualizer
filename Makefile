@@ -27,11 +27,12 @@ test: install-dev  ## Run tests
 test-cov: install-dev  ## Run tests with coverage report
 	$(BIN)/pytest --cov=src/glove80_visualizer --cov-report=html --cov-report=term-missing
 
-lint: install-dev  ## Run linter
+lint: install-dev  ## Run linter and format check
 	$(BIN)/ruff check src tests
+	$(BIN)/ruff format --check src tests
 
 format: install-dev  ## Format code
-	$(BIN)/black src tests
+	$(BIN)/ruff format src tests
 	$(BIN)/ruff check --fix src tests
 
 typecheck: install-dev  ## Run type checker
