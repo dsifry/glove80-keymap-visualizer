@@ -170,3 +170,138 @@ class TestParserErrorPaths:
         result = parse_zmk_keymap(simple_keymap_path)
         # Should have layout section
         assert "layout" in result or "zmk_keyboard" in result
+
+
+class TestParseModMorphBehaviors:
+    """Tests for mod-morph behavior parsing."""
+
+    def test_parse_mod_morph_extracts_shifted(self, daves_keymap_path):
+        """Parser extracts shifted characters from mod-morph behaviors."""
+        from glove80_visualizer.parser import parse_mod_morph_behaviors
+
+        if not daves_keymap_path.exists():
+            pytest.skip("Dave's keymap file not found")
+
+        content = daves_keymap_path.read_text()
+        result = parse_mod_morph_behaviors(content)
+
+        # Should find parang_left and parang_right
+        assert len(result) > 0
+
+
+class TestParseCombos:
+    """Tests for combo parsing."""
+
+    @pytest.mark.slow
+    def test_parse_combos_from_daves_keymap(self, daves_keymap_path):
+        """Parser extracts combos from Dave's keymap."""
+        from glove80_visualizer.parser import parse_combos
+
+        if not daves_keymap_path.exists():
+            pytest.skip("Dave's keymap file not found")
+
+        combos = parse_combos(daves_keymap_path)
+
+        # Dave's keymap has several combos defined
+        assert len(combos) > 0
+
+    @pytest.mark.slow
+    def test_combo_has_positions(self, daves_keymap_path):
+        """Each combo has key positions."""
+        from glove80_visualizer.parser import parse_combos
+
+        if not daves_keymap_path.exists():
+            pytest.skip("Dave's keymap file not found")
+
+        combos = parse_combos(daves_keymap_path)
+
+        for combo in combos:
+            assert len(combo.positions) >= 2, "Combo must have at least 2 positions"
+
+    @pytest.mark.slow
+    def test_combo_has_action(self, daves_keymap_path):
+        """Each combo has an action label."""
+        from glove80_visualizer.parser import parse_combos
+
+        if not daves_keymap_path.exists():
+            pytest.skip("Dave's keymap file not found")
+
+        combos = parse_combos(daves_keymap_path)
+
+        for combo in combos:
+            assert combo.action, "Combo must have an action"
+            assert isinstance(combo.action, str)
+
+    @pytest.mark.slow
+    def test_combo_thumb_key_names(self, daves_keymap_path):
+        """Thumb combos have human-readable key names (LT1-LT6, RT1-RT6)."""
+        from glove80_visualizer.parser import parse_combos
+
+        if not daves_keymap_path.exists():
+            pytest.skip("Dave's keymap file not found")
+
+        combos = parse_combos(daves_keymap_path)
+
+        # Find a thumb combo (positions 52-57, 69-74)
+        thumb_positions = {52, 53, 54, 55, 56, 57, 69, 70, 71, 72, 73, 74}
+        thumb_combos = [c for c in combos if all(p in thumb_positions for p in c.positions)]
+
+        assert len(thumb_combos) > 0, "Should have thumb combos"
+
+        for combo in thumb_combos:
+            # Name should use LT/RT format
+            assert "LT" in combo.name or "RT" in combo.name, f"Expected LT/RT in name, got {combo.name}"
+
+    @pytest.mark.slow
+    def test_combo_layers_filtering(self, daves_keymap_path):
+        """Combos have layer restrictions when specified."""
+        from glove80_visualizer.parser import parse_combos
+
+        if not daves_keymap_path.exists():
+            pytest.skip("Dave's keymap file not found")
+
+        combos = parse_combos(daves_keymap_path)
+
+        # Some combos have layer restrictions, some don't
+        restricted = [c for c in combos if c.layers is not None]
+        unrestricted = [c for c in combos if c.layers is None]
+
+        # Dave's keymap has both types
+        assert len(restricted) > 0, "Should have layer-restricted combos"
+        # There may or may not be unrestricted combos
+
+    @pytest.mark.slow
+    def test_combo_gaming_toggle(self, daves_keymap_path):
+        """Gaming toggle combo is parsed correctly."""
+        from glove80_visualizer.parser import parse_combos
+
+        if not daves_keymap_path.exists():
+            pytest.skip("Dave's keymap file not found")
+
+        combos = parse_combos(daves_keymap_path)
+
+        # Find gaming toggle (positions 54 + 71 = LT3 + LT6)
+        gaming_combos = [c for c in combos if 54 in c.positions and 71 in c.positions]
+
+        assert len(gaming_combos) == 1, "Should find gaming toggle combo"
+        combo = gaming_combos[0]
+        assert combo.name == "LT3+LT6"
+        assert "Gaming" in combo.action
+
+    @pytest.mark.slow
+    def test_combo_caps_lock_cross_hand(self, daves_keymap_path):
+        """Cross-hand combo (Caps Lock) is parsed correctly."""
+        from glove80_visualizer.parser import parse_combos
+
+        if not daves_keymap_path.exists():
+            pytest.skip("Dave's keymap file not found")
+
+        combos = parse_combos(daves_keymap_path)
+
+        # Find caps lock (positions 71 + 72 = LT6 + RT6)
+        caps_combos = [c for c in combos if 71 in c.positions and 72 in c.positions]
+
+        assert len(caps_combos) == 1, "Should find caps lock combo"
+        combo = caps_combos[0]
+        assert combo.name == "LT6+RT6"
+        assert "Caps" in combo.action

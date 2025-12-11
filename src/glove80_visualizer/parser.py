@@ -13,6 +13,8 @@ import yaml
 from keymap_drawer.config import ParseConfig
 from keymap_drawer.parse.zmk import ZmkKeymapParser
 
+from glove80_visualizer.models import Combo
+
 
 class KeymapParseError(Exception):
     """Raised when a keymap file cannot be parsed."""
@@ -167,3 +169,233 @@ def parse_mod_morph_behaviors(keymap_content: str) -> dict[str, dict[str, str]]:
             }
 
     return result
+
+
+# ZMK position → thumb key name mapping
+THUMB_KEY_NAMES: dict[int, str] = {
+    # Left thumb (upper row: T1-T3, lower row: T4-T6)
+    52: "LT1",
+    53: "LT2",
+    54: "LT3",
+    69: "LT4",
+    70: "LT5",
+    71: "LT6",
+    # Right thumb (upper row: T1-T3, lower row: T4-T6)
+    57: "RT1",
+    56: "RT2",
+    55: "RT3",
+    74: "RT4",
+    73: "RT5",
+    72: "RT6",
+}
+
+
+def _positions_to_name(positions: list[int]) -> str:
+    """
+    Convert ZMK positions to human-readable thumb key names.
+
+    Args:
+        positions: List of ZMK key positions
+
+    Returns:
+        String like "LT3+LT6" or "RT1+RT4" or "25+26" for non-thumb keys
+    """
+    names = []
+    for pos in sorted(positions):
+        if pos in THUMB_KEY_NAMES:
+            names.append(THUMB_KEY_NAMES[pos])
+        else:
+            names.append(str(pos))
+    return "+".join(names)
+
+
+def _format_combo_action(key_data: dict | str, combo_name: str = "") -> str:
+    """
+    Format a combo binding into a human-readable action label.
+
+    Args:
+        key_data: The key binding data from keymap-drawer
+        combo_name: Optional combo node name for fallback
+
+    Returns:
+        Human-readable action string
+    """
+    # Handle string bindings (e.g., "CAPSLOCK", "]", "[")
+    if isinstance(key_data, str):
+        # Clean up raw binding strings
+        if key_data.startswith("&"):
+            # Custom behavior - try to parse known patterns
+            # &mod_tab_chord LGUI 17 -> Cmd+Tab
+            # &mod_tab_chord LCTL 17 -> Ctrl+Tab
+            if "mod_tab_chord" in key_data:
+                if "LGUI" in key_data or "GUI" in key_data:
+                    return "Cmd+Tab"
+                if "LCTL" in key_data or "CTL" in key_data:
+                    return "Ctrl+Tab"
+                if "LALT" in key_data or "ALT" in key_data:
+                    return "Alt+Tab"
+                return "Tab Switcher"
+
+            # Fallback to combo name if available
+            if combo_name:
+                return _derive_action_from_name(combo_name)
+            return key_data
+
+        # Format common key names
+        return _format_key_name(key_data)
+
+    # Handle dict bindings with tap/hold
+    if isinstance(key_data, dict):
+        tap = key_data.get("t", "")
+        hold = key_data.get("h", "")
+
+        # Handle toggle layer
+        if hold == "toggle":
+            return f"Toggle {tap}"
+
+        # Handle sticky keys
+        if hold == "sticky":
+            return _format_sticky_key(tap)
+
+        # Just return tap if no special handling
+        if tap:
+            return _format_key_name(tap)
+
+    # Fallback to combo name
+    if combo_name:
+        return _derive_action_from_name(combo_name)
+
+    return str(key_data)
+
+
+def _format_key_name(key: str) -> str:
+    """Format a key name for display."""
+    # Common key name mappings
+    key_names = {
+        "CAPSLOCK": "Caps Lock",
+        "CAPS": "Caps Lock",
+        "LGUI": "Left Cmd",
+        "RGUI": "Right Cmd",
+        "LALT": "Left Alt",
+        "RALT": "AltGr",
+        "LCTL": "Left Ctrl",
+        "RCTL": "Right Ctrl",
+        "LSHFT": "Left Shift",
+        "RSHFT": "Right Shift",
+    }
+    return key_names.get(key.upper(), key)
+
+
+def _format_sticky_key(tap: str) -> str:
+    """Format a sticky key modifier combo."""
+    # Handle combined modifiers like "Gui+Alt+Ctl+LSHFT"
+    tap_upper = tap.upper()
+
+    if "GUI" in tap_upper and "ALT" in tap_upper and "CTL" in tap_upper and "SHFT" in tap_upper:
+        return "Sticky Hyper"
+    if "ALT" in tap_upper and "CTL" in tap_upper and "SHFT" in tap_upper:
+        return "Sticky Meh"
+    if tap_upper == "RALT":
+        return "Sticky AltGr"
+    if tap_upper == "LALT":
+        return "Sticky Alt"
+    if "SHFT" in tap_upper:
+        return "Sticky Shift"
+    if "CTL" in tap_upper:
+        return "Sticky Ctrl"
+    if "GUI" in tap_upper:
+        return "Sticky Cmd"
+
+    return f"Sticky {tap}"
+
+
+def _derive_action_from_name(combo_name: str) -> str:
+    """
+    Derive a human-readable action from the combo node name.
+
+    Args:
+        combo_name: The ZMK combo node name (e.g., "combo_alt_tab_switcher")
+
+    Returns:
+        Human-readable action (e.g., "Alt+Tab Switcher")
+    """
+    # Remove common prefixes
+    name = combo_name
+    for prefix in ("combo_", "cmb_"):
+        if name.startswith(prefix):
+            name = name[len(prefix) :]
+            break
+
+    # Replace underscores with spaces and title case
+    words = name.replace("_", " ").split()
+
+    # Capitalize each word, handling special cases
+    result = []
+    for word in words:
+        word_lower = word.lower()
+        # Keep modifier names intact
+        if word_lower in ("alt", "ctrl", "shift", "gui", "cmd", "tab"):
+            result.append(word.capitalize())
+        elif word_lower == "altgr":
+            result.append("AltGr")
+        else:
+            result.append(word.capitalize())
+
+    return " ".join(result)
+
+
+def parse_combos(
+    keymap_path: Path,
+    columns: int = 10,
+) -> list[Combo]:
+    """
+    Parse combos from a ZMK keymap file.
+
+    Uses keymap-drawer's parser which handles C preprocessing (via pcpp)
+    to expand #ifdef, #define, and #include directives.
+
+    Args:
+        keymap_path: Path to the ZMK .keymap file
+        columns: Number of columns for layout (used by keymap-drawer)
+
+    Returns:
+        List of Combo objects
+
+    Raises:
+        FileNotFoundError: If the keymap file does not exist
+        KeymapParseError: If the keymap cannot be parsed
+    """
+    validate_keymap_path(keymap_path)
+
+    config = ParseConfig()
+    parser = ZmkKeymapParser(config=config, columns=columns)
+
+    try:
+        with open(keymap_path) as f:
+            result = parser.parse(f)
+    except Exception as e:
+        raise KeymapParseError(f"Failed to parse keymap for combos: {e}") from e
+
+    combos = []
+    for combo_data in result.get("combos", []):
+        positions = combo_data["p"]
+        key_data = combo_data["k"]
+        layers = combo_data.get("l")  # None if not specified (all layers)
+
+        # Generate human-readable name from positions
+        name = _positions_to_name(positions)
+
+        # Format the action label
+        # Note: combo node names aren't exposed by keymap-drawer,
+        # so we can't use them as fallback
+        action = _format_combo_action(key_data)
+
+        combo = Combo(
+            name=name,
+            positions=positions,
+            action=action,
+            layers=layers,
+        )
+        combos.append(combo)
+
+    return combos
