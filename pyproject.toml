@@ -46,6 +46,7 @@ dev = [
     "types-PyYAML>=6.0.0",
     "build>=1.0.0",
     "playwright>=1.40.0",
+    "toon-python>=0.1.0",
 ]
 
 [project.scripts]
