@@ -256,3 +256,129 @@ class TestPdfEdgeCases:
         result = _replace_layer_label(svg, "Layer 0: Test")
         assert "Layer 0: Test" in result
         assert "Test:</text>" not in result
+
+
+class TestRsvgConvertPath:
+    """Tests for the rsvg-convert code path."""
+
+    def test_svg_to_pdf_uses_rsvg_when_available(self, sample_svg, mocker, tmp_path):
+        """Uses rsvg-convert when available."""
+        from glove80_visualizer.pdf_generator import svg_to_pdf
+
+        # Create a real PDF file to be returned
+        pdf_content = b"%PDF-1.4 fake pdf content for testing"
+        fake_pdf_path = tmp_path / "output.pdf"
+        fake_pdf_path.write_bytes(pdf_content)
+
+        # Mock shutil.which to return a path (rsvg found)
+        mocker.patch(
+            "glove80_visualizer.pdf_generator.shutil.which", return_value="/usr/bin/rsvg-convert"
+        )
+
+        # Mock subprocess.run to simulate successful rsvg-convert
+        mock_run = mocker.patch("glove80_visualizer.pdf_generator.subprocess.run")
+        mock_run.return_value.returncode = 0
+
+        # Mock tempfile to control the output path
+        mock_svg_file = mocker.MagicMock()
+        mock_svg_file.__enter__ = mocker.MagicMock(return_value=mock_svg_file)
+        mock_svg_file.__exit__ = mocker.MagicMock(return_value=False)
+        mock_svg_file.name = str(tmp_path / "input.svg")
+
+        mock_pdf_file = mocker.MagicMock()
+        mock_pdf_file.__enter__ = mocker.MagicMock(return_value=mock_pdf_file)
+        mock_pdf_file.__exit__ = mocker.MagicMock(return_value=False)
+        mock_pdf_file.name = str(fake_pdf_path)
+
+        mocker.patch(
+            "glove80_visualizer.pdf_generator.tempfile.NamedTemporaryFile",
+            side_effect=[mock_svg_file, mock_pdf_file],
+        )
+
+        # Mock os.unlink to avoid file not found errors
+        mocker.patch("os.unlink")
+
+        pdf_bytes = svg_to_pdf(sample_svg)
+
+        # Verify rsvg-convert was called
+        mock_run.assert_called_once()
+        call_args = mock_run.call_args[0][0]
+        assert call_args[0] == "rsvg-convert"
+        assert "-f" in call_args
+        assert "pdf" in call_args
+
+        # Verify PDF content was read
+        assert pdf_bytes == pdf_content
+
+    def test_svg_to_pdf_rsvg_direct(self, sample_svg, mocker, tmp_path):
+        """Test _svg_to_pdf_rsvg function directly."""
+        from glove80_visualizer.pdf_generator import _svg_to_pdf_rsvg
+
+        # Create a real PDF file to be returned
+        pdf_content = b"%PDF-1.4 rsvg test pdf"
+        fake_pdf_path = tmp_path / "output.pdf"
+        fake_pdf_path.write_bytes(pdf_content)
+
+        fake_svg_path = tmp_path / "input.svg"
+
+        # Mock subprocess.run to simulate successful rsvg-convert
+        mock_run = mocker.patch("glove80_visualizer.pdf_generator.subprocess.run")
+        mock_run.return_value.returncode = 0
+
+        # Mock tempfile to control paths
+        mock_svg_file = mocker.MagicMock()
+        mock_svg_file.__enter__ = mocker.MagicMock(return_value=mock_svg_file)
+        mock_svg_file.__exit__ = mocker.MagicMock(return_value=False)
+        mock_svg_file.name = str(fake_svg_path)
+
+        mock_pdf_file = mocker.MagicMock()
+        mock_pdf_file.__enter__ = mocker.MagicMock(return_value=mock_pdf_file)
+        mock_pdf_file.__exit__ = mocker.MagicMock(return_value=False)
+        mock_pdf_file.name = str(fake_pdf_path)
+
+        mocker.patch(
+            "glove80_visualizer.pdf_generator.tempfile.NamedTemporaryFile",
+            side_effect=[mock_svg_file, mock_pdf_file],
+        )
+
+        # Mock os.unlink
+        mocker.patch("os.unlink")
+
+        pdf_bytes = _svg_to_pdf_rsvg(sample_svg)
+
+        assert pdf_bytes == pdf_content
+        mock_run.assert_called_once()
+
+    def test_svg_to_pdf_rsvg_failure(self, sample_svg, mocker, tmp_path):
+        """Test _svg_to_pdf_rsvg handles rsvg-convert failure."""
+        from glove80_visualizer.pdf_generator import _svg_to_pdf_rsvg
+
+        fake_svg_path = tmp_path / "input.svg"
+        fake_pdf_path = tmp_path / "output.pdf"
+
+        # Mock subprocess.run to simulate failed rsvg-convert
+        mock_run = mocker.patch("glove80_visualizer.pdf_generator.subprocess.run")
+        mock_run.return_value.returncode = 1
+        mock_run.return_value.stderr = "rsvg-convert error: invalid SVG"
+
+        # Mock tempfile
+        mock_svg_file = mocker.MagicMock()
+        mock_svg_file.__enter__ = mocker.MagicMock(return_value=mock_svg_file)
+        mock_svg_file.__exit__ = mocker.MagicMock(return_value=False)
+        mock_svg_file.name = str(fake_svg_path)
+
+        mock_pdf_file = mocker.MagicMock()
+        mock_pdf_file.__enter__ = mocker.MagicMock(return_value=mock_pdf_file)
+        mock_pdf_file.__exit__ = mocker.MagicMock(return_value=False)
+        mock_pdf_file.name = str(fake_pdf_path)
+
+        mocker.patch(
+            "glove80_visualizer.pdf_generator.tempfile.NamedTemporaryFile",
+            side_effect=[mock_svg_file, mock_pdf_file],
+        )
+
+        # Mock os.unlink
+        mocker.patch("os.unlink")
+
+        with pytest.raises(RuntimeError, match="rsvg-convert failed"):
+            _svg_to_pdf_rsvg(sample_svg)
