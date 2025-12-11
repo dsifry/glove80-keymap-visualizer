@@ -31,7 +31,14 @@ jobs:
 
       - name: Install Cairo (macOS)
         if: runner.os == 'macOS'
-        run: brew install cairo
+        run: |
+          brew install cairo
+          echo "PKG_CONFIG_PATH=$(brew --prefix cairo)/lib/pkgconfig:$PKG_CONFIG_PATH" >> $GITHUB_ENV
+
+      - name: Set library path (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          echo "DYLD_FALLBACK_LIBRARY_PATH=$(brew --prefix cairo)/lib:$DYLD_FALLBACK_LIBRARY_PATH" >> $GITHUB_ENV
 
       - name: Install dependencies
         run: |
