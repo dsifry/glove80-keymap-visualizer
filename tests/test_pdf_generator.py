@@ -390,12 +390,7 @@ class TestRsvgConvertPath:
         mock_cairosvg.svg2pdf.side_effect = Exception("Invalid SVG content")
         mocker.patch.dict("sys.modules", {"cairosvg": mock_cairosvg})
 
-        # Need to reload the function to use the mocked module
-        import importlib
-
-        import glove80_visualizer.pdf_generator as pdf_gen
-
-        importlib.reload(pdf_gen)
+        from glove80_visualizer.pdf_generator import _svg_to_pdf_cairosvg
 
         with pytest.raises(RuntimeError, match="Failed to convert SVG to PDF"):
-            pdf_gen._svg_to_pdf_cairosvg(sample_svg)
+            _svg_to_pdf_cairosvg(sample_svg)
