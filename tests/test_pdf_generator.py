@@ -382,3 +382,20 @@ class TestRsvgConvertPath:
 
         with pytest.raises(RuntimeError, match="rsvg-convert failed"):
             _svg_to_pdf_rsvg(sample_svg)
+
+    def test_svg_to_pdf_cairosvg_conversion_failure(self, sample_svg, mocker):
+        """Test _svg_to_pdf_cairosvg handles conversion failure."""
+        # Mock cairosvg to raise an exception during conversion
+        mock_cairosvg = mocker.MagicMock()
+        mock_cairosvg.svg2pdf.side_effect = Exception("Invalid SVG content")
+        mocker.patch.dict("sys.modules", {"cairosvg": mock_cairosvg})
+
+        # Need to reload the function to use the mocked module
+        import importlib
+
+        import glove80_visualizer.pdf_generator as pdf_gen
+
+        importlib.reload(pdf_gen)
+
+        with pytest.raises(RuntimeError, match="Failed to convert SVG to PDF"):
+            pdf_gen._svg_to_pdf_cairosvg(sample_svg)

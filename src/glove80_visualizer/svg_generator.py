@@ -438,9 +438,7 @@ def generate_layer_svg(
 
     # Pre-build the physical layout using layout_factory (API changed in keymap-drawer 0.18+)
     try:
-        physical_layout = layout_factory(
-            config=kd_config.draw_config, qmk_keyboard=config.keyboard
-        )
+        physical_layout = layout_factory(config=kd_config.draw_config, qmk_keyboard=config.keyboard)
     except Exception as e:
         raise ValueError(
             f"Failed to create physical layout for keyboard '{config.keyboard}'. "

@@ -3278,3 +3278,39 @@ class TestCairoSvgCompatibility:
         assert dark_ratio < 0.1, (
             f"CairoSVG rendered {dark_ratio:.1%} dark pixels - likely artifact bug"
         )
+
+
+class TestErrorHandling:
+    """Tests for error handling in SVG generator."""
+
+    def test_layout_factory_failure(self, sample_layer, mocker):
+        """Test that layout_factory failure produces actionable error."""
+        from glove80_visualizer.config import VisualizerConfig
+        from glove80_visualizer.svg_generator import generate_layer_svg
+
+        # Mock layout_factory to raise an exception
+        mocker.patch(
+            "glove80_visualizer.svg_generator.layout_factory",
+            side_effect=Exception("Unknown keyboard type"),
+        )
+
+        import pytest
+
+        with pytest.raises(ValueError, match="Failed to create physical layout"):
+            generate_layer_svg(sample_layer, config=VisualizerConfig())
+
+    def test_keymap_drawer_failure(self, sample_layer, mocker):
+        """Test that KeymapDrawer failure produces actionable error."""
+        from glove80_visualizer.config import VisualizerConfig
+        from glove80_visualizer.svg_generator import generate_layer_svg
+
+        # Mock KeymapDrawer to raise an exception
+        mocker.patch(
+            "glove80_visualizer.svg_generator.KeymapDrawer",
+            side_effect=Exception("Invalid keymap data"),
+        )
+
+        import pytest
+
+        with pytest.raises(RuntimeError, match="Failed to generate SVG"):
+            generate_layer_svg(sample_layer, config=VisualizerConfig())
