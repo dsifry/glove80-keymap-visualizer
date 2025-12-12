@@ -360,6 +360,17 @@ def generate_kle_from_template(
                     and not binding.hold  # Not a hold-tap key (those use different format)
                 )
 
+                # Check if this key has multi-line word labels (like "Page\nUp", "Sel\nLine")
+                # These also need a=5 to show both lines
+                has_multiline_words = (
+                    '\n' in label
+                    and len(label_lines) >= 2
+                    and label_lines[0]  # Has content on first line
+                    and label_lines[1]  # Has content on second line
+                    and (len(label_lines[0]) > 2 or len(label_lines[1]) > 2)  # At least one line is a word
+                    and not binding.hold  # Not a hold-tap key
+                )
+
                 # Check if this key has shifted char AND hold (like semicolon with control)
                 # Detect from binding properties, not label format
                 has_shifted_and_hold = (
@@ -407,8 +418,8 @@ def generate_kle_from_template(
                         props["a"] = 0
                     elif is_home_row_hrm or is_outer_special or is_thumb_key:
                         props["a"] = 7
-                    # Set a=5 alignment for keys with shifted characters (two-line legend)
-                    elif has_shifted_char:
+                    # Set a=5 alignment for keys with shifted characters or multi-line words
+                    elif has_shifted_char or has_multiline_words:
                         # Check if this is the last key before row end (R2C6 right position)
                         # These need a=5 but we must reset a=7 afterward for Row 6 letters
                         was_reset_point = props.get("a") == 7
@@ -427,6 +438,29 @@ def generate_kle_from_template(
                         # Remove fa array if present to use consistent font
                         if "fa" in props:
                             del props["fa"]
+                # Handle keys without immediately preceding props dict
+                # Search backward for the most recent props dict, but only modify if
+                # all intermediate keys are also multi-line (won't be broken by a=5)
+                elif has_multiline_words:
+                    # Find the most recent props dict before this key
+                    props_idx = None
+                    for search_idx in range(item_idx - 1, -1, -1):
+                        if isinstance(row[search_idx], dict):
+                            props_idx = search_idx
+                            break
+
+                    if props_idx is not None:
+                        # Check if all keys between props_idx and item_idx are multi-line
+                        all_multiline = True
+                        for check_idx in range(props_idx + 1, item_idx):
+                            check_item = row[check_idx]
+                            if isinstance(check_item, str) and '\n' not in check_item:
+                                # Single-line label found - would be broken by a=5
+                                all_multiline = False
+                                break
+
+                        if all_multiline:
+                            row[props_idx]["a"] = 5
                 # Note: We intentionally do NOT insert new property dicts here
                 # The template structure must be preserved - inserting would break layout
 
@@ -492,14 +526,14 @@ def _format_hold_label(hold: str, os_style: str = "mac") -> str:
 KLE_WORD_LABELS = {
     "HOME": "Home",
     "END": "End",
-    "PG_UP": "Page\nUp",
-    "PG_DN": "Page\nDn",
-    "PG UP": "Page\nUp",
-    "PG DN": "Page\nDn",
-    "PAGE_UP": "Page\nUp",
-    "PAGE_DN": "Page\nDn",
-    "PAGE UP": "Page\nUp",
-    "PAGE DN": "Page\nDn",
+    "PG_UP": "Page Up",
+    "PG_DN": "Page Dn",
+    "PG UP": "Page Up",
+    "PG DN": "Page Dn",
+    "PAGE_UP": "Page Up",
+    "PAGE_DN": "Page Dn",
+    "PAGE UP": "Page Up",
+    "PAGE DN": "Page Dn",
     "ENTER": "Enter",
     "RET": "Enter",
     "RETURN": "Enter",
