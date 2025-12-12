@@ -349,11 +349,14 @@ def generate_kle_from_template(
 
                 # Check if this key has a shifted character (two-line legend: "shifted\nunshifted")
                 # These need a=5 alignment for proper KLE rendering
+                # Only match short char pairs (1-2 chars each), not multi-word labels like "Sel\nLine"
                 has_shifted_char = (
                     '\n' in label
                     and len(label_lines) >= 2
                     and label_lines[0]  # Has shifted char on first line
                     and label_lines[1]  # Has unshifted char on second line
+                    and len(label_lines[0]) <= 2  # Short shifted char (e.g., "!", ":")
+                    and len(label_lines[1]) <= 2  # Short unshifted char (e.g., "1", ";")
                     and not binding.hold  # Not a hold-tap key (those use different format)
                 )
 
@@ -397,7 +400,7 @@ def generate_kle_from_template(
                         # Keys like semicolon with shifted : and hold control
                         # Use a=0 with center column positions 8, 9, 10 for vertical centering
                         props["a"] = 0
-                    elif is_home_row_hrm or is_outer_with_hold or is_thumb_key:
+                    elif is_home_row_hrm or is_outer_special or is_thumb_key:
                         props["a"] = 7
                     # Set a=5 alignment for keys with shifted characters (two-line legend)
                     elif has_shifted_char:
@@ -410,6 +413,9 @@ def generate_kle_from_template(
                             next_item = row[item_idx + 1] if item_idx + 1 < len(row) else None
                             if isinstance(next_item, dict) and "a" not in next_item:
                                 next_item["a"] = 7
+                    else:
+                        # Default: center simple single-line labels
+                        props["a"] = 7
                     # Set font size for thumb/outer special keys
                     if needs_font_adjustment and target_font:
                         props["f"] = target_font
