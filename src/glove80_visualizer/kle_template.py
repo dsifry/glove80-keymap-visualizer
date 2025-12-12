@@ -193,7 +193,7 @@ ZMK_TO_SLOT = {
 
     # Home row (ZMK 34-45)
     # ZMK: 34=Caps, 35=A, 36=S, 37=D, 38=F, 39=G | 40=H, 41=J, 42=K, 43=L, 44=;, 45='
-    # Caps (34) has no main slot in template
+    34: 29,  # Caps -> slot 29 (R4C6 left outer)
     35: 30,  # A -> slot 30
     36: 21,  # S -> slot 21
     37: 22,  # D -> slot 22
@@ -365,6 +365,8 @@ def generate_kle_from_template(
                     target_font = None  # Use template default for regular keys
 
                 # Handle preceding property dict
+                # IMPORTANT: Only modify existing property dicts - do NOT insert new ones
+                # as that would shift all subsequent items and break the template layout
                 if item_idx > 0 and isinstance(row[item_idx - 1], dict):
                     props = row[item_idx - 1]
                     # Remove ghost flag when we're putting actual content there
@@ -382,15 +384,8 @@ def generate_kle_from_template(
                         # Remove fa array if present to use consistent font
                         if "fa" in props:
                             del props["fa"]
-                elif is_home_row_hrm:
-                    # No preceding property dict - insert one with a=7
-                    row.insert(item_idx, {"a": 7})
-                elif has_shifted_char:
-                    # No preceding property dict - insert one with a=5 for shifted chars
-                    row.insert(item_idx, {"a": 5})
-                elif needs_font_adjustment and target_font:
-                    # No preceding property dict - insert one with font size
-                    row.insert(item_idx, {"f": target_font})
+                # Note: We intentionally do NOT insert new property dicts here
+                # The template structure must be preserved - inserting would break layout
 
     return json.dumps(kle_data, indent=2)
 

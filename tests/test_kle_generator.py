@@ -388,6 +388,28 @@ class TestKLEKeyMapping:
         assert row_idx == 5, f"ZMK 10 should be in row 5 (R2), not row {row_idx}"
         assert item_idx == 3, f"ZMK 10 should be at item 3 (R2C6 left), not item {item_idx}"
 
+    def test_outer_column_r4_caps_key(self):
+        """KLE-037: R4C6 left (Caps Lock) should appear in generated output."""
+        from glove80_visualizer.kle_template import generate_kle_from_template
+        import json
+
+        # ZMK position 34 is the Caps Lock key on R4 left outer column
+        bindings = [KeyBinding(position=34, tap="CAPS")]
+        bindings.extend([KeyBinding(position=i, tap="X") for i in range(80) if i != 34])
+        layer = Layer(name="Test", index=0, bindings=bindings)
+
+        result = generate_kle_from_template(layer)
+        parsed = json.loads(result)
+
+        # The Caps key should appear in row 9 (R4 outer)
+        # It gets formatted as ⇪ (Caps Lock symbol) by format_key_label
+        row9 = parsed[9]
+        found_caps = any(
+            isinstance(item, str) and ("⇪" in item or "Caps" in item or "CAPS" in item)
+            for item in row9
+        )
+        assert found_caps, f"Caps key should appear in row 9, got: {[item for item in row9 if isinstance(item, str)]}"
+
 
 class TestKLEComboTextBlocks:
     """Test combo text block generation in KLE JSON."""
