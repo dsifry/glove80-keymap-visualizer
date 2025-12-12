@@ -307,41 +307,43 @@ def main(
     if combos and verbose:
         log(f"Found {len(combos)} combos")
 
-    # Generate SVGs
+    # Generate SVGs (only needed for pdf and svg formats)
     svgs: list[str] = []
     failed_layers: list[str] = []
 
-    for layer in extracted_layers:
-        log(f"  Generating SVG for layer: {layer.name}")
-        try:
-            svg = generate_layer_svg(
-                layer,
-                config,
-                os_style=os_style,
-                resolve_trans=resolve_trans,
-                base_layer=base_layer_obj,
-                activators=activators,
-            )
-            svgs.append(svg)
-        except Exception as e:
-            if continue_on_error:
-                failed_layers.append(layer.name)
-                log(f"  Warning: Failed to render layer {layer.name}: {e}", force=True)
-                svgs.append(None)  # Placeholder
-            else:
-                error(f"Failed to render layer {layer.name}: {e}")
-                sys.exit(1)
+    # Skip SVG generation for KLE-only formats (they use the template directly)
+    if output_format not in ("kle", "kle-png", "kle-pdf"):
+        for layer in extracted_layers:
+            log(f"  Generating SVG for layer: {layer.name}")
+            try:
+                svg = generate_layer_svg(
+                    layer,
+                    config,
+                    os_style=os_style,
+                    resolve_trans=resolve_trans,
+                    base_layer=base_layer_obj,
+                    activators=activators,
+                )
+                svgs.append(svg)
+            except Exception as e:
+                if continue_on_error:
+                    failed_layers.append(layer.name)
+                    log(f"  Warning: Failed to render layer {layer.name}: {e}", force=True)
+                    svgs.append(None)  # Placeholder
+                else:
+                    error(f"Failed to render layer {layer.name}: {e}")
+                    sys.exit(1)
 
-    # Filter out failed layers
-    if continue_on_error:
-        valid_pairs = [(l, s) for l, s in zip(extracted_layers, svgs) if s is not None]
-        if not valid_pairs:
-            error("All layers failed to render")
-            sys.exit(1)
-        if failed_layers:
-            click.echo(f"Warning: Skipped {len(failed_layers)} layer(s): {', '.join(failed_layers)}")
-        extracted_layers = [p[0] for p in valid_pairs]
-        svgs = [p[1] for p in valid_pairs]
+        # Filter out failed layers
+        if continue_on_error:
+            valid_pairs = [(l, s) for l, s in zip(extracted_layers, svgs) if s is not None]
+            if not valid_pairs:
+                error("All layers failed to render")
+                sys.exit(1)
+            if failed_layers:
+                click.echo(f"Warning: Skipped {len(failed_layers)} layer(s): {', '.join(failed_layers)}")
+            extracted_layers = [p[0] for p in valid_pairs]
+            svgs = [p[1] for p in valid_pairs]
 
     # Output based on format
     if output_format == "svg":
