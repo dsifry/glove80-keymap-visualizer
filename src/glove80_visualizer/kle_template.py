@@ -338,6 +338,16 @@ def generate_kle_from_template(
                 label_lines = label.split('\n')
                 max_line_len = max((len(line) for line in label_lines if line), default=0)
 
+                # Check if this key has a shifted character (two-line legend: "shifted\nunshifted")
+                # These need a=5 alignment for proper KLE rendering
+                has_shifted_char = (
+                    '\n' in label
+                    and len(label_lines) >= 2
+                    and label_lines[0]  # Has shifted char on first line
+                    and label_lines[1]  # Has unshifted char on second line
+                    and not binding.hold  # Not a hold-tap key (those use different format)
+                )
+
                 # Font size logic:
                 # - f=5: short labels (1-2 chars) on regular keys
                 # - f=4: medium labels (3-5 chars) or thumb/outer special keys
@@ -363,6 +373,9 @@ def generate_kle_from_template(
                     # Set a=7 alignment for home row HRM keys to center the tap letter
                     if is_home_row_hrm:
                         props["a"] = 7
+                    # Set a=5 alignment for keys with shifted characters (two-line legend)
+                    elif has_shifted_char:
+                        props["a"] = 5
                     # Set font size for thumb/outer special keys
                     if needs_font_adjustment and target_font:
                         props["f"] = target_font
@@ -372,6 +385,9 @@ def generate_kle_from_template(
                 elif is_home_row_hrm:
                     # No preceding property dict - insert one with a=7
                     row.insert(item_idx, {"a": 7})
+                elif has_shifted_char:
+                    # No preceding property dict - insert one with a=5 for shifted chars
+                    row.insert(item_idx, {"a": 5})
                 elif needs_font_adjustment and target_font:
                     # No preceding property dict - insert one with font size
                     row.insert(item_idx, {"f": target_font})
