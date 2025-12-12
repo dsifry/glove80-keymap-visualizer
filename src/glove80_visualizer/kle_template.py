@@ -333,6 +333,13 @@ def generate_kle_from_template(
                 is_thumb_key = zmk_pos in THUMB_POSITIONS
                 is_outer_special = zmk_pos in OUTER_R5_R6_POSITIONS
 
+                # Check if outer special key has a hold behavior (like sticky shift)
+                is_outer_with_hold = (
+                    is_outer_special
+                    and binding.hold
+                    and binding.hold != "None"
+                )
+
                 # Calculate appropriate font size based on label content
                 # Get the longest line in the label for font size calculation
                 label_lines = label.split('\n')
@@ -372,11 +379,13 @@ def generate_kle_from_template(
                     # Remove ghost flag when we're putting actual content there
                     if props.get("g") is True:
                         props["g"] = False
-                    # Set a=7 alignment for home row HRM keys to center the tap letter
-                    if is_home_row_hrm:
+                    # Set a=7 alignment for hold-tap keys to center the tap letter
+                    # This applies to: home row HRM keys and outer special keys with holds
+                    if is_home_row_hrm or is_outer_with_hold:
                         props["a"] = 7
                     # Set a=5 alignment for keys with shifted characters (two-line legend)
-                    elif has_shifted_char:
+                    # BUT preserve a=7 if already set (these are reset points for cascading)
+                    elif has_shifted_char and props.get("a") != 7:
                         props["a"] = 5
                     # Set font size for thumb/outer special keys
                     if needs_font_adjustment and target_font:
