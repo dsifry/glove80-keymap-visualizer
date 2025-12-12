@@ -384,9 +384,16 @@ def generate_kle_from_template(
                     if is_home_row_hrm or is_outer_with_hold:
                         props["a"] = 7
                     # Set a=5 alignment for keys with shifted characters (two-line legend)
-                    # BUT preserve a=7 if already set (these are reset points for cascading)
-                    elif has_shifted_char and props.get("a") != 7:
+                    elif has_shifted_char:
+                        # Check if this is the last key before row end (R2C6 right position)
+                        # These need a=5 but we must reset a=7 afterward for Row 6 letters
+                        was_reset_point = props.get("a") == 7
                         props["a"] = 5
+                        # If this was a reset point, ensure next prop dict resets to a=7
+                        if was_reset_point and item_idx + 1 < len(row):
+                            next_item = row[item_idx + 1] if item_idx + 1 < len(row) else None
+                            if isinstance(next_item, dict) and "a" not in next_item:
+                                next_item["a"] = 7
                     # Set font size for thumb/outer special keys
                     if needs_font_adjustment and target_font:
                         props["f"] = target_font
