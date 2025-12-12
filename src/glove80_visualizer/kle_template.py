@@ -373,6 +373,8 @@ def generate_kle_from_template(
                 # - f=4: medium labels (3-5 chars) or thumb/outer special keys
                 # - f=3: longer labels (6+ chars)
                 # - f=2: very long labels (10+ chars)
+                # Count modifier symbols (they're visually wider than regular chars)
+                modifier_count = sum(1 for c in label if c in '⌘⌥⌃⇧')
                 needs_font_adjustment = is_thumb_key or is_outer_special
                 if needs_font_adjustment:
                     if max_line_len <= 3:
@@ -381,6 +383,9 @@ def generate_kle_from_template(
                         target_font = 3
                     else:
                         target_font = 2
+                elif max_line_len >= 5 or modifier_count >= 2:
+                    # Reduce font for longer labels or multi-modifier combos (⌘⇧Z, etc.)
+                    target_font = 4
                 else:
                     target_font = None  # Use template default for regular keys
 
@@ -416,8 +421,8 @@ def generate_kle_from_template(
                     else:
                         # Default: center simple single-line labels
                         props["a"] = 7
-                    # Set font size for thumb/outer special keys
-                    if needs_font_adjustment and target_font:
+                    # Set font size for keys that need it (thumb/outer special or long labels)
+                    if target_font:
                         props["f"] = target_font
                         # Remove fa array if present to use consistent font
                         if "fa" in props:
