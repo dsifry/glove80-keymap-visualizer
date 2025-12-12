@@ -636,3 +636,147 @@ class TestKLEHRMAlignment:
             # (they may have other 'a' values from the template, that's fine)
             assert props.get("a") != 7 or "f" in props, \
                 f"Thumb key should not get a=7 HRM override, got props: {props}"
+
+
+class TestKLEHeldKeyIndicator:
+    """Test the held key indicator (✋) for layer activators."""
+
+    def test_held_key_shows_hand_emoji(self):
+        """KLE-036: Key that activates current layer should show ✋."""
+        from glove80_visualizer.kle_template import generate_kle_from_template, ZMK_TO_SLOT, TEMPLATE_POSITIONS
+        from glove80_visualizer.models import LayerActivator
+
+        # Create a layer where position 69 (left T4) activates it
+        bindings = [KeyBinding(position=69, tap="Cursor", hold="Cursor")]
+        bindings.extend([KeyBinding(position=i, tap="X") for i in range(80) if i != 69])
+        layer = Layer(name="Cursor", index=17, bindings=bindings)
+
+        # Create an activator that says position 69 activates layer "Cursor"
+        activators = [
+            LayerActivator(
+                source_layer_name="QWERTY",
+                source_position=69,
+                target_layer_name="Cursor",
+                activation_type="hold"
+            )
+        ]
+
+        result = generate_kle_from_template(layer, activators=activators)
+        parsed = json.loads(result)
+
+        slot = ZMK_TO_SLOT[69]
+        row_idx, item_idx = TEMPLATE_POSITIONS[slot]
+        row = parsed[row_idx]
+        label = row[item_idx]
+
+        # Should contain the hand emoji
+        assert "✋" in label, f"Held key should show ✋, got {repr(label)}"
+
+    def test_held_key_shows_layer_text(self):
+        """KLE-037: Held key indicator should include 'Layer' text."""
+        from glove80_visualizer.kle_template import generate_kle_from_template, ZMK_TO_SLOT, TEMPLATE_POSITIONS
+        from glove80_visualizer.models import LayerActivator
+
+        bindings = [KeyBinding(position=69, tap="Cursor", hold="Cursor")]
+        bindings.extend([KeyBinding(position=i, tap="X") for i in range(80) if i != 69])
+        layer = Layer(name="Cursor", index=17, bindings=bindings)
+
+        activators = [
+            LayerActivator(
+                source_layer_name="QWERTY",
+                source_position=69,
+                target_layer_name="Cursor",
+                activation_type="hold"
+            )
+        ]
+
+        result = generate_kle_from_template(layer, activators=activators)
+        parsed = json.loads(result)
+
+        slot = ZMK_TO_SLOT[69]
+        row_idx, item_idx = TEMPLATE_POSITIONS[slot]
+        row = parsed[row_idx]
+        label = row[item_idx]
+
+        # Should contain "Layer" text
+        assert "Layer" in label, f"Held key should show 'Layer', got {repr(label)}"
+
+    def test_held_key_has_alignment_a0(self):
+        """KLE-038: Held key should use a=0 alignment for 12-position grid."""
+        from glove80_visualizer.kle_template import generate_kle_from_template, ZMK_TO_SLOT, TEMPLATE_POSITIONS
+        from glove80_visualizer.models import LayerActivator
+
+        bindings = [KeyBinding(position=69, tap="Cursor", hold="Cursor")]
+        bindings.extend([KeyBinding(position=i, tap="X") for i in range(80) if i != 69])
+        layer = Layer(name="Cursor", index=17, bindings=bindings)
+
+        activators = [
+            LayerActivator(
+                source_layer_name="QWERTY",
+                source_position=69,
+                target_layer_name="Cursor",
+                activation_type="hold"
+            )
+        ]
+
+        result = generate_kle_from_template(layer, activators=activators)
+        parsed = json.loads(result)
+
+        slot = ZMK_TO_SLOT[69]
+        row_idx, item_idx = TEMPLATE_POSITIONS[slot]
+        row = parsed[row_idx]
+
+        # Find the alignment setting for this key
+        if item_idx > 0 and isinstance(row[item_idx - 1], dict):
+            props = row[item_idx - 1]
+            assert props.get("a") == 0, f"Held key should have a=0 alignment, got {props.get('a')}"
+
+    def test_no_held_indicator_without_activators(self):
+        """KLE-039: Without activators, key should show normal label."""
+        from glove80_visualizer.kle_template import generate_kle_from_template, ZMK_TO_SLOT, TEMPLATE_POSITIONS
+
+        bindings = [KeyBinding(position=69, tap="Cursor")]
+        bindings.extend([KeyBinding(position=i, tap="X") for i in range(80) if i != 69])
+        layer = Layer(name="Cursor", index=17, bindings=bindings)
+
+        # No activators passed
+        result = generate_kle_from_template(layer)
+        parsed = json.loads(result)
+
+        slot = ZMK_TO_SLOT[69]
+        row_idx, item_idx = TEMPLATE_POSITIONS[slot]
+        row = parsed[row_idx]
+        label = row[item_idx]
+
+        # Should NOT contain the hand emoji
+        assert "✋" not in label, f"Without activators, key should not show ✋, got {repr(label)}"
+
+    def test_held_indicator_only_for_matching_layer(self):
+        """KLE-040: Held indicator only shows when activator targets current layer."""
+        from glove80_visualizer.kle_template import generate_kle_from_template, ZMK_TO_SLOT, TEMPLATE_POSITIONS
+        from glove80_visualizer.models import LayerActivator
+
+        bindings = [KeyBinding(position=69, tap="Symbol")]
+        bindings.extend([KeyBinding(position=i, tap="X") for i in range(80) if i != 69])
+        layer = Layer(name="Symbol", index=21, bindings=bindings)
+
+        # Activator targets "Cursor", not "Symbol"
+        activators = [
+            LayerActivator(
+                source_layer_name="QWERTY",
+                source_position=69,
+                target_layer_name="Cursor",
+                activation_type="hold"
+            )
+        ]
+
+        result = generate_kle_from_template(layer, activators=activators)
+        parsed = json.loads(result)
+
+        slot = ZMK_TO_SLOT[69]
+        row_idx, item_idx = TEMPLATE_POSITIONS[slot]
+        row = parsed[row_idx]
+        label = row[item_idx]
+
+        # Should NOT show held indicator since activator targets different layer
+        assert "✋" not in label, f"Activator for wrong layer should not show ✋, got {repr(label)}"
