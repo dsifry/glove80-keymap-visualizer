@@ -266,6 +266,7 @@ def generate_kle_from_template(
     title: str | None = None,
     combos: list[Combo] | None = None,
     os_style: str = "mac",
+    activators: list | None = None,
 ) -> str:
     """
     Generate KLE JSON using Sunaku's template.
@@ -275,6 +276,7 @@ def generate_kle_from_template(
         title: Optional title (uses layer.name if not provided)
         combos: Optional list of combos to display in text blocks
         os_style: Operating system style for modifier symbols ("mac", "windows", "linux")
+        activators: Optional list of LayerActivator objects for marking held keys
 
     Returns:
         KLE JSON string
@@ -284,6 +286,13 @@ def generate_kle_from_template(
 
     # Build position map from layer bindings
     pos_map = {b.position: b for b in layer.bindings}
+
+    # Find held positions for this layer (keys that activate this layer when held)
+    held_positions: set[int] = set()
+    if activators:
+        for activator in activators:
+            if activator.target_layer_name == layer.name:
+                held_positions.add(activator.source_position)
 
     # Update center metadata
     layer_title = title or layer.name
@@ -315,6 +324,18 @@ def generate_kle_from_template(
         if row_idx < len(kle_data):
             row = kle_data[row_idx]
             if isinstance(row, list) and item_idx < len(row):
+                # Check if this is a held key (activates current layer)
+                is_held_key = zmk_pos in held_positions
+                if is_held_key:
+                    # Use raised hand emoji centered, "Layer" at bottom
+                    # a=7 centers single content; use tap/hold format like HRM keys
+                    label = "✋"  # Just the hand centered
+                    row[item_idx] = label
+                    if item_idx > 0 and isinstance(row[item_idx - 1], dict):
+                        row[item_idx - 1]["f"] = 2  # Large font for hand visibility
+                        row[item_idx - 1]["a"] = 7  # Centered
+                    continue  # Skip further processing for held keys
+
                 label = _format_binding_label(binding, os_style)
                 row[item_idx] = label
 
@@ -416,10 +437,13 @@ def generate_kle_from_template(
                         # Keys like semicolon with shifted : and hold control
                         # Use a=0 with center column positions 8, 9, 10 for vertical centering
                         props["a"] = 0
+                    # Multi-line words need a=5 to show both lines (even on thumb keys)
+                    elif has_multiline_words:
+                        props["a"] = 5
                     elif is_home_row_hrm or is_outer_special or is_thumb_key:
                         props["a"] = 7
-                    # Set a=5 alignment for keys with shifted characters or multi-line words
-                    elif has_shifted_char or has_multiline_words:
+                    # Set a=5 alignment for keys with shifted characters
+                    elif has_shifted_char:
                         # Check if this is the last key before row end (R2C6 right position)
                         # These need a=5 but we must reset a=7 afterward for Row 6 letters
                         was_reset_point = props.get("a") == 7

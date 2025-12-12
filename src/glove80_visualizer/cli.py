@@ -367,6 +367,7 @@ def main(
                 title=layer.name,
                 combos=combos,
                 os_style=os_style,
+                activators=activators,
             )
             json_path = output / f"{layer.name}.json"
             json_path.write_text(kle_json)
@@ -386,6 +387,7 @@ def main(
                 title=layer.name,
                 combos=combos,
                 os_style=os_style,
+                activators=activators,
             )
             png_path = output / f"{layer.name}.png"
             try:
