@@ -372,6 +372,13 @@ def _format_binding_label(binding: KeyBinding, os_style: str = "mac") -> str:
         return tap_fmt
 
 
+def _is_thumb_only_combo(combo: Combo) -> bool:
+    """Check if a combo uses only thumb cluster keys."""
+    # Thumb cluster positions: left thumb (52-57), right thumb (69-74)
+    THUMB_POSITIONS = set(range(52, 58)) | set(range(69, 75))
+    return all(pos in THUMB_POSITIONS for pos in combo.positions)
+
+
 def _update_combo_text_blocks(
     kle_data: list[Any],
     layer_name: str,
@@ -380,6 +387,7 @@ def _update_combo_text_blocks(
     """
     Update the combo text blocks in the KLE JSON with combo information.
 
+    Only displays combos that use thumb cluster keys.
     Left text block (row 14, first text item): left-hand and cross-hand combos
     Right text block (row 14, second text item): right-hand combos
 
@@ -388,8 +396,11 @@ def _update_combo_text_blocks(
         layer_name: Name of the current layer (for filtering)
         combos: List of all combos to potentially display
     """
-    # Filter combos active on this layer
-    active_combos = [c for c in combos if c.is_active_on_layer(layer_name)]
+    # Filter combos: active on this layer AND using only thumb keys
+    active_combos = [
+        c for c in combos
+        if c.is_active_on_layer(layer_name) and _is_thumb_only_combo(c)
+    ]
 
     # Separate into left/cross-hand and right-hand
     left_combos = [c for c in active_combos if c.is_left_hand or c.is_cross_hand]

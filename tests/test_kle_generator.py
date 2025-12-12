@@ -747,3 +747,70 @@ class TestKLEShiftedBehaviorFormatting:
         assert "Ext→W" in label, f"Tap behavior should format to Ext→W, got {repr(label)}"
         # Should NOT show raw behavior names
         assert "&extend" not in label, f"Should not show raw behavior name, got {repr(label)}"
+
+
+class TestKLEThumbOnlyComboFilter:
+    """Test that combo text blocks only show thumb cluster combos."""
+
+    def test_thumb_combo_is_shown(self):
+        """KLE-043: Combos using only thumb keys should appear in combo text."""
+        from glove80_visualizer.kle_template import generate_kle_from_template
+        from glove80_visualizer.models import Combo
+
+        bindings = [KeyBinding(position=i, tap="X") for i in range(80)]
+        layer = Layer(name="QWERTY", index=0, bindings=bindings)
+
+        # Thumb-only combo (positions 52 and 53 are left thumb)
+        thumb_combo = Combo(
+            name="LT1+LT2",
+            positions=[52, 53],
+            action="Tab",
+            layers=["QWERTY"],
+        )
+
+        result = generate_kle_from_template(layer, combos=[thumb_combo])
+
+        # Should show the thumb combo in the output
+        assert "Tab" in result, f"Thumb combo action should appear in output"
+
+    def test_non_thumb_combo_is_filtered_out(self):
+        """KLE-044: Combos using main keys (not thumb) should NOT appear."""
+        from glove80_visualizer.kle_template import generate_kle_from_template
+        from glove80_visualizer.models import Combo
+
+        bindings = [KeyBinding(position=i, tap="X") for i in range(80)]
+        layer = Layer(name="QWERTY", index=0, bindings=bindings)
+
+        # Non-thumb combo (positions 36 and 37 are main keys, not thumb)
+        main_key_combo = Combo(
+            name="36+37",
+            positions=[36, 37],
+            action="Bracket",
+            layers=["QWERTY"],
+        )
+
+        result = generate_kle_from_template(layer, combos=[main_key_combo])
+
+        # Should NOT show the main-key combo in the output
+        assert "Bracket" not in result, f"Main-key combo should be filtered out, but found in: {result[:500]}"
+
+    def test_mixed_combo_is_filtered_out(self):
+        """KLE-045: Combos mixing thumb and non-thumb keys should NOT appear."""
+        from glove80_visualizer.kle_template import generate_kle_from_template
+        from glove80_visualizer.models import Combo
+
+        bindings = [KeyBinding(position=i, tap="X") for i in range(80)]
+        layer = Layer(name="QWERTY", index=0, bindings=bindings)
+
+        # Mixed combo (position 52 is thumb, position 36 is not)
+        mixed_combo = Combo(
+            name="Mixed",
+            positions=[52, 36],
+            action="MixedAction",
+            layers=["QWERTY"],
+        )
+
+        result = generate_kle_from_template(layer, combos=[mixed_combo])
+
+        # Should NOT show the mixed combo
+        assert "MixedAction" not in result, f"Mixed combo should be filtered out"
