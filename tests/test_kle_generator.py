@@ -694,3 +694,56 @@ class TestKLEHeldKeyIndicator:
 
         # Should NOT show held indicator since activator targets different layer
         assert "✋" not in label, f"Activator for wrong layer should not show ✋, got {repr(label)}"
+
+
+class TestKLEShiftedBehaviorFormatting:
+    """Test that shifted behaviors (like &select_line_left) are formatted properly."""
+
+    def test_shifted_behavior_is_formatted(self):
+        """KLE-041: Shifted behavior like &select_line_left should format to Sel←L."""
+        from glove80_visualizer.kle_template import generate_kle_from_template, ZMK_TO_SLOT, TEMPLATE_POSITIONS
+
+        # Create a binding with a raw behavior as the shifted value
+        # This is what happens with select_line: tap=&select_line_right, shifted=&select_line_left
+        bindings = [
+            KeyBinding(position=48, tap="&select_line_right", shifted="&select_line_left")
+        ]
+        bindings.extend([KeyBinding(position=i, tap="X") for i in range(80) if i != 48])
+        layer = Layer(name="Test", index=0, bindings=bindings)
+
+        result = generate_kle_from_template(layer, os_style="mac")
+        parsed = json.loads(result)
+
+        slot = ZMK_TO_SLOT[48]
+        row_idx, item_idx = TEMPLATE_POSITIONS[slot]
+        label = parsed[row_idx][item_idx]
+
+        # Should show formatted labels, not raw behavior names
+        assert "Sel←L" in label, f"Shifted behavior should format to Sel←L, got {repr(label)}"
+        assert "Sel→L" in label, f"Tap behavior should format to Sel→L, got {repr(label)}"
+        # Should NOT show raw behavior names
+        assert "&select_line_left" not in label, f"Should not show raw behavior name, got {repr(label)}"
+        assert "&select_line_right" not in label, f"Should not show raw behavior name, got {repr(label)}"
+
+    def test_extend_behavior_is_formatted(self):
+        """KLE-042: Shifted behavior like &extend_word_left should format to Ext←W."""
+        from glove80_visualizer.kle_template import generate_kle_from_template, ZMK_TO_SLOT, TEMPLATE_POSITIONS
+
+        bindings = [
+            KeyBinding(position=67, tap="&extend_word_right", shifted="&extend_word_left")
+        ]
+        bindings.extend([KeyBinding(position=i, tap="X") for i in range(80) if i != 67])
+        layer = Layer(name="Test", index=0, bindings=bindings)
+
+        result = generate_kle_from_template(layer, os_style="mac")
+        parsed = json.loads(result)
+
+        slot = ZMK_TO_SLOT[67]
+        row_idx, item_idx = TEMPLATE_POSITIONS[slot]
+        label = parsed[row_idx][item_idx]
+
+        # Should show formatted labels
+        assert "Ext←W" in label, f"Shifted behavior should format to Ext←W, got {repr(label)}"
+        assert "Ext→W" in label, f"Tap behavior should format to Ext→W, got {repr(label)}"
+        # Should NOT show raw behavior names
+        assert "&extend" not in label, f"Should not show raw behavior name, got {repr(label)}"

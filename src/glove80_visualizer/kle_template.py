@@ -350,21 +350,22 @@ def _format_binding_label(binding: KeyBinding, os_style: str = "mac") -> str:
     # Format for nice display
     tap_fmt = format_key_label(tap, os_style) if tap else ""
     hold_fmt = format_key_label(hold, os_style) if hold else ""
+    shifted_fmt = format_key_label(shifted, os_style) if shifted else ""
 
     # Auto-calculate shifted character if not already provided
     # This adds shifted characters for numbers (1→!, 2→@) and punctuation
-    if not shifted and tap_fmt:
+    if not shifted_fmt and tap_fmt:
         auto_shifted = get_shifted_char(tap_fmt)
         if auto_shifted:
-            shifted = auto_shifted
+            shifted_fmt = auto_shifted
 
     # KLE uses newlines for 12-position legend format
     # Position 0 = top-left, 1 = bottom-left, 5 = center-left
     # For hold-tap: tap on top (or center), hold at bottom
-    if shifted and hold_fmt:
-        return f"{shifted}\n{tap_fmt}\n\n\n{hold_fmt}"
-    elif shifted:
-        return f"{shifted}\n{tap_fmt}"
+    if shifted_fmt and hold_fmt:
+        return f"{shifted_fmt}\n{tap_fmt}\n\n\n{hold_fmt}"
+    elif shifted_fmt:
+        return f"{shifted_fmt}\n{tap_fmt}"
     elif hold_fmt:
         return f"{tap_fmt}\n\n\n\n{hold_fmt}"
     else:
