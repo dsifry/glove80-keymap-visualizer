@@ -130,6 +130,8 @@ TEMPLATE_POSITIONS = [
     (2, 7),  # slot 77: R1C2 right - ZMK 7
     (2, 8),  # slot 78: R1C3 right - ZMK 8
     (2, 9),  # slot 79: R1C4 right - ZMK 9
+    # R2 outer left (slot 80) - ZMK 10 (equals/backtick)
+    (5, 3),  # slot 80: R2C6 left (=/+) - ZMK 10
 ]
 
 # ZMK to template slot mapping
@@ -158,7 +160,7 @@ ZMK_TO_SLOT = {
     # Number row (ZMK 10-21)
     # ZMK: 10=`/~, 11=1, 12=2, 13=3, 14=4, 15=5 | 16=6, 17=7, 18=8, 19=9, 20=0, 21=-
     # Note: ZMK 21 (minus) has no dedicated slot - Sunaku's template doesn't show it
-    10: 29,  # `/~ -> = position (slot 29)
+    10: 80,  # =/+ -> R2C6 left (slot 80) - number row outer
     11: 8,  # 1 -> slot 8
     12: 0,  # 2 -> slot 0
     13: 1,  # 3 -> slot 1
@@ -186,7 +188,7 @@ ZMK_TO_SLOT = {
     33: 20,  # \ -> slot 20 (QWERTY outer right - position (7, 9))
     # Home row (ZMK 34-45)
     # ZMK: 34=Caps, 35=A, 36=S, 37=D, 38=F, 39=G | 40=H, 41=J, 42=K, 43=L, 44=;, 45='
-    # Caps (34) has no main slot in template
+    34: 29,  # Caps -> slot 29 (R4C6 left - home row outer)
     35: 30,  # A -> slot 30
     36: 21,  # S -> slot 21
     37: 22,  # D -> slot 22

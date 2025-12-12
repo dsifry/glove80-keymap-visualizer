@@ -814,3 +814,53 @@ class TestKLEThumbOnlyComboFilter:
 
         # Should NOT show the mixed combo
         assert "MixedAction" not in result, f"Mixed combo should be filtered out"
+
+
+class TestKLEMissingKeyPositions:
+    """Test that all ZMK positions are properly mapped to KLE slots."""
+
+    def test_zmk_10_equals_key_on_number_row(self):
+        """KLE-046: ZMK 10 (equals) should appear on R2 (number row), not home row."""
+        from glove80_visualizer.kle_template import generate_kle_from_template, ZMK_TO_SLOT, TEMPLATE_POSITIONS
+
+        # ZMK 10 is the equals key on the number row outer left
+        bindings = [KeyBinding(position=i, tap="X") for i in range(80)]
+        bindings[10] = KeyBinding(position=10, tap="EQUAL", shifted="+")
+        layer = Layer(name="Test", index=0, bindings=bindings)
+
+        result = generate_kle_from_template(layer, os_style="mac")
+        parsed = json.loads(result)
+
+        # ZMK 10 should map to a slot on Row 5 (R2 number row), not Row 9 (home row)
+        slot = ZMK_TO_SLOT[10]
+        row_idx, item_idx = TEMPLATE_POSITIONS[slot]
+
+        # Row 5 is R2 (number row), Row 9 is R4 (home row)
+        assert row_idx == 5, f"ZMK 10 (equals) should be on row 5 (number row), got row {row_idx}"
+
+    def test_zmk_34_caps_key_is_mapped(self):
+        """KLE-047: ZMK 34 (Caps) should be mapped and appear in output."""
+        from glove80_visualizer.kle_template import generate_kle_from_template, ZMK_TO_SLOT
+
+        # ZMK 34 is the Caps key
+        bindings = [KeyBinding(position=i, tap="X") for i in range(80)]
+        bindings[34] = KeyBinding(position=34, tap="CAPS")
+        layer = Layer(name="Test", index=0, bindings=bindings)
+
+        # First verify ZMK 34 is in the mapping
+        assert 34 in ZMK_TO_SLOT, "ZMK 34 (Caps) should be in ZMK_TO_SLOT mapping"
+
+        result = generate_kle_from_template(layer, os_style="mac")
+
+        # The Caps key content should appear (formatted as ⇪ symbol, may be unicode escaped in JSON)
+        assert "\\u21ea" in result or "⇪" in result, f"Caps key (⇪) should appear in KLE output"
+
+    def test_zmk_0_and_1_outer_function_keys_not_in_template(self):
+        """KLE-048: ZMK 0 and 1 are outermost keys - Sunaku's template has no slots for them."""
+        from glove80_visualizer.kle_template import ZMK_TO_SLOT
+
+        # ZMK 0 and 1 are the outermost keys on the function row (R1C5, R1C6)
+        # Sunaku's template doesn't have visual positions for these outer columns
+        # This test documents the expected behavior (not a bug, just a template limitation)
+        assert 0 not in ZMK_TO_SLOT, "ZMK 0 has no slot in Sunaku's template"
+        assert 1 not in ZMK_TO_SLOT, "ZMK 1 has no slot in Sunaku's template"
