@@ -577,6 +577,7 @@ class TestKLEHRMAlignment:
         label = row[item_idx]
 
         # Label should be "A\n\n\n\n⌘" (tap at pos0, hold at pos4)
+        # Modifiers show OS-appropriate icons (⌘ for mac)
         parts = label.split("\n")
         assert parts[0] == "A", f"Tap letter should be at position 0, got {parts[0]}"
         assert len(parts) >= 5, f"Label should have at least 5 parts for pos4, got {len(parts)}"

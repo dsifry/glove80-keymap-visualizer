@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any
 
 from glove80_visualizer.models import Layer, KeyBinding, Combo
-from glove80_visualizer.svg_generator import format_key_label, get_shifted_char
+from glove80_visualizer.svg_generator import format_key_label, get_shifted_char, MODIFIER_SYMBOLS
 
 
 # Template file location
@@ -265,6 +265,7 @@ def generate_kle_from_template(
     layer: Layer,
     title: str | None = None,
     combos: list[Combo] | None = None,
+    os_style: str = "mac",
 ) -> str:
     """
     Generate KLE JSON using Sunaku's template.
@@ -273,6 +274,7 @@ def generate_kle_from_template(
         layer: Layer object with bindings
         title: Optional title (uses layer.name if not provided)
         combos: Optional list of combos to display in text blocks
+        os_style: Operating system style for modifier symbols ("mac", "windows", "linux")
 
     Returns:
         KLE JSON string
@@ -313,7 +315,7 @@ def generate_kle_from_template(
         if row_idx < len(kle_data):
             row = kle_data[row_idx]
             if isinstance(row, list) and item_idx < len(row):
-                label = _format_binding_label(binding)
+                label = _format_binding_label(binding, os_style)
                 row[item_idx] = label
 
                 # Check if this is an HRM key on the home row (R4)
@@ -408,15 +410,59 @@ def generate_kle_from_template(
     return json.dumps(kle_data, indent=2)
 
 
-def _format_binding_label(binding: KeyBinding) -> str:
+def _format_hold_label(hold: str, os_style: str = "mac") -> str:
+    """
+    Format a hold behavior label.
+
+    For modifier holds: returns OS-appropriate icon (⌘, ⌃, ⌥, ⇧ for mac)
+    For layer holds: returns the layer name as-is (e.g., "Symbol", "Cursor")
+
+    Args:
+        hold: The hold behavior string
+        os_style: Operating system style for modifier symbols ("mac", "windows", "linux")
+    """
+    import re
+
+    if not hold:
+        return ""
+
+    modifier_map = MODIFIER_SYMBOLS.get(os_style, MODIFIER_SYMBOLS["mac"])
+
+    # Handle finger hold behaviors: &left_pinky_hold LCTL, &right_middy_hold LGUI, etc.
+    finger_hold_match = re.match(r'^&(left|right)_(pinky|ringy|middy|index)_hold\s+(.+)$', hold)
+    if finger_hold_match:
+        modifier = finger_hold_match.group(3).upper()
+        if modifier in modifier_map:
+            return modifier_map[modifier]
+        return modifier
+
+    # Handle sticky key behaviors: &sk LSHIFT, &sticky_key LALT, etc.
+    sticky_match = re.match(r'^&(sk|sticky_key|sticky_key_oneshot)\s+(.+)$', hold)
+    if sticky_match:
+        modifier = sticky_match.group(2).upper()
+        if modifier in modifier_map:
+            return modifier_map[modifier]
+        return modifier
+
+    # Check if this is a direct modifier - use icon from MODIFIER_SYMBOLS
+    hold_upper = hold.upper()
+    if hold_upper in modifier_map:
+        return modifier_map[hold_upper]
+
+    # For layer names or anything else, return as-is
+    return hold
+
+
+def _format_binding_label(binding: KeyBinding, os_style: str = "mac") -> str:
     """Format a binding as a KLE label string."""
     tap = binding.tap or ""
     hold = binding.hold if binding.hold and binding.hold != "None" else ""
     shifted = binding.shifted if binding.shifted and binding.shifted != "None" else ""
 
     # Format for nice display
-    tap_fmt = format_key_label(tap, "mac") if tap else ""
-    hold_fmt = format_key_label(hold, "mac") if hold else ""
+    tap_fmt = format_key_label(tap, os_style) if tap else ""
+    # Use icons for modifiers (respecting OS style), text for layer names
+    hold_fmt = _format_hold_label(hold, os_style) if hold else ""
 
     # Auto-calculate shifted character if not already provided
     # This adds shifted characters for numbers (1→!, 2→@) and punctuation

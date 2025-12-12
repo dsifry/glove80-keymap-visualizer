@@ -366,6 +366,7 @@ def main(
                 layer,
                 title=layer.name,
                 combos=combos,
+                os_style=os_style,
             )
             json_path = output / f"{layer.name}.json"
             json_path.write_text(kle_json)
@@ -384,6 +385,7 @@ def main(
                 layer,
                 title=layer.name,
                 combos=combos,
+                os_style=os_style,
             )
             png_path = output / f"{layer.name}.png"
             try:
@@ -403,7 +405,7 @@ def main(
 
         log("Generating KLE PDF via headless browser...")
         try:
-            create_combined_pdf_kle(extracted_layers, output, combos=combos)
+            create_combined_pdf_kle(extracted_layers, output, combos=combos, os_style=os_style)
             if not quiet:
                 click.echo(f"Generated KLE PDF: {output}")
         except Exception as e:

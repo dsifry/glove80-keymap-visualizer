@@ -169,6 +169,7 @@ def render_layer_kle(
     output_path: Path | str,
     output_format: str = "png",
     combos: list | None = None,
+    os_style: str = "mac",
     **kwargs,
 ) -> Path:
     """
@@ -179,6 +180,7 @@ def render_layer_kle(
         output_path: Path for output file
         output_format: "png" or "pdf"
         combos: Optional list of Combo objects to display in text blocks
+        os_style: Operating system style for modifier symbols ("mac", "windows", "linux")
         **kwargs: Additional arguments passed to render functions
 
     Returns:
@@ -186,7 +188,7 @@ def render_layer_kle(
     """
     from glove80_visualizer.kle_template import generate_kle_from_template
 
-    kle_json = generate_kle_from_template(layer, combos=combos)
+    kle_json = generate_kle_from_template(layer, combos=combos, os_style=os_style)
 
     if output_format.lower() == "pdf":
         return render_kle_to_pdf(kle_json, output_path, **kwargs)
@@ -199,6 +201,7 @@ def render_all_layers_kle(
     output_dir: Path | str,
     output_format: str = "png",
     combos: list | None = None,
+    os_style: str = "mac",
     **kwargs,
 ) -> list[Path]:
     """
@@ -209,6 +212,7 @@ def render_all_layers_kle(
         output_dir: Directory to save output files
         output_format: "png" or "pdf"
         combos: Optional list of Combo objects to display in text blocks
+        os_style: Operating system style for modifier symbols ("mac", "windows", "linux")
         **kwargs: Additional arguments passed to render functions
 
     Returns:
@@ -221,7 +225,7 @@ def render_all_layers_kle(
     for layer in layers:
         suffix = ".pdf" if output_format.lower() == "pdf" else ".png"
         output_path = output_dir / f"{layer.name}{suffix}"
-        render_layer_kle(layer, output_path, output_format=output_format, combos=combos, **kwargs)
+        render_layer_kle(layer, output_path, output_format=output_format, combos=combos, os_style=os_style, **kwargs)
         output_paths.append(output_path)
 
     return output_paths
@@ -231,6 +235,7 @@ def create_combined_pdf_kle(
     layers: list,
     output_path: Path | str,
     combos: list | None = None,
+    os_style: str = "mac",
     **kwargs,
 ) -> Path:
     """
@@ -240,6 +245,7 @@ def create_combined_pdf_kle(
         layers: List of Layer objects
         output_path: Path for combined PDF
         combos: Optional list of Combo objects to display in text blocks
+        os_style: Operating system style for modifier symbols ("mac", "windows", "linux")
         **kwargs: Additional arguments passed to render functions
 
     Returns:
@@ -260,6 +266,7 @@ def create_combined_pdf_kle(
             tmp_path,
             output_format="pdf",
             combos=combos,
+            os_style=os_style,
             **kwargs,
         )
 
