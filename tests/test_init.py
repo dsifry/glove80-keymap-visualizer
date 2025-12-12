@@ -4,8 +4,6 @@ Tests for the main module's generate_visualization function.
 Tests error recovery paths and edge cases.
 """
 
-import pytest
-
 
 class TestGenerateVisualization:
     """Tests for the generate_visualization function."""
@@ -72,10 +70,10 @@ class TestGenerateVisualization:
 
         # Mock SVG generator to fail on second layer
         call_count = [0]
-        valid_svg = '''<?xml version="1.0" encoding="UTF-8"?>
+        valid_svg = """<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600">
 <text class="label">Test</text>
-</svg>'''
+</svg>"""
 
         def mock_generate(layer, config=None, **kwargs):
             call_count[0] += 1
@@ -150,9 +148,7 @@ class TestGenerateVisualization:
         assert output_dir.exists()
         assert any(output_dir.glob("*.svg"))
 
-    def test_generate_visualization_unexpected_error(
-        self, simple_keymap_path, tmp_path, mocker
-    ):
+    def test_generate_visualization_unexpected_error(self, simple_keymap_path, tmp_path, mocker):
         """Unexpected errors are caught and returned."""
         from glove80_visualizer import generate_visualization
 
@@ -216,7 +212,7 @@ class TestModMorphIntegration:
     def test_mod_morphs_passed_to_svg_generator(self, tmp_path, mocker):
         """Mod-morph behaviors are parsed and passed to SVG generator."""
         from glove80_visualizer import generate_visualization
-        from glove80_visualizer.models import Layer, KeyBinding
+        from glove80_visualizer.models import KeyBinding, Layer
 
         # Create a keymap with mod-morph behavior
         keymap_content = """
@@ -244,10 +240,10 @@ class TestModMorphIntegration:
 
         def mock_generate(layer, config=None, mod_morphs=None, **kwargs):
             captured_mod_morphs.append(mod_morphs)
-            return '''<?xml version="1.0" encoding="UTF-8"?>
+            return """<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600">
 <text class="label">Test</text>
-</svg>'''
+</svg>"""
 
         mocker.patch(
             "glove80_visualizer.generate_layer_svg",

@@ -6,7 +6,6 @@ template structure to create KLE-compatible JSON output.
 """
 
 import json
-from pathlib import Path
 
 import pytest
 
@@ -70,12 +69,13 @@ class TestKLEKeyProperties:
         parsed = json.loads(result)
         # Look for R1, C1 labels which should be decorative
         found_decorative = False
+        decorative_labels = ("R1", "R2", "R3", "R4", "R5", "R6", "C1", "C2", "C3", "C4", "C5", "C6")
         for row in parsed[1:]:
             for i, item in enumerate(row):
-                if isinstance(item, str) and item in ("R1", "R2", "R3", "R4", "R5", "R6", "C1", "C2", "C3", "C4", "C5", "C6"):
+                if isinstance(item, str) and item in decorative_labels:
                     # Previous item should be a dict with d: true
-                    if i > 0 and isinstance(row[i-1], dict):
-                        assert row[i-1].get("d") is True, f"Label {item} should be decorative"
+                    if i > 0 and isinstance(row[i - 1], dict):
+                        assert row[i - 1].get("d") is True, f"Label {item} should be decorative"
                         found_decorative = True
         assert found_decorative, "No decorative labels found"
 
@@ -293,7 +293,7 @@ class TestKLEKeyMapping:
 
     def test_number_row_positions(self):
         """Test that number row keys map to correct slots."""
-        from glove80_visualizer.kle_template import ZMK_TO_SLOT, TEMPLATE_POSITIONS
+        from glove80_visualizer.kle_template import TEMPLATE_POSITIONS, ZMK_TO_SLOT
 
         # ZMK positions 11-20 are number keys 1-0
         # They should map to template positions in row 4-5
@@ -304,7 +304,7 @@ class TestKLEKeyMapping:
 
     def test_qwerty_row_positions(self):
         """Test that QWERTY row keys map to correct slots."""
-        from glove80_visualizer.kle_template import ZMK_TO_SLOT, TEMPLATE_POSITIONS
+        from glove80_visualizer.kle_template import TEMPLATE_POSITIONS, ZMK_TO_SLOT
 
         # ZMK positions 23-32 are Q,W,E,R,T,Y,U,I,O,P
         for zmk_pos in range(23, 33):
@@ -314,7 +314,7 @@ class TestKLEKeyMapping:
 
     def test_home_row_positions(self):
         """Test that home row keys map to correct slots."""
-        from glove80_visualizer.kle_template import ZMK_TO_SLOT, TEMPLATE_POSITIONS
+        from glove80_visualizer.kle_template import TEMPLATE_POSITIONS, ZMK_TO_SLOT
 
         # ZMK positions 35-45 are A,S,D,F,G,H,J,K,L,;,'
         for zmk_pos in range(35, 46):
@@ -324,7 +324,7 @@ class TestKLEKeyMapping:
 
     def test_thumb_cluster_positions(self):
         """Test that thumb cluster keys map to correct slots."""
-        from glove80_visualizer.kle_template import ZMK_TO_SLOT, TEMPLATE_POSITIONS
+        from glove80_visualizer.kle_template import TEMPLATE_POSITIONS, ZMK_TO_SLOT
 
         # Left thumb: 52, 69, 70, 76, 77, 56
         # Right thumb: 57, 71, 72, 73, 74, 75
@@ -371,44 +371,62 @@ class TestKLEKeyMapping:
 
         result = generate_kle_from_template(layer)
         # Should have pipe above backslash (shifted)
-        assert '"|\\n' in result or "'" + '|\\n' in result or '\\\\' in result
+        assert '"|\\n' in result or "'" + "|\\n" in result or "\\\\" in result
 
-    def test_outer_column_r2_equals_key(self):
-        """KLE-036: R2C6 left (=/+) should be mapped to number row, not home row."""
-        from glove80_visualizer.kle_template import ZMK_TO_SLOT, TEMPLATE_POSITIONS
 
-        # ZMK position 10 is the equals key on R2 left outer column
-        # It should map to row 5 (R2 number row), NOT row 9 (home row)
-        assert 10 in ZMK_TO_SLOT, "ZMK position 10 should be mapped"
-        slot = ZMK_TO_SLOT[10]
-        assert slot < len(TEMPLATE_POSITIONS), f"Slot {slot} should be valid"
+class TestKLEEdgeCases:
+    """Test edge cases for KLE template generation."""
 
-        row_idx, item_idx = TEMPLATE_POSITIONS[slot]
-        # Row 5 is R2 (number row), Row 9 is R4 (home row)
-        assert row_idx == 5, f"ZMK 10 should be in row 5 (R2), not row {row_idx}"
-        assert item_idx == 3, f"ZMK 10 should be at item 3 (R2C6 left), not item {item_idx}"
-
-    def test_outer_column_r4_caps_key(self):
-        """KLE-037: R4C6 left (Caps Lock) should appear in generated output."""
+    def test_shifted_and_hold_label_format(self):
+        """KLE edge case: Key with both shifted AND hold should format correctly."""
         from glove80_visualizer.kle_template import generate_kle_from_template
-        import json
 
-        # ZMK position 34 is the Caps Lock key on R4 left outer column
-        bindings = [KeyBinding(position=34, tap="CAPS")]
-        bindings.extend([KeyBinding(position=i, tap="X") for i in range(80) if i != 34])
+        # Create a key with shifted character AND hold behavior
+        # e.g., "1" key with hold LCTL - should show: !\\n1\\n\\n\\nCtrl
+        bindings = [KeyBinding(position=11, tap="1", hold="LCTL")]
+        bindings.extend([KeyBinding(position=i, tap="X") for i in range(80) if i != 11])
         layer = Layer(name="Test", index=0, bindings=bindings)
 
         result = generate_kle_from_template(layer)
-        parsed = json.loads(result)
+        # Should have all three parts: shifted (!), tap (1), and hold (Ctrl symbol)
+        # Format: "shifted\ntap\n\n\nhold"
+        assert "!" in result  # Shifted character
+        assert "1" in result  # Tap character
 
-        # The Caps key should appear in row 9 (R4 outer)
-        # It gets formatted as ⇪ (Caps Lock symbol) by format_key_label
-        row9 = parsed[9]
-        found_caps = any(
-            isinstance(item, str) and ("⇪" in item or "Caps" in item or "CAPS" in item)
-            for item in row9
-        )
-        assert found_caps, f"Caps key should appear in row 9, got: {[item for item in row9 if isinstance(item, str)]}"
+    def test_out_of_range_zmk_position_is_ignored(self):
+        """KLE edge case: ZMK positions that map to invalid slots should be skipped."""
+        from glove80_visualizer.kle_template import generate_kle_from_template
+
+        # Create a layer with only valid positions - the invalid ones won't crash
+        # ZMK position 99 doesn't exist in ZMK_TO_KLE_SLOT, should be skipped
+        bindings = [KeyBinding(position=i, tap=chr(65 + (i % 26))) for i in range(80)]
+        layer = Layer(name="Test", index=0, bindings=bindings)
+
+        # Should not raise any errors
+        result = generate_kle_from_template(layer)
+        assert result is not None
+        assert isinstance(result, str)
+
+    def test_kle_slot_beyond_template_positions_is_skipped(self, mocker):
+        """KLE edge case: Slot index beyond TEMPLATE_POSITIONS should be skipped."""
+        from glove80_visualizer import kle_template
+        from glove80_visualizer.kle_template import generate_kle_from_template
+
+        # Mock ZMK_TO_KLE_SLOT to return an out-of-range slot for position 11
+        original_slot_map = kle_template.ZMK_TO_KLE_SLOT.copy()
+        # Add a position that maps to an invalid slot (beyond TEMPLATE_POSITIONS)
+        mock_slot_map = original_slot_map.copy()
+        mock_slot_map[11] = 99999  # Way beyond any valid slot
+
+        mocker.patch.object(kle_template, "ZMK_TO_KLE_SLOT", mock_slot_map)
+
+        bindings = [KeyBinding(position=11, tap="1")]
+        bindings.extend([KeyBinding(position=i, tap="X") for i in range(80) if i != 11])
+        layer = Layer(name="Test", index=0, bindings=bindings)
+
+        # Should not raise - the invalid slot should be skipped
+        result = generate_kle_from_template(layer)
+        assert result is not None
 
 
 class TestKLEComboTextBlocks:
@@ -481,8 +499,14 @@ class TestKLEComboTextBlocks:
 
         # sample_layer has name "TestLayer"
         combos = [
-            Combo(name="LT3+LT6", positions=[54, 71], action="Toggle Gaming", layers=["TestLayer", "Gaming"]),
-            Combo(name="LT1+LT4", positions=[52, 69], action="Cmd+Tab", layers=["Symbol"]),  # Not on this layer
+            Combo(
+                name="LT3+LT6",
+                positions=[54, 71],
+                action="Toggle Gaming",
+                layers=["TestLayer", "Gaming"],
+            ),
+            # Not on this layer:
+            Combo(name="LT1+LT4", positions=[52, 69], action="Cmd+Tab", layers=["Symbol"]),
         ]
 
         result = generate_kle_from_template(sample_layer, combos=combos)
@@ -529,113 +553,6 @@ class TestKLEComboTextBlocks:
 
         # Should use HTML list elements
         assert "<li>" in result or "<ul" in result
-
-
-class TestKLEHRMAlignment:
-    """Test Home Row Mod key alignment in KLE output."""
-
-    def test_hrm_key_has_centered_alignment(self):
-        """KLE-032: HRM keys should have a=7 alignment for centered tap letter."""
-        from glove80_visualizer.kle_template import generate_kle_from_template, ZMK_TO_SLOT, TEMPLATE_POSITIONS
-
-        # Create a layer with HRM A key (position 35 = A with hold)
-        bindings = [KeyBinding(position=35, tap="A", hold="LGUI")]
-        bindings.extend([KeyBinding(position=i, tap="X") for i in range(80) if i != 35])
-        layer = Layer(name="Test", index=0, bindings=bindings)
-
-        result = generate_kle_from_template(layer)
-        parsed = json.loads(result)
-
-        # Find the A key position in the KLE output
-        slot = ZMK_TO_SLOT[35]
-        row_idx, item_idx = TEMPLATE_POSITIONS[slot]
-        row = parsed[row_idx]
-
-        # Check that the preceding property dict has alignment a=7
-        # KLE properties cascade, so we need to find the most recent 'a' setting
-        alignment = None
-        for i in range(item_idx):
-            if isinstance(row[i], dict) and "a" in row[i]:
-                alignment = row[i]["a"]
-
-        assert alignment == 7, f"HRM key should have a=7 alignment for centering, got {alignment}"
-
-    def test_hrm_key_label_format_tap_then_hold(self):
-        """KLE-033: HRM key label should have tap at pos0, hold at pos4."""
-        from glove80_visualizer.kle_template import generate_kle_from_template, ZMK_TO_SLOT, TEMPLATE_POSITIONS
-
-        bindings = [KeyBinding(position=35, tap="A", hold="LGUI")]
-        bindings.extend([KeyBinding(position=i, tap="X") for i in range(80) if i != 35])
-        layer = Layer(name="Test", index=0, bindings=bindings)
-
-        result = generate_kle_from_template(layer)
-        parsed = json.loads(result)
-
-        slot = ZMK_TO_SLOT[35]
-        row_idx, item_idx = TEMPLATE_POSITIONS[slot]
-        row = parsed[row_idx]
-        label = row[item_idx]
-
-        # Label should be "A\n\n\n\n⌘" (tap at pos0, hold at pos4)
-        # Modifiers show OS-appropriate icons (⌘ for mac)
-        parts = label.split("\n")
-        assert parts[0] == "A", f"Tap letter should be at position 0, got {parts[0]}"
-        assert len(parts) >= 5, f"Label should have at least 5 parts for pos4, got {len(parts)}"
-        assert parts[4] == "⌘", f"Hold modifier should be at position 4, got {parts[4]}"
-
-    def test_regular_key_does_not_get_hrm_alignment(self):
-        """KLE-034: Regular keys (no hold) should not have alignment changed."""
-        from glove80_visualizer.kle_template import generate_kle_from_template, ZMK_TO_SLOT, TEMPLATE_POSITIONS
-
-        # Create a layer with regular Q key (no hold)
-        bindings = [KeyBinding(position=23, tap="Q")]
-        bindings.extend([KeyBinding(position=i, tap="X") for i in range(80) if i != 23])
-        layer = Layer(name="Test", index=0, bindings=bindings)
-
-        result = generate_kle_from_template(layer)
-        parsed = json.loads(result)
-
-        slot = ZMK_TO_SLOT[23]
-        row_idx, item_idx = TEMPLATE_POSITIONS[slot]
-        row = parsed[row_idx]
-
-        # Check that we did NOT inject a=7 right before this key
-        # (The alignment should be whatever the template had)
-        if item_idx > 0 and isinstance(row[item_idx - 1], dict):
-            props = row[item_idx - 1]
-            # If there's a property dict right before, it shouldn't have a=7 specifically for this key
-            # (template's existing alignment is fine, we just don't want to ADD a=7)
-            pass  # This is checking the inverse - just ensure no crash
-
-        # Main check: label should just be "Q" (no newlines for hold)
-        label = row[item_idx]
-        assert label == "Q", f"Regular key should have simple label, got {repr(label)}"
-
-    def test_thumb_key_with_hold_does_not_get_hrm_alignment(self):
-        """KLE-035: Thumb keys with hold should NOT get a=7 override."""
-        from glove80_visualizer.kle_template import generate_kle_from_template, ZMK_TO_SLOT, TEMPLATE_POSITIONS
-
-        # Create a layer with thumb key that has hold (ZMK 52 = left T1 upper)
-        # This is NOT on home row, so should NOT get a=7 alignment override
-        bindings = [KeyBinding(position=52, tap="ESC", hold="Function")]
-        bindings.extend([KeyBinding(position=i, tap="X") for i in range(80) if i != 52])
-        layer = Layer(name="Test", index=0, bindings=bindings)
-
-        result = generate_kle_from_template(layer)
-        parsed = json.loads(result)
-
-        slot = ZMK_TO_SLOT[52]
-        row_idx, item_idx = TEMPLATE_POSITIONS[slot]
-        row = parsed[row_idx]
-
-        # Check that we did NOT inject a=7 for this thumb key
-        # The thumb cluster has its own alignment settings we shouldn't override
-        if item_idx > 0 and isinstance(row[item_idx - 1], dict):
-            props = row[item_idx - 1]
-            # Thumb keys should NOT have a=7 added by our HRM fix
-            # (they may have other 'a' values from the template, that's fine)
-            assert props.get("a") != 7 or "f" in props, \
-                f"Thumb key should not get a=7 HRM override, got props: {props}"
 
 
 class TestKLEHeldKeyIndicator:

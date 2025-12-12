@@ -1,6 +1,8 @@
 # Core dependencies
 keymap-drawer>=0.18.0
 cairosvg>=2.7.0
-PyPDF2>=3.0.0
 pyyaml>=6.0
 click>=8.0.0
+
+# KLE output via headless browser
+playwright>=1.40.0

@@ -5,23 +5,25 @@ Uses Sunaku's KLE JSON as a template and populates it with actual keymap binding
 This preserves all the careful positioning, rotations, and styling.
 """
 
-import json
 import copy
+import json
 from pathlib import Path
 from typing import Any
 
-from glove80_visualizer.models import Layer, KeyBinding, Combo
-from glove80_visualizer.svg_generator import format_key_label, get_shifted_char, MODIFIER_SYMBOLS
-
+from glove80_visualizer.models import Combo, KeyBinding, Layer
+from glove80_visualizer.svg_generator import format_key_label, get_shifted_char
 
 # Template file location
-TEMPLATE_PATH = Path(__file__).parent.parent.parent / "tests" / "fixtures" / "kle" / "sunaku-base-layer.json"
+TEMPLATE_PATH = (
+    Path(__file__).parent.parent.parent / "tests" / "fixtures" / "kle" / "sunaku-base-layer.json"
+)
 
 
 def load_template() -> list[Any]:
     """Load Sunaku's KLE template."""
     with open(TEMPLATE_PATH) as f:
-        return json.load(f)
+        result: list[Any] = json.load(f)
+        return result
 
 
 # Template positions: (row_idx, item_idx) for each slot
@@ -30,44 +32,44 @@ def load_template() -> list[Any]:
 TEMPLATE_POSITIONS = [
     # Main body keys (slots 0-54)
     # Row 4 (JSON index 4): Number row inner 2-5, 6-9
-    (4, 1),   # slot 0: 2
-    (4, 2),   # slot 1: 3
-    (4, 3),   # slot 2: 4
-    (4, 4),   # slot 3: 5
-    (4, 6),   # slot 4: 6
-    (4, 7),   # slot 5: 7
-    (4, 8),   # slot 6: 8
-    (4, 9),   # slot 7: 9
+    (4, 1),  # slot 0: 2
+    (4, 2),  # slot 1: 3
+    (4, 3),  # slot 2: 4
+    (4, 4),  # slot 3: 5
+    (4, 6),  # slot 4: 6
+    (4, 7),  # slot 5: 7
+    (4, 8),  # slot 6: 8
+    (4, 9),  # slot 7: 9
     # Row 5 (JSON index 5): Number row outer 1, 0
-    (5, 5),   # slot 8: 1
-    (5, 7),   # slot 9: 0
+    (5, 5),  # slot 8: 1
+    (5, 7),  # slot 9: 0
     # Row 6 (JSON index 6): QWERTY inner W,E,R,T | Y,U,I,O
-    (6, 1),   # slot 10: W
-    (6, 2),   # slot 11: E
-    (6, 3),   # slot 12: R
-    (6, 4),   # slot 13: T
-    (6, 6),   # slot 14: Y
-    (6, 7),   # slot 15: U
-    (6, 8),   # slot 16: I
-    (6, 9),   # slot 17: O
+    (6, 1),  # slot 10: W
+    (6, 2),  # slot 11: E
+    (6, 3),  # slot 12: R
+    (6, 4),  # slot 13: T
+    (6, 6),  # slot 14: Y
+    (6, 7),  # slot 15: U
+    (6, 8),  # slot 16: I
+    (6, 9),  # slot 17: O
     # Row 7 (JSON index 7): QWERTY outer Q | P
-    (7, 5),   # slot 18: Q
-    (7, 7),   # slot 19: P
-    (7, 9),   # slot 20: - (legacy comment, but actually used for ZMK 33 backslash)
+    (7, 5),  # slot 18: Q
+    (7, 7),  # slot 19: P
+    (7, 9),  # slot 20: - (legacy comment, but actually used for ZMK 33 backslash)
     # Row 8 (JSON index 8): Home row inner S,D,F,G | H,J,K,L
-    (8, 1),   # slot 21: S
-    (8, 3),   # slot 22: D
-    (8, 5),   # slot 23: F
-    (8, 7),   # slot 24: G
-    (8, 9),   # slot 25: H
+    (8, 1),  # slot 21: S
+    (8, 3),  # slot 22: D
+    (8, 5),  # slot 23: F
+    (8, 7),  # slot 24: G
+    (8, 9),  # slot 25: H
     (8, 11),  # slot 26: J
     (8, 13),  # slot 27: K
     (8, 15),  # slot 28: L
     # Row 9 (JSON index 9): Home row outer =,A | ;,'
-    (9, 3),   # slot 29: =
-    (9, 5),   # slot 30: A
-    (9, 7),   # slot 31: ;
-    (9, 9),   # slot 32: '
+    (9, 3),  # slot 29: =
+    (9, 5),  # slot 30: A
+    (9, 7),  # slot 31: ;
+    (9, 9),  # slot 32: '
     # Row 10 (JSON index 10): Bottom inner X,C,V,B | N,M,<,>
     # Note: [0]=props, [1]=key, [2]=props, [3-5]=keys, [6]=gap props, [7-10]=keys
     (10, 1),  # slot 33: X
@@ -77,7 +79,7 @@ TEMPLATE_POSITIONS = [
     (10, 7),  # slot 37: N (skip [6] which is gap props)
     (10, 8),  # slot 38: M
     (10, 9),  # slot 39: ,
-    (10, 10), # slot 40: .
+    (10, 10),  # slot 40: .
     # Row 11 (JSON index 11): Bottom outer Lower,Z | /,Lower
     (11, 3),  # slot 41: Lower_L
     (11, 5),  # slot 42: Z
@@ -112,24 +114,22 @@ TEMPLATE_POSITIONS = [
     (36, 1),  # slot 65: T1 upper - ZMK 57 (ENTER/System)
     (37, 1),  # slot 66: T1 lower - ZMK 74 (SPACE/Symbol)
     # Outer column slots (slots 67-69) - added for full keyboard support
-    (5, 9),   # slot 67: R2C6 right (-/_) - ZMK 21
-    (7, 3),   # slot 68: R3C6 left (Tab) - ZMK 22
-    (9, 3),   # slot 69: R4C6 left (Caps) - ZMK 34 (alternate to slot 29)
+    (5, 9),  # slot 67: R2C6 right (-/_) - ZMK 21
+    (7, 3),  # slot 68: R3C6 left (Tab) - ZMK 22
+    (9, 3),  # slot 69: R4C6 left (Caps) - ZMK 34 (alternate to slot 29)
     # Function row R1 (slots 70-79) - ZMK 0-9
     # Left side R1: ZMK 0-4 (C6 to C2)
-    (2, 1),   # slot 70: R1C4 left - ZMK 2
-    (2, 2),   # slot 71: R1C3 left - ZMK 3
-    (2, 3),   # slot 72: R1C2 left - ZMK 4
-    (3, 3),   # slot 73: R1C1 left - ZMK 5 (inner)
-    (3, 4),   # slot 74: Extra left slot
+    (2, 1),  # slot 70: R1C4 left - ZMK 2
+    (2, 2),  # slot 71: R1C3 left - ZMK 3
+    (2, 3),  # slot 72: R1C2 left - ZMK 4
+    (3, 3),  # slot 73: R1C1 left - ZMK 5 (inner)
+    (3, 4),  # slot 74: Extra left slot
     # Right side R1: ZMK 5-9 (C2 to C6)
-    (3, 6),   # slot 75: R1C1 right - ZMK 6 (inner)
-    (3, 7),   # slot 76: Extra right slot
-    (2, 7),   # slot 77: R1C2 right - ZMK 7
-    (2, 8),   # slot 78: R1C3 right - ZMK 8
-    (2, 9),   # slot 79: R1C4 right - ZMK 9
-    # R2 outer left (slot 80) - for ZMK 10 (=/+)
-    (5, 3),   # slot 80: R2C6 left (=/+) - ZMK 10
+    (3, 6),  # slot 75: R1C1 right - ZMK 6 (inner)
+    (3, 7),  # slot 76: Extra right slot
+    (2, 7),  # slot 77: R1C2 right - ZMK 7
+    (2, 8),  # slot 78: R1C3 right - ZMK 8
+    (2, 9),  # slot 79: R1C4 right - ZMK 9
 ]
 
 # ZMK to template slot mapping
@@ -144,38 +144,32 @@ TEMPLATE_POSITIONS = [
 # Row 5 (64-79): Lower + right thumb - 5 left + 6 thumb + 5 right
 
 ZMK_TO_SLOT = {
-    # Function row (ZMK 0-9): R1 - mapped to slots 70-79
-    # R1 has 5 keys per side: C6 (outer), C5, C4, C3, C2 (no C1 on R1)
-    # Template structure: Row 2 has inner keys (C4,C3,C2), Row 3 has outer keys (C6,C5)
-    # Left side (ZMK 0-4): C6->C2 (outer to inner)
-    0: 74,   # ZMK 0 (C6 outer) -> slot 74 (row 3, item 4)
-    1: 73,   # ZMK 1 (C5) -> slot 73 (row 3, item 3)
-    2: 70,   # ZMK 2 (C4) -> slot 70 (row 2, item 1)
-    3: 71,   # ZMK 3 (C3) -> slot 71 (row 2, item 2)
-    4: 72,   # ZMK 4 (C2 inner) -> slot 72 (row 2, item 3)
-    # Right side (ZMK 5-9): C2->C6 (inner to outer)
-    5: 77,   # ZMK 5 (C2 inner) -> slot 77 (row 2, item 7)
-    6: 78,   # ZMK 6 (C3) -> slot 78 (row 2, item 8)
-    7: 79,   # ZMK 7 (C4) -> slot 79 (row 2, item 9)
-    8: 75,   # ZMK 8 (C5) -> slot 75 (row 3, item 6)
-    9: 76,   # ZMK 9 (C6 outer) -> slot 76 (row 3, item 7)
-
+    # Function row (ZMK 0-9): R1 - now mapped to slots 70-79
+    # ZMK 0-4: Left side (C6 to C2), ZMK 5-9: Right side (C2 to C6)
+    # Note: ZMK 0, 1 have no visual slots (outer edges)
+    2: 70,  # ZMK 2 -> slot 70 (R1C4 left)
+    3: 71,  # ZMK 3 -> slot 71 (R1C3 left)
+    4: 72,  # ZMK 4 -> slot 72 (R1C2 left)
+    5: 73,  # ZMK 5 -> slot 73 (R1C1 left)
+    6: 75,  # ZMK 6 -> slot 75 (R1C1 right)
+    7: 77,  # ZMK 7 -> slot 77 (R1C2 right)
+    8: 78,  # ZMK 8 -> slot 78 (R1C3 right)
+    9: 79,  # ZMK 9 -> slot 79 (R1C4 right)
     # Number row (ZMK 10-21)
-    # ZMK: 10==/+, 11=1, 12=2, 13=3, 14=4, 15=5 | 16=6, 17=7, 18=8, 19=9, 20=0, 21=-
-    # ZMK 10 is the leftmost key on number row (R2C6 left)
-    10: 80,  # =/+ -> R2C6 left (slot 80)
-    11: 8,   # 1 -> slot 8
-    12: 0,   # 2 -> slot 0
-    13: 1,   # 3 -> slot 1
-    14: 2,   # 4 -> slot 2
-    15: 3,   # 5 -> slot 3
-    16: 4,   # 6 -> slot 4
-    17: 5,   # 7 -> slot 5
-    18: 6,   # 8 -> slot 6
-    19: 7,   # 9 -> slot 7
-    20: 9,   # 0 -> slot 9
+    # ZMK: 10=`/~, 11=1, 12=2, 13=3, 14=4, 15=5 | 16=6, 17=7, 18=8, 19=9, 20=0, 21=-
+    # Note: ZMK 21 (minus) has no dedicated slot - Sunaku's template doesn't show it
+    10: 29,  # `/~ -> = position (slot 29)
+    11: 8,  # 1 -> slot 8
+    12: 0,  # 2 -> slot 0
+    13: 1,  # 3 -> slot 1
+    14: 2,  # 4 -> slot 2
+    15: 3,  # 5 -> slot 3
+    16: 4,  # 6 -> slot 4
+    17: 5,  # 7 -> slot 5
+    18: 6,  # 8 -> slot 6
+    19: 7,  # 9 -> slot 7
+    20: 9,  # 0 -> slot 9
     21: 67,  # - -> slot 67 (R2C6 right)
-
     # QWERTY row (ZMK 22-33)
     # ZMK: 22=Tab, 23=Q, 24=W, 25=E, 26=R, 27=T | 28=Y, 29=U, 30=I, 31=O, 32=P, 33=\
     22: 68,  # Tab -> slot 68 (R3C6 left)
@@ -190,10 +184,9 @@ ZMK_TO_SLOT = {
     31: 17,  # O -> slot 17
     32: 19,  # P -> slot 19
     33: 20,  # \ -> slot 20 (QWERTY outer right - position (7, 9))
-
     # Home row (ZMK 34-45)
     # ZMK: 34=Caps, 35=A, 36=S, 37=D, 38=F, 39=G | 40=H, 41=J, 42=K, 43=L, 44=;, 45='
-    34: 29,  # Caps -> slot 29 (R4C6 left outer)
+    # Caps (34) has no main slot in template
     35: 30,  # A -> slot 30
     36: 21,  # S -> slot 21
     37: 22,  # D -> slot 22
@@ -205,7 +198,6 @@ ZMK_TO_SLOT = {
     43: 28,  # L -> slot 28
     44: 31,  # ; -> slot 31
     45: 32,  # ' -> slot 32
-
     # Bottom row + left thumb (ZMK 46-63)
     # ZMK 46-51: Lower,Z,X,C,V,B (left bottom)
     # ZMK 52-57: left thumb (Esc,App,Lower,Lower,Ins,Enter)
@@ -230,7 +222,6 @@ ZMK_TO_SLOT = {
     61: 40,  # . -> slot 40
     62: 43,  # / -> slot 43
     63: 44,  # Lower -> slot 44
-
     # Lower row + right thumb (ZMK 64-79)
     # ZMK 64-68: RGB,`,{,[,Scroll (left lower)
     # ZMK 69-74: right thumb (Bksp,Del,Home,End,Tab,Space)
@@ -275,7 +266,7 @@ def generate_kle_from_template(
         layer: Layer object with bindings
         title: Optional title (uses layer.name if not provided)
         combos: Optional list of combos to display in text blocks
-        os_style: Operating system style for modifier symbols ("mac", "windows", "linux")
+        os_style: OS style for modifier symbols ("mac", "windows", or "linux")
         activators: Optional list of LayerActivator objects for marking held keys
 
     Returns:
@@ -339,308 +330,15 @@ def generate_kle_from_template(
                 label = _format_binding_label(binding, os_style)
                 row[item_idx] = label
 
-                # Check if this is an HRM key on the home row (R4)
-                # Home row positions: ZMK 35-44 (A,S,D,F,G on left; H,J,K,L,; on right)
-                HOME_ROW_POSITIONS = set(range(35, 45))
-                is_home_row_hrm = (
-                    zmk_pos in HOME_ROW_POSITIONS
-                    and binding.tap
-                    and binding.hold
-                    and binding.hold != "None"
-                )
-
-                # Thumb cluster positions: ZMK 52-57 (left) and 69-74 (right)
-                THUMB_POSITIONS = set(range(52, 58)) | set(range(69, 75))
-                # R5/R6 outer column positions (Sticky Shift, RGB keys)
-                OUTER_R5_R6_POSITIONS = {46, 63, 64, 68, 79}  # Sticky shift and RGB
-                is_thumb_key = zmk_pos in THUMB_POSITIONS
-                is_outer_special = zmk_pos in OUTER_R5_R6_POSITIONS
-
-                # Check if outer special key has a hold behavior (like sticky shift)
-                is_outer_with_hold = (
-                    is_outer_special
-                    and binding.hold
-                    and binding.hold != "None"
-                )
-
-                # Calculate appropriate font size based on label content
-                # Get the longest line in the label for font size calculation
-                label_lines = label.split('\n')
-                max_line_len = max((len(line) for line in label_lines if line), default=0)
-
-                # Check if this key has a shifted character (two-line legend: "shifted\nunshifted")
-                # These need a=5 alignment for proper KLE rendering
-                # Only match short char pairs (1-2 chars each), not multi-word labels like "Sel\nLine"
-                has_shifted_char = (
-                    '\n' in label
-                    and len(label_lines) >= 2
-                    and label_lines[0]  # Has shifted char on first line
-                    and label_lines[1]  # Has unshifted char on second line
-                    and len(label_lines[0]) <= 2  # Short shifted char (e.g., "!", ":")
-                    and len(label_lines[1]) <= 2  # Short unshifted char (e.g., "1", ";")
-                    and not binding.hold  # Not a hold-tap key (those use different format)
-                )
-
-                # Check if this key has multi-line word labels (like "Page\nUp", "Sel\nLine")
-                # These also need a=5 to show both lines
-                has_multiline_words = (
-                    '\n' in label
-                    and len(label_lines) >= 2
-                    and label_lines[0]  # Has content on first line
-                    and label_lines[1]  # Has content on second line
-                    and (len(label_lines[0]) > 2 or len(label_lines[1]) > 2)  # At least one line is a word
-                    and not binding.hold  # Not a hold-tap key
-                )
-
-                # Check if this key has shifted char AND hold (like semicolon with control)
-                # Detect from binding properties, not label format
-                has_shifted_and_hold = (
-                    binding.hold
-                    and binding.hold != "None"
-                    and (binding.shifted or get_shifted_char(binding.tap or ""))
-                )
-
-                # Font size logic:
-                # - f=5: short labels (1-2 chars) on regular keys
-                # - f=4: medium labels (3-5 chars) or thumb/outer special keys
-                # - f=3: longer labels (6+ chars)
-                # - f=2: very long labels (10+ chars)
-                # Count modifier symbols (they're visually wider than regular chars)
-                modifier_count = sum(1 for c in label if c in '⌘⌥⌃⇧')
-                needs_font_adjustment = is_thumb_key or is_outer_special
-                if needs_font_adjustment:
-                    if max_line_len <= 3:
-                        target_font = 4
-                    elif max_line_len <= 6:
-                        target_font = 3
-                    else:
-                        target_font = 2
-                elif max_line_len >= 4 or modifier_count >= 2:
-                    # Reduce font for longer labels or multi-modifier combos (⌘⇧Z, etc.)
-                    target_font = 4
-                else:
-                    target_font = None  # Use template default for regular keys
-
-                # Handle preceding property dict
-                # IMPORTANT: Only modify existing property dicts - do NOT insert new ones
-                # as that would shift all subsequent items and break the template layout
+                # Check if preceding item is a property dict with ghost flag
+                # In KLE, properties cascade to subsequent keys, so we need to
+                # remove ghost flag when we're putting actual content there
                 if item_idx > 0 and isinstance(row[item_idx - 1], dict):
                     props = row[item_idx - 1]
-                    # Remove ghost flag when we're putting actual content there
                     if props.get("g") is True:
                         props["g"] = False
-                    # Set alignment based on key type:
-                    # - a=4: Keys with shifted char + hold (need all 3 positions visible)
-                    # - a=7: HRM keys without shifted char (tap centered, hold at bottom)
-                    # - a=5: Keys with just shifted characters (two-line legend)
-                    if has_shifted_and_hold:
-                        # Keys like semicolon with shifted : and hold control
-                        # Use a=0 with center column positions 8, 9, 10 for vertical centering
-                        props["a"] = 0
-                    # Multi-line words need a=5 to show both lines (even on thumb keys)
-                    elif has_multiline_words:
-                        props["a"] = 5
-                    elif is_home_row_hrm or is_outer_special or is_thumb_key:
-                        props["a"] = 7
-                    # Set a=5 alignment for keys with shifted characters
-                    elif has_shifted_char:
-                        # Check if this is the last key before row end (R2C6 right position)
-                        # These need a=5 but we must reset a=7 afterward for Row 6 letters
-                        was_reset_point = props.get("a") == 7
-                        props["a"] = 5
-                        # If this was a reset point, ensure next prop dict resets to a=7
-                        if was_reset_point and item_idx + 1 < len(row):
-                            next_item = row[item_idx + 1] if item_idx + 1 < len(row) else None
-                            if isinstance(next_item, dict) and "a" not in next_item:
-                                next_item["a"] = 7
-                    else:
-                        # Default: center simple single-line labels
-                        props["a"] = 7
-                    # Set font size for keys that need it (thumb/outer special or long labels)
-                    if target_font:
-                        props["f"] = target_font
-                        # Remove fa array if present to use consistent font
-                        if "fa" in props:
-                            del props["fa"]
-                # Handle keys without immediately preceding props dict
-                # For font size, we can safely search backward and set on the nearest
-                # props dict since smaller fonts won't break other keys' layout
-                elif target_font:
-                    # Find the most recent props dict before this key
-                    for search_idx in range(item_idx - 1, -1, -1):
-                        if isinstance(row[search_idx], dict):
-                            # Only set if not already set to a smaller font
-                            if row[search_idx].get("f", 99) > target_font:
-                                row[search_idx]["f"] = target_font
-                            # Also set centered alignment for single-line labels,
-                            # but only if no multi-line keys exist between props and this key
-                            if '\n' not in label and not has_shifted_char:
-                                has_multiline_between = False
-                                for check_idx in range(search_idx + 1, item_idx):
-                                    check_item = row[check_idx]
-                                    if isinstance(check_item, str) and '\n' in check_item:
-                                        has_multiline_between = True
-                                        break
-                                if not has_multiline_between:
-                                    row[search_idx]["a"] = 7
-                                else:
-                                    # Can't change alignment - shift label to bottom position
-                                    # With a=5: position 0 is top, position 1 is bottom
-                                    # Use "\n{label}" to put content at bottom (visually centered)
-                                    row[item_idx] = f"\n{label}"
-                            break
-                # Search backward for the most recent props dict, but only modify if
-                # all intermediate keys are also multi-line (won't be broken by a=5)
-                elif has_multiline_words:
-                    # Find the most recent props dict before this key
-                    props_idx = None
-                    for search_idx in range(item_idx - 1, -1, -1):
-                        if isinstance(row[search_idx], dict):
-                            props_idx = search_idx
-                            break
-
-                    if props_idx is not None:
-                        # Check if all keys between props_idx and item_idx are multi-line
-                        all_multiline = True
-                        for check_idx in range(props_idx + 1, item_idx):
-                            check_item = row[check_idx]
-                            if isinstance(check_item, str) and '\n' not in check_item:
-                                # Single-line label found - would be broken by a=5
-                                all_multiline = False
-                                break
-
-                        if all_multiline:
-                            row[props_idx]["a"] = 5
-                # Note: We intentionally do NOT insert new property dicts here
-                # The template structure must be preserved - inserting would break layout
-
-    # Post-processing: Reset alignment at row boundaries where shifted chars cascade
-    # Row 10 (bottom letter row) needs a=7 to center X,C,V,B,N,M after Row 9's a=5
-    rows_needing_alignment_reset = [10]
-    for row_idx in rows_needing_alignment_reset:
-        if row_idx < len(kle_data) and isinstance(kle_data[row_idx], list):
-            row = kle_data[row_idx]
-            # Find first props dict in row and ensure a=7
-            if row and isinstance(row[0], dict):
-                if "a" not in row[0]:
-                    row[0]["a"] = 7
 
     return json.dumps(kle_data, indent=2)
-
-
-def _format_hold_label(hold: str, os_style: str = "mac") -> str:
-    """
-    Format a hold behavior label.
-
-    For modifier holds: returns OS-appropriate icon (⌘, ⌃, ⌥, ⇧ for mac)
-    For layer holds: returns the layer name as-is (e.g., "Symbol", "Cursor")
-
-    Args:
-        hold: The hold behavior string
-        os_style: Operating system style for modifier symbols ("mac", "windows", "linux")
-    """
-    import re
-
-    if not hold:
-        return ""
-
-    modifier_map = MODIFIER_SYMBOLS.get(os_style, MODIFIER_SYMBOLS["mac"])
-
-    # Handle finger hold behaviors: &left_pinky_hold LCTL, &right_middy_hold LGUI, etc.
-    finger_hold_match = re.match(r'^&(left|right)_(pinky|ringy|middy|index)_hold\s+(.+)$', hold)
-    if finger_hold_match:
-        modifier = finger_hold_match.group(3).upper()
-        if modifier in modifier_map:
-            return modifier_map[modifier]
-        return modifier
-
-    # Handle sticky key behaviors: &sk LSHIFT, &sticky_key LALT, etc.
-    sticky_match = re.match(r'^&(sk|sticky_key|sticky_key_oneshot)\s+(.+)$', hold)
-    if sticky_match:
-        modifier = sticky_match.group(2).upper()
-        if modifier in modifier_map:
-            return modifier_map[modifier]
-        return modifier
-
-    # Check if this is a direct modifier - use icon from MODIFIER_SYMBOLS
-    hold_upper = hold.upper()
-    if hold_upper in modifier_map:
-        return modifier_map[hold_upper]
-
-    # For layer names or anything else, return as-is
-    return hold
-
-
-# Keys that should show as words (not icons) on non-thumb keys
-# Format: ZMK_KEY -> "Word" or "Line1\nLine2" for multi-word
-KLE_WORD_LABELS = {
-    "HOME": "Home",
-    "END": "End",
-    "PG_UP": "Page Up",
-    "PG_DN": "Page Dn",
-    "PG UP": "Page Up",
-    "PG DN": "Page Dn",
-    "PAGE_UP": "Page Up",
-    "PAGE_DN": "Page Dn",
-    "PAGE UP": "Page Up",
-    "PAGE DN": "Page Dn",
-    "ENTER": "Enter",
-    "RET": "Enter",
-    "RETURN": "Enter",
-    "SPACE": "Space",
-    "SPC": "Space",
-    "TAB": "Tab",
-    "BSPC": "Bksp",
-    "BACKSPACE": "Bksp",
-    "DEL": "Del",
-    "DELETE": "Del",
-    "INS": "Ins",
-    "INSERT": "Ins",
-    "ESC": "Esc",
-    "ESCAPE": "Esc",
-    "CAPS": "Caps",
-    "CAPSLOCK": "Caps",
-}
-
-# Thumb cluster positions - icons are OK here since space is limited
-THUMB_POSITIONS = set(range(52, 58)) | set(range(69, 75))
-
-
-def _format_tap_label_kle(tap: str, position: int, os_style: str = "mac") -> str:
-    """
-    Format a tap label for KLE output.
-
-    Non-thumb keys use word labels for navigation/action keys.
-    Thumb keys use icons (via format_key_label) since space is limited.
-    """
-    if not tap:
-        return ""
-
-    # Handle behavior macros with special formatting
-    if tap.startswith("&"):
-        tap_lower = tap.lower()
-        # Extend behaviors
-        if "extend_line" in tap_lower:
-            return "Extnd\nLine"
-        if "extend_word" in tap_lower:
-            return "Extnd\nWord"
-        # Select behaviors
-        if "select_line" in tap_lower:
-            return "Sel\nLine"
-        if "select_word" in tap_lower:
-            return "Sel\nWord"
-
-    # For thumb keys, use standard icon formatting
-    if position in THUMB_POSITIONS:
-        return format_key_label(tap, os_style)
-
-    # For non-thumb keys, check if we should use word labels
-    tap_upper = tap.upper()
-    if tap_upper in KLE_WORD_LABELS:
-        return KLE_WORD_LABELS[tap_upper]
-
-    # Fall back to standard formatting
-    return format_key_label(tap, os_style)
 
 
 def _format_binding_label(binding: KeyBinding, os_style: str = "mac") -> str:
@@ -649,19 +347,9 @@ def _format_binding_label(binding: KeyBinding, os_style: str = "mac") -> str:
     hold = binding.hold if binding.hold and binding.hold != "None" else ""
     shifted = binding.shifted if binding.shifted and binding.shifted != "None" else ""
 
-    # Format for nice display - use KLE-specific tap formatting
-    tap_fmt = _format_tap_label_kle(tap, binding.position, os_style) if tap else ""
-    # Use icons for modifiers (respecting OS style), text for layer names
-    hold_fmt = _format_hold_label(hold, os_style) if hold else ""
-
-    # If shifted is a behavior macro, format it the same way as tap
-    # For extend/select behaviors, we don't want to show both directions
-    if shifted and shifted.startswith("&"):
-        shifted_lower = shifted.lower()
-        # Skip shifted display for extend/select behaviors (left/right variants)
-        # since showing both directions is redundant
-        if any(x in shifted_lower for x in ["extend_", "select_"]):
-            shifted = ""
+    # Format for nice display
+    tap_fmt = format_key_label(tap, os_style) if tap else ""
+    hold_fmt = format_key_label(hold, os_style) if hold else ""
 
     # Auto-calculate shifted character if not already provided
     # This adds shifted characters for numbers (1→!, 2→@) and punctuation
@@ -674,23 +362,13 @@ def _format_binding_label(binding: KeyBinding, os_style: str = "mac") -> str:
     # Position 0 = top-left, 1 = bottom-left, 5 = center-left
     # For hold-tap: tap on top (or center), hold at bottom
     if shifted and hold_fmt:
-        # For HRM keys with shifted chars (like semicolon with control),
-        # Use a=0 with center column: positions 8, 10, 11 (lines 8, 10, 11)
-        # KLE grid center column: 8 (top), 9 (upper-mid), 10 (lower-mid), 11 (bottom)
-        return f"\n\n\n\n\n\n\n\n{shifted}\n\n{tap_fmt}\n{hold_fmt}"
+        return f"{shifted}\n{tap_fmt}\n\n\n{hold_fmt}"
     elif shifted:
         return f"{shifted}\n{tap_fmt}"
     elif hold_fmt:
         return f"{tap_fmt}\n\n\n\n{hold_fmt}"
     else:
         return tap_fmt
-
-
-def _is_thumb_only_combo(combo: Combo) -> bool:
-    """Check if a combo uses only thumb cluster keys."""
-    # Thumb cluster positions: left thumb (52-57), right thumb (69-74)
-    THUMB_POSITIONS = set(range(52, 58)) | set(range(69, 75))
-    return all(pos in THUMB_POSITIONS for pos in combo.positions)
 
 
 def _update_combo_text_blocks(
@@ -701,7 +379,6 @@ def _update_combo_text_blocks(
     """
     Update the combo text blocks in the KLE JSON with combo information.
 
-    Only displays combos that use thumb cluster keys.
     Left text block (row 14, first text item): left-hand and cross-hand combos
     Right text block (row 14, second text item): right-hand combos
 
@@ -710,11 +387,8 @@ def _update_combo_text_blocks(
         layer_name: Name of the current layer (for filtering)
         combos: List of all combos to potentially display
     """
-    # Filter combos: active on this layer AND using only thumb keys
-    active_combos = [
-        c for c in combos
-        if c.is_active_on_layer(layer_name) and _is_thumb_only_combo(c)
-    ]
+    # Filter combos active on this layer
+    active_combos = [c for c in combos if c.is_active_on_layer(layer_name)]
 
     # Separate into left/cross-hand and right-hand
     left_combos = [c for c in active_combos if c.is_left_hand or c.is_cross_hand]

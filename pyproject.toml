@@ -45,6 +45,7 @@ dev = [
     "mypy>=1.0.0",
     "types-PyYAML>=6.0.0",
     "build>=1.0.0",
+    "playwright>=1.40.0",
 ]
 
 [project.scripts]
@@ -74,6 +75,8 @@ target-version = ["py310", "py311", "py312"]
 [tool.ruff]
 line-length = 100
 target-version = "py310"
+
+[tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "UP"]
 
 [tool.mypy]

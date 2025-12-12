@@ -5,12 +5,14 @@ This module takes KLE JSON and renders it to PNG/PDF using
 keyboard-layout-editor.com via a headless browser (Playwright).
 """
 
-import json
 import tempfile
 from pathlib import Path
+from typing import Any
 
-from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeout
+from playwright.sync_api import TimeoutError as PlaywrightTimeout  # type: ignore[import-not-found]
+from playwright.sync_api import sync_playwright  # type: ignore[import-not-found]
 
+from glove80_visualizer.models import Combo, Layer
 
 # The KLE website URL
 KLE_URL = "https://www.keyboard-layout-editor.com/"
@@ -150,7 +152,7 @@ def _png_to_pdf(png_path: Path, pdf_path: Path) -> None:
     try:
         from PIL import Image
 
-        img = Image.open(png_path)
+        img: Any = Image.open(png_path)
         # Convert to RGB if necessary (PDF doesn't support alpha)
         if img.mode == "RGBA":
             background = Image.new("RGB", img.size, (255, 255, 255))
@@ -160,17 +162,17 @@ def _png_to_pdf(png_path: Path, pdf_path: Path) -> None:
             img = img.convert("RGB")
 
         img.save(pdf_path, "PDF", resolution=150.0)
-    except ImportError:
+    except ImportError:  # pragma: no cover
         raise RuntimeError("PIL/Pillow is required for PDF conversion")
 
 
 def render_layer_kle(
-    layer,
+    layer: Layer,
     output_path: Path | str,
     output_format: str = "png",
-    combos: list | None = None,
+    combos: list[Combo] | None = None,
     os_style: str = "mac",
-    **kwargs,
+    **kwargs: Any,
 ) -> Path:
     """
     Convenience function to render a Layer object to KLE output.
@@ -180,7 +182,7 @@ def render_layer_kle(
         output_path: Path for output file
         output_format: "png" or "pdf"
         combos: Optional list of Combo objects to display in text blocks
-        os_style: Operating system style for modifier symbols ("mac", "windows", "linux")
+        os_style: OS style for modifier symbols ("mac", "windows", or "linux")
         **kwargs: Additional arguments passed to render functions
 
     Returns:
@@ -197,12 +199,12 @@ def render_layer_kle(
 
 
 def render_all_layers_kle(
-    layers: list,
+    layers: list[Layer],
     output_dir: Path | str,
     output_format: str = "png",
-    combos: list | None = None,
+    combos: list[Combo] | None = None,
     os_style: str = "mac",
-    **kwargs,
+    **kwargs: Any,
 ) -> list[Path]:
     """
     Render all layers to KLE output files.
@@ -212,7 +214,7 @@ def render_all_layers_kle(
         output_dir: Directory to save output files
         output_format: "png" or "pdf"
         combos: Optional list of Combo objects to display in text blocks
-        os_style: Operating system style for modifier symbols ("mac", "windows", "linux")
+        os_style: OS style for modifier symbols ("mac", "windows", or "linux")
         **kwargs: Additional arguments passed to render functions
 
     Returns:
@@ -225,18 +227,25 @@ def render_all_layers_kle(
     for layer in layers:
         suffix = ".pdf" if output_format.lower() == "pdf" else ".png"
         output_path = output_dir / f"{layer.name}{suffix}"
-        render_layer_kle(layer, output_path, output_format=output_format, combos=combos, os_style=os_style, **kwargs)
+        render_layer_kle(
+            layer,
+            output_path,
+            output_format=output_format,
+            combos=combos,
+            os_style=os_style,
+            **kwargs,
+        )
         output_paths.append(output_path)
 
     return output_paths
 
 
 def create_combined_pdf_kle(
-    layers: list,
+    layers: list[Layer],
     output_path: Path | str,
-    combos: list | None = None,
+    combos: list[Combo] | None = None,
     os_style: str = "mac",
-    **kwargs,
+    **kwargs: Any,
 ) -> Path:
     """
     Render all layers and combine into a single PDF.
@@ -245,14 +254,15 @@ def create_combined_pdf_kle(
         layers: List of Layer objects
         output_path: Path for combined PDF
         combos: Optional list of Combo objects to display in text blocks
-        os_style: Operating system style for modifier symbols ("mac", "windows", "linux")
+        os_style: OS style for modifier symbols ("mac", "windows", or "linux")
         **kwargs: Additional arguments passed to render functions
 
     Returns:
         Path to the combined PDF
     """
     import tempfile
-    from PyPDF2 import PdfMerger
+
+    from glove80_visualizer.pdf_generator import merge_pdfs
 
     output_path = Path(output_path)
 
@@ -270,12 +280,11 @@ def create_combined_pdf_kle(
             **kwargs,
         )
 
-        # Merge PDFs
-        merger = PdfMerger()
-        for pdf_path in pdf_paths:
-            merger.append(str(pdf_path))
+        # Read all PDFs as bytes and merge using pikepdf
+        pdf_bytes_list = [path.read_bytes() for path in pdf_paths]
+        merged_pdf = merge_pdfs(pdf_bytes_list)
 
-        merger.write(str(output_path))
-        merger.close()
+        # Write merged PDF to output
+        output_path.write_bytes(merged_pdf)
 
     return output_path

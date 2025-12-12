@@ -12,6 +12,7 @@ import click
 from glove80_visualizer import __version__
 from glove80_visualizer.config import VisualizerConfig
 from glove80_visualizer.extractor import extract_layer_activators, extract_layers
+from glove80_visualizer.models import Combo
 from glove80_visualizer.parser import KeymapParseError, parse_combos, parse_zmk_keymap
 from glove80_visualizer.pdf_generator import generate_pdf_with_toc
 from glove80_visualizer.svg_generator import generate_layer_svg
@@ -20,22 +21,32 @@ from glove80_visualizer.svg_generator import generate_layer_svg
 class MutuallyExclusiveOption(click.Option):
     """Custom option class that enforces mutual exclusivity."""
 
-    def __init__(self, *args, **kwargs):
-        self.mutually_exclusive = set(kwargs.pop('mutually_exclusive', []))
-        super().__init__(*args, **kwargs)
+    mutually_exclusive: set[str]
 
-    def handle_parse_result(self, ctx, opts, args):
+    def __init__(self, *args: object, **kwargs: object) -> None:
+        mutex_arg = kwargs.pop("mutually_exclusive", [])
+        # Cast to list[str] - we know the caller passes string lists
+        mutex_list: list[str] = (
+            list(mutex_arg) if mutex_arg else []  # type: ignore[call-overload]
+        )
+        self.mutually_exclusive = set(mutex_list)
+        super().__init__(*args, **kwargs)  # type: ignore[arg-type]
+
+    def handle_parse_result(  # type: ignore[override]
+        self, ctx: click.Context, opts: dict[str, object], args: list[str]
+    ) -> tuple[object, list[str]]:
         current_opt = self.name in opts and opts[self.name]
 
         for mutex_opt in self.mutually_exclusive:
             if mutex_opt in opts and opts[mutex_opt]:
                 if current_opt:
+                    name = self.name or "unknown"
                     raise click.UsageError(
-                        f"Options --{self.name.replace('_', '-')} and "
+                        f"Options --{name.replace('_', '-')} and "
                         f"--{mutex_opt.replace('_', '-')} are mutually exclusive."
                     )
 
-        return super().handle_parse_result(ctx, opts, args)
+        return super().handle_parse_result(ctx, opts, args)  # type: ignore[return-value]
 
 
 @click.command()
@@ -143,11 +154,12 @@ class MutuallyExclusiveOption(click.Option):
     is_flag=True,
     help="Hide shifted characters on keys (shown by default)",
 )
+# TODO: Wire up color scheme to KLE generation (currently only sunaku template exists)
 @click.option(
     "--kle-color-scheme",
     type=click.Choice(["sunaku", "everforest"]),
     default="sunaku",
-    help="Color scheme for KLE output (default: sunaku)",
+    help="Color scheme for KLE output (default: sunaku) [WIP - not yet implemented]",
 )
 @click.version_option(version=__version__)
 def main(
@@ -203,6 +215,7 @@ def main(
         # List available layers
         glove80-viz my-keymap.keymap --list-layers
     """
+
     # Helper for output
     def log(msg: str, force: bool = False) -> None:
         if (verbose or force) and not quiet:
@@ -241,8 +254,8 @@ def main(
         sys.exit(1)
 
     # Parse include/exclude filters
-    include_list = [l.strip() for l in layers.split(",")] if layers else None
-    exclude_list = [l.strip() for l in exclude_layers.split(",")] if exclude_layers else None
+    include_list = [name.strip() for name in layers.split(",")] if layers else None
+    exclude_list = [name.strip() for name in exclude_layers.split(",")] if exclude_layers else None
 
     # Extract layers
     extracted_layers = extract_layers(yaml_content, include=include_list, exclude=exclude_list)
@@ -272,6 +285,9 @@ def main(
             output = keymap.parent / f"{keymap.stem}_kle_pngs"
         elif output_format == "kle-pdf":
             output = keymap.with_name(f"{keymap.stem}_kle.pdf")
+
+    # At this point output should be set (Click validates output_format choices)
+    assert output is not None, "Output path should be set"
 
     log(f"Found {len(extracted_layers)} layers")
 
@@ -303,58 +319,67 @@ def main(
         log(f"Found {len(activators)} layer activators")
 
     # Parse combos for KLE output
-    combos = parse_combos(keymap)
-    if combos and verbose:
-        log(f"Found {len(combos)} combos")
+    combos: list[Combo] = []
+    try:
+        combos = parse_combos(keymap)
+        if combos and verbose:
+            log(f"Found {len(combos)} combos")
+    except KeymapParseError as e:
+        # Combos are optional, log warning and continue
+        log(f"Warning: Could not parse combos: {e}", force=True)
 
-    # Generate SVGs (only needed for pdf and svg formats)
-    svgs: list[str] = []
+    # Generate SVGs
+    svgs: list[str | None] = []
     failed_layers: list[str] = []
 
-    # Skip SVG generation for KLE-only formats (they use the template directly)
-    if output_format not in ("kle", "kle-png", "kle-pdf"):
-        for layer in extracted_layers:
-            log(f"  Generating SVG for layer: {layer.name}")
-            try:
-                svg = generate_layer_svg(
-                    layer,
-                    config,
-                    os_style=os_style,
-                    resolve_trans=resolve_trans,
-                    base_layer=base_layer_obj,
-                    activators=activators,
-                )
-                svgs.append(svg)
-            except Exception as e:
-                if continue_on_error:
-                    failed_layers.append(layer.name)
-                    log(f"  Warning: Failed to render layer {layer.name}: {e}", force=True)
-                    svgs.append(None)  # Placeholder
-                else:
-                    error(f"Failed to render layer {layer.name}: {e}")
-                    sys.exit(1)
-
-        # Filter out failed layers
-        if continue_on_error:
-            valid_pairs = [(l, s) for l, s in zip(extracted_layers, svgs) if s is not None]
-            if not valid_pairs:
-                error("All layers failed to render")
+    for layer in extracted_layers:
+        log(f"  Generating SVG for layer: {layer.name}")
+        try:
+            svg = generate_layer_svg(
+                layer,
+                config,
+                os_style=os_style,
+                resolve_trans=resolve_trans,
+                base_layer=base_layer_obj,
+                activators=activators,
+            )
+            svgs.append(svg)
+        except Exception as e:
+            if continue_on_error:
+                failed_layers.append(layer.name)
+                log(f"  Warning: Failed to render layer {layer.name}: {e}", force=True)
+                svgs.append(None)  # Placeholder
+            else:
+                error(f"Failed to render layer {layer.name}: {e}")
                 sys.exit(1)
-            if failed_layers:
-                click.echo(f"Warning: Skipped {len(failed_layers)} layer(s): {', '.join(failed_layers)}")
-            extracted_layers = [p[0] for p in valid_pairs]
-            svgs = [p[1] for p in valid_pairs]
+
+    # Filter out failed layers
+    if continue_on_error:
+        valid_pairs = [(lyr, s) for lyr, s in zip(extracted_layers, svgs) if s is not None]
+        if not valid_pairs:
+            error("All layers failed to render")
+            sys.exit(1)
+        if failed_layers:
+            click.echo(
+                f"Warning: Skipped {len(failed_layers)} layer(s): {', '.join(failed_layers)}"
+            )
+        extracted_layers = [p[0] for p in valid_pairs]
+        # After filtering, we know all values are str (not None)
+        filtered_svgs: list[str] = [p[1] for p in valid_pairs]
+    else:
+        # No filtering needed, all svgs should be strings
+        filtered_svgs = [s for s in svgs if s is not None]
 
     # Output based on format
     if output_format == "svg":
         # Create output directory
         output.mkdir(parents=True, exist_ok=True)
-        for layer, svg in zip(extracted_layers, svgs):
+        for layer, svg in zip(extracted_layers, filtered_svgs):
             svg_path = output / f"{layer.name}.svg"
             svg_path.write_text(svg)
             log(f"  Wrote: {svg_path}")
         if not quiet:
-            click.echo(f"Generated {len(svgs)} SVG files in {output}")
+            click.echo(f"Generated {len(filtered_svgs)} SVG files in {output}")
     elif output_format == "kle":
         # Generate KLE JSON files using Sunaku's template
         from glove80_visualizer.kle_template import generate_kle_from_template
@@ -376,8 +401,8 @@ def main(
             click.echo(f"Generated {len(extracted_layers)} KLE JSON files in {output}")
     elif output_format == "kle-png":
         # Generate KLE PNG files via headless browser using Sunaku's template
-        from glove80_visualizer.kle_template import generate_kle_from_template
         from glove80_visualizer.kle_renderer import render_kle_to_png
+        from glove80_visualizer.kle_template import generate_kle_from_template
 
         output.mkdir(parents=True, exist_ok=True)
         for layer in extracted_layers:
@@ -418,7 +443,7 @@ def main(
         log("Generating PDF...")
         pdf_bytes = generate_pdf_with_toc(
             layers=extracted_layers,
-            svgs=svgs,
+            svgs=filtered_svgs,
             config=config,
             include_toc=config.include_toc,
         )

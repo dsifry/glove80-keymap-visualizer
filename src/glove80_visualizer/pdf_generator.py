@@ -52,42 +52,59 @@ def svg_to_pdf(
 
 def _svg_to_pdf_rsvg(svg_content: str) -> bytes:
     """Convert SVG to PDF using rsvg-convert."""
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.svg', delete=False) as svg_file:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".svg", delete=False) as svg_file:
         svg_file.write(svg_content)
         svg_path = svg_file.name
 
+    pdf_path: str | None = None
     try:
-        with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as pdf_file:
+        with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as pdf_file:
             pdf_path = pdf_file.name
 
         result = subprocess.run(
-            ['rsvg-convert', '-f', 'pdf', '-o', pdf_path, svg_path],
-            capture_output=True,
-            text=True
+            ["rsvg-convert", "-f", "pdf", "-o", pdf_path, svg_path], capture_output=True, text=True
         )
 
         if result.returncode != 0:  # pragma: no cover
             raise RuntimeError(f"rsvg-convert failed: {result.stderr}")
 
-        with open(pdf_path, 'rb') as f:
+        with open(pdf_path, "rb") as f:
             return f.read()
     finally:
         # Clean up temp files - OSError handling is defensive
         import os
+
         try:
             os.unlink(svg_path)
         except OSError:  # pragma: no cover
             pass
-        try:
-            os.unlink(pdf_path)
-        except OSError:  # pragma: no cover
-            pass
+        if pdf_path is not None:
+            try:
+                os.unlink(pdf_path)
+            except OSError:  # pragma: no cover
+                pass
 
 
 def _svg_to_pdf_cairosvg(svg_content: str) -> bytes:
     """Convert SVG to PDF using CairoSVG (fallback)."""
-    import cairosvg
-    return cairosvg.svg2pdf(bytestring=svg_content.encode("utf-8"))
+    try:
+        import cairosvg  # type: ignore[import-untyped]
+    except ImportError as e:  # pragma: no cover
+        raise RuntimeError(
+            "CairoSVG is required to convert SVG to PDF but is not installed. "
+            "Install it with 'pip install cairosvg' or ensure it is available "
+            "in your environment."
+        ) from e
+
+    try:
+        result: bytes = cairosvg.svg2pdf(bytestring=svg_content.encode("utf-8"))
+        return result
+    except Exception as e:
+        raise RuntimeError(
+            "Failed to convert SVG to PDF using CairoSVG. "
+            "Verify that the SVG content is valid and that CairoSVG is functioning "
+            "correctly."
+        ) from e
 
 
 def svg_to_pdf_file(
@@ -204,7 +221,7 @@ def _replace_layer_label(svg_content: str, new_label: str) -> str:
     # Pattern to match keymap-drawer's label: <text ... class="label" ...>LayerName:</text>
     pattern = r'(<text[^>]*class="label"[^>]*>)[^<]*(</text>)'
 
-    replacement = rf'\g<1>{new_label}\g<2>'
+    replacement = rf"\g<1>{new_label}\g<2>"
 
     return re.sub(pattern, replacement, svg_content, count=1)
 
@@ -236,9 +253,7 @@ def _add_header_to_svg(svg_content: str, header: str) -> str:
         # All keymap-drawer SVGs have style blocks
         insert_pos = style_end + len("</style>")
 
-    svg_content = (
-        svg_content[:insert_pos] + "\n" + header_element + svg_content[insert_pos:]
-    )
+    svg_content = svg_content[:insert_pos] + "\n" + header_element + svg_content[insert_pos:]
 
     return svg_content
 
@@ -275,9 +290,11 @@ def _generate_toc_pages(layers: list[Layer], config: VisualizerConfig) -> list[b
 
         lines = []
         lines.append('<?xml version="1.0" encoding="UTF-8"?>')
-        lines.append(
-            f'<svg xmlns="http://www.w3.org/2000/svg" width="{page_width}" height="{page_height}" viewBox="0 0 {page_width} {page_height}">'
+        svg_attrs = (
+            f'xmlns="http://www.w3.org/2000/svg" width="{page_width}" '
+            f'height="{page_height}" viewBox="0 0 {page_width} {page_height}"'
         )
+        lines.append(f"<svg {svg_attrs}>")
         lines.append("<style>")
         lines.append("  text { font-family: sans-serif; fill: #24292e; }")
         lines.append("  .title { font-size: 24px; font-weight: bold; }")
@@ -299,9 +316,7 @@ def _generate_toc_pages(layers: list[Layer], config: VisualizerConfig) -> list[b
             page_num = num_toc_pages + actual_layer_idx + 1
             entry_text = f"{layer.index}: {layer.name}"
             lines.append(f'<text x="60" y="{y}" class="entry">{entry_text}</text>')
-            lines.append(
-                f'<text x="700" y="{y}" class="entry" text-anchor="end">{page_num}</text>'
-            )
+            lines.append(f'<text x="700" y="{y}" class="entry" text-anchor="end">{page_num}</text>')
             y += entry_height
 
         lines.append("</svg>")
@@ -315,7 +330,7 @@ def _generate_toc_pages(layers: list[Layer], config: VisualizerConfig) -> list[b
 def _create_empty_pdf() -> bytes:
     """Create a minimal empty PDF with a blank page."""
     # Create a minimal SVG to convert to PDF
-    empty_svg = '''<?xml version="1.0" encoding="UTF-8"?>
+    empty_svg = """<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="612" height="792" viewBox="0 0 612 792">
-</svg>'''
+</svg>"""
     return svg_to_pdf(empty_svg)
