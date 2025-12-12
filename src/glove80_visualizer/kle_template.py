@@ -327,13 +327,13 @@ def generate_kle_from_template(
                 # Check if this is a held key (activates current layer)
                 is_held_key = zmk_pos in held_positions
                 if is_held_key:
-                    # Use raised hand emoji centered, "Layer" at bottom
-                    # a=7 centers single content; use tap/hold format like HRM keys
-                    label = "✋"  # Just the hand centered
+                    # Use raised hand emoji in tap position, "Layer" in hold position
+                    # a=0 12-position grid: hand at pos 9, Layer at pos 11 (bottom)
+                    label = "\n\n\n\n\n\n\n\n\n✋\n\nLayer"  # 9 newlines, hand, 2 newlines, Layer
                     row[item_idx] = label
                     if item_idx > 0 and isinstance(row[item_idx - 1], dict):
-                        row[item_idx - 1]["f"] = 2  # Large font for hand visibility
-                        row[item_idx - 1]["a"] = 7  # Centered
+                        row[item_idx - 1]["f"] = 3  # Medium font
+                        row[item_idx - 1]["a"] = 0  # 12-position grid
                     continue  # Skip further processing for held keys
 
                 label = _format_binding_label(binding, os_style)
