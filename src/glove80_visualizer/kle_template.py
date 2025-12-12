@@ -379,9 +379,11 @@ def generate_kle_from_template(
                     # Remove ghost flag when we're putting actual content there
                     if props.get("g") is True:
                         props["g"] = False
-                    # Set a=7 alignment for hold-tap keys to center the tap letter
-                    # This applies to: home row HRM keys and outer special keys with holds
-                    if is_home_row_hrm or is_outer_with_hold:
+                    # Set a=7 alignment to center content for:
+                    # - Home row HRM keys (tap centered, hold at bottom)
+                    # - Outer special keys with holds (like sticky shift)
+                    # - Thumb keys (always centered, with or without hold)
+                    if is_home_row_hrm or is_outer_with_hold or is_thumb_key:
                         props["a"] = 7
                     # Set a=5 alignment for keys with shifted characters (two-line legend)
                     elif has_shifted_char:
