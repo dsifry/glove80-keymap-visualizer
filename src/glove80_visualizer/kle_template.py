@@ -128,6 +128,8 @@ TEMPLATE_POSITIONS = [
     (2, 7),   # slot 77: R1C2 right - ZMK 7
     (2, 8),   # slot 78: R1C3 right - ZMK 8
     (2, 9),   # slot 79: R1C4 right - ZMK 9
+    # R2 outer left (slot 80) - for ZMK 10 (=/+)
+    (5, 3),   # slot 80: R2C6 left (=/+) - ZMK 10
 ]
 
 # ZMK to template slot mapping
@@ -142,22 +144,26 @@ TEMPLATE_POSITIONS = [
 # Row 5 (64-79): Lower + right thumb - 5 left + 6 thumb + 5 right
 
 ZMK_TO_SLOT = {
-    # Function row (ZMK 0-9): R1 - now mapped to slots 70-79
-    # ZMK 0-4: Left side (C6 to C2), ZMK 5-9: Right side (C2 to C6)
-    # Note: ZMK 0, 1 have no visual slots (outer edges)
-    2: 70,   # ZMK 2 -> slot 70 (R1C4 left)
-    3: 71,   # ZMK 3 -> slot 71 (R1C3 left)
-    4: 72,   # ZMK 4 -> slot 72 (R1C2 left)
-    5: 73,   # ZMK 5 -> slot 73 (R1C1 left)
-    6: 75,   # ZMK 6 -> slot 75 (R1C1 right)
-    7: 77,   # ZMK 7 -> slot 77 (R1C2 right)
-    8: 78,   # ZMK 8 -> slot 78 (R1C3 right)
-    9: 79,   # ZMK 9 -> slot 79 (R1C4 right)
+    # Function row (ZMK 0-9): R1 - mapped to slots 70-79
+    # R1 has 5 keys per side: C6 (outer), C5, C4, C3, C2 (no C1 on R1)
+    # Template structure: Row 2 has inner keys (C4,C3,C2), Row 3 has outer keys (C6,C5)
+    # Left side (ZMK 0-4): C6->C2 (outer to inner)
+    0: 74,   # ZMK 0 (C6 outer) -> slot 74 (row 3, item 4)
+    1: 73,   # ZMK 1 (C5) -> slot 73 (row 3, item 3)
+    2: 70,   # ZMK 2 (C4) -> slot 70 (row 2, item 1)
+    3: 71,   # ZMK 3 (C3) -> slot 71 (row 2, item 2)
+    4: 72,   # ZMK 4 (C2 inner) -> slot 72 (row 2, item 3)
+    # Right side (ZMK 5-9): C2->C6 (inner to outer)
+    5: 77,   # ZMK 5 (C2 inner) -> slot 77 (row 2, item 7)
+    6: 78,   # ZMK 6 (C3) -> slot 78 (row 2, item 8)
+    7: 79,   # ZMK 7 (C4) -> slot 79 (row 2, item 9)
+    8: 75,   # ZMK 8 (C5) -> slot 75 (row 3, item 6)
+    9: 76,   # ZMK 9 (C6 outer) -> slot 76 (row 3, item 7)
 
     # Number row (ZMK 10-21)
-    # ZMK: 10=`/~, 11=1, 12=2, 13=3, 14=4, 15=5 | 16=6, 17=7, 18=8, 19=9, 20=0, 21=-
-    # Note: ZMK 21 (minus) has no dedicated slot - Sunaku's template doesn't show it
-    10: 29,  # `/~ -> = position (slot 29)
+    # ZMK: 10==/+, 11=1, 12=2, 13=3, 14=4, 15=5 | 16=6, 17=7, 18=8, 19=9, 20=0, 21=-
+    # ZMK 10 is the leftmost key on number row (R2C6 left)
+    10: 80,  # =/+ -> R2C6 left (slot 80)
     11: 8,   # 1 -> slot 8
     12: 0,   # 2 -> slot 0
     13: 1,   # 3 -> slot 1
@@ -310,13 +316,65 @@ def generate_kle_from_template(
                 label = _format_binding_label(binding)
                 row[item_idx] = label
 
-                # Check if preceding item is a property dict with ghost flag
-                # In KLE, properties cascade to subsequent keys, so we need to
-                # remove ghost flag when we're putting actual content there
+                # Check if this is an HRM key on the home row (R4)
+                # Home row positions: ZMK 35-44 (A,S,D,F,G on left; H,J,K,L,; on right)
+                HOME_ROW_POSITIONS = set(range(35, 45))
+                is_home_row_hrm = (
+                    zmk_pos in HOME_ROW_POSITIONS
+                    and binding.tap
+                    and binding.hold
+                    and binding.hold != "None"
+                )
+
+                # Thumb cluster positions: ZMK 52-57 (left) and 69-74 (right)
+                THUMB_POSITIONS = set(range(52, 58)) | set(range(69, 75))
+                # R5/R6 outer column positions (Sticky Shift, RGB keys)
+                OUTER_R5_R6_POSITIONS = {46, 63, 64, 68, 79}  # Sticky shift and RGB
+                is_thumb_key = zmk_pos in THUMB_POSITIONS
+                is_outer_special = zmk_pos in OUTER_R5_R6_POSITIONS
+
+                # Calculate appropriate font size based on label content
+                # Get the longest line in the label for font size calculation
+                label_lines = label.split('\n')
+                max_line_len = max((len(line) for line in label_lines if line), default=0)
+
+                # Font size logic:
+                # - f=5: short labels (1-2 chars) on regular keys
+                # - f=4: medium labels (3-5 chars) or thumb/outer special keys
+                # - f=3: longer labels (6+ chars)
+                # - f=2: very long labels (10+ chars)
+                needs_font_adjustment = is_thumb_key or is_outer_special
+                if needs_font_adjustment:
+                    if max_line_len <= 3:
+                        target_font = 4
+                    elif max_line_len <= 6:
+                        target_font = 3
+                    else:
+                        target_font = 2
+                else:
+                    target_font = None  # Use template default for regular keys
+
+                # Handle preceding property dict
                 if item_idx > 0 and isinstance(row[item_idx - 1], dict):
                     props = row[item_idx - 1]
+                    # Remove ghost flag when we're putting actual content there
                     if props.get("g") is True:
                         props["g"] = False
+                    # Set a=7 alignment for home row HRM keys to center the tap letter
+                    if is_home_row_hrm:
+                        props["a"] = 7
+                    # Set font size for thumb/outer special keys
+                    if needs_font_adjustment and target_font:
+                        props["f"] = target_font
+                        # Remove fa array if present to use consistent font
+                        if "fa" in props:
+                            del props["fa"]
+                elif is_home_row_hrm:
+                    # No preceding property dict - insert one with a=7
+                    row.insert(item_idx, {"a": 7})
+                elif needs_font_adjustment and target_font:
+                    # No preceding property dict - insert one with font size
+                    row.insert(item_idx, {"f": target_font})
 
     return json.dumps(kle_data, indent=2)
 
