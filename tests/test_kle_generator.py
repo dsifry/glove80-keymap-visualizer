@@ -640,10 +640,11 @@ class TestKLEHeldKeyIndicator:
         row_idx, item_idx = TEMPLATE_POSITIONS[slot]
         row = parsed[row_idx]
 
-        # Find the alignment setting for this key
-        if item_idx > 0 and isinstance(row[item_idx - 1], dict):
-            props = row[item_idx - 1]
-            assert props.get("a") == 0, f"Held key should have a=0 alignment, got {props.get('a')}"
+        # Verify the alignment setting for this key - fail if structure is wrong
+        assert item_idx > 0, "Expected a properties object before the held-key label"
+        assert isinstance(row[item_idx - 1], dict), "Expected a properties dict before the held-key label"
+        props = row[item_idx - 1]
+        assert props.get("a") == 0, f"Held key should have a=0 alignment, got {props.get('a')}"
 
     def test_no_held_indicator_without_activators(self):
         """KLE-039: Without activators, key should show normal label."""

@@ -10,7 +10,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from glove80_visualizer.models import Combo, KeyBinding, Layer
+from glove80_visualizer.models import Combo, KeyBinding, Layer, LayerActivator
 from glove80_visualizer.svg_generator import format_key_label, get_shifted_char
 
 # Template file location
@@ -257,7 +257,7 @@ def generate_kle_from_template(
     title: str | None = None,
     combos: list[Combo] | None = None,
     os_style: str = "mac",
-    activators: list | None = None,
+    activators: list[LayerActivator] | None = None,
 ) -> str:
     """
     Generate KLE JSON using Sunaku's template.

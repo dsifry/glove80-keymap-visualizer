@@ -190,7 +190,7 @@ def render_layer_kle(
     """
     from glove80_visualizer.kle_template import generate_kle_from_template
 
-    kle_json = generate_kle_from_template(layer, combos=combos, os_style=os_style)
+    kle_json = generate_kle_from_template(layer, combos=combos, os_style=os_style, **kwargs)
 
     if output_format.lower() == "pdf":
         return render_kle_to_pdf(kle_json, output_path, **kwargs)

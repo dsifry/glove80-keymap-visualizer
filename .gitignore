@@ -149,14 +149,11 @@ output/
 *.svg
 !tests/fixtures/*.svg
 
-# Generated KLE JSON files
+# Generated KLE JSON files and directories
 daves-keymap-kle/
 *-kle/
+*_kle/
 kle-output/
-*.json
-!tests/fixtures/**/*.json
-!package.json
-!package-lock.json
 
 # Generated test images
 kle-*.png
