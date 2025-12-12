@@ -27,8 +27,29 @@
 3. Investigate if the SPACE key profile affects text rendering
 4. Test directly in KLE website to understand position/alignment behavior better
 
+## Sticky Shift Font Issues
+
+**Problem**: "Shift sticky" keys have incorrect font sizing - text appears too large.
+
+**Affected keys**: Left and right Shift sticky keys (R5)
+
+## RGB Key Issues
+
+**Problem**: RGB keys have font/display issues.
+
+**Affected keys**: RGB keys on R6 (both left and right sides)
+
+## Thumb Key Issues
+
+**Problem**: Thumb cluster keys have multiple issues:
+- Text placement is incorrect
+- Font sizes are off
+
+**Affected keys**: All thumb cluster keys (T1-T6 positions)
+
+---
+
 ## Other Notes
 
 - The original kle_template.py (commit 09214f1) did not have special HRM handling
-- Font size adjustments for "Shift sticky" and other multi-line labels are working
 - Hold layer labels (like "Cursor" on "Back space") display correctly at position 5 with `fa` array
