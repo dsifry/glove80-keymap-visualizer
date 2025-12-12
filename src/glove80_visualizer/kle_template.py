@@ -394,7 +394,7 @@ def generate_kle_from_template(
                         target_font = 3
                     else:
                         target_font = 2
-                elif max_line_len >= 5 or modifier_count >= 2:
+                elif max_line_len >= 4 or modifier_count >= 2:
                     # Reduce font for longer labels or multi-modifier combos (⌘⇧Z, etc.)
                     target_font = 4
                 else:
@@ -439,6 +439,32 @@ def generate_kle_from_template(
                         if "fa" in props:
                             del props["fa"]
                 # Handle keys without immediately preceding props dict
+                # For font size, we can safely search backward and set on the nearest
+                # props dict since smaller fonts won't break other keys' layout
+                elif target_font:
+                    # Find the most recent props dict before this key
+                    for search_idx in range(item_idx - 1, -1, -1):
+                        if isinstance(row[search_idx], dict):
+                            # Only set if not already set to a smaller font
+                            if row[search_idx].get("f", 99) > target_font:
+                                row[search_idx]["f"] = target_font
+                            # Also set centered alignment for single-line labels,
+                            # but only if no multi-line keys exist between props and this key
+                            if '\n' not in label and not has_shifted_char:
+                                has_multiline_between = False
+                                for check_idx in range(search_idx + 1, item_idx):
+                                    check_item = row[check_idx]
+                                    if isinstance(check_item, str) and '\n' in check_item:
+                                        has_multiline_between = True
+                                        break
+                                if not has_multiline_between:
+                                    row[search_idx]["a"] = 7
+                                else:
+                                    # Can't change alignment - shift label to bottom position
+                                    # With a=5: position 0 is top, position 1 is bottom
+                                    # Use "\n{label}" to put content at bottom (visually centered)
+                                    row[item_idx] = f"\n{label}"
+                            break
                 # Search backward for the most recent props dict, but only modify if
                 # all intermediate keys are also multi-line (won't be broken by a=5)
                 elif has_multiline_words:
