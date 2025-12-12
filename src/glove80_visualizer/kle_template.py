@@ -358,14 +358,11 @@ def generate_kle_from_template(
                 )
 
                 # Check if this key has shifted char AND hold (like semicolon with control)
-                # These need a=4 to show all three: shifted (pos 0), tap (pos 1), hold (pos 4)
+                # Detect from binding properties, not label format
                 has_shifted_and_hold = (
-                    '\n' in label
-                    and len(label_lines) >= 5
-                    and label_lines[0]  # Has shifted char
-                    and label_lines[1]  # Has tap char
-                    and label_lines[4] if len(label_lines) > 4 else False  # Has hold
-                    and binding.hold
+                    binding.hold
+                    and binding.hold != "None"
+                    and (binding.shifted or get_shifted_char(binding.tap or ""))
                 )
 
                 # Font size logic:
@@ -398,8 +395,8 @@ def generate_kle_from_template(
                     # - a=5: Keys with just shifted characters (two-line legend)
                     if has_shifted_and_hold:
                         # Keys like semicolon with shifted : and hold control
-                        # Use a=7 since label format combines shifted/tap on one line
-                        props["a"] = 7
+                        # Use a=0 with center column positions 8, 9, 10 for vertical centering
+                        props["a"] = 0
                     elif is_home_row_hrm or is_outer_with_hold or is_thumb_key:
                         props["a"] = 7
                     # Set a=5 alignment for keys with shifted characters (two-line legend)
@@ -583,8 +580,9 @@ def _format_binding_label(binding: KeyBinding, os_style: str = "mac") -> str:
     # For hold-tap: tap on top (or center), hold at bottom
     if shifted and hold_fmt:
         # For HRM keys with shifted chars (like semicolon with control),
-        # combine shifted/tap on one line so a=7 centering works properly
-        return f"{shifted} {tap_fmt}\n\n\n\n{hold_fmt}"
+        # Use a=0 with center column: positions 8, 10, 11 (lines 8, 10, 11)
+        # KLE grid center column: 8 (top), 9 (upper-mid), 10 (lower-mid), 11 (bottom)
+        return f"\n\n\n\n\n\n\n\n{shifted}\n\n{tap_fmt}\n{hold_fmt}"
     elif shifted:
         return f"{shifted}\n{tap_fmt}"
     elif hold_fmt:
