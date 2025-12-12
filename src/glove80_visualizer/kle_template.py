@@ -357,6 +357,17 @@ def generate_kle_from_template(
                     and not binding.hold  # Not a hold-tap key (those use different format)
                 )
 
+                # Check if this key has shifted char AND hold (like semicolon with control)
+                # These need a=4 to show all three: shifted (pos 0), tap (pos 1), hold (pos 4)
+                has_shifted_and_hold = (
+                    '\n' in label
+                    and len(label_lines) >= 5
+                    and label_lines[0]  # Has shifted char
+                    and label_lines[1]  # Has tap char
+                    and label_lines[4] if len(label_lines) > 4 else False  # Has hold
+                    and binding.hold
+                )
+
                 # Font size logic:
                 # - f=5: short labels (1-2 chars) on regular keys
                 # - f=4: medium labels (3-5 chars) or thumb/outer special keys
@@ -381,11 +392,15 @@ def generate_kle_from_template(
                     # Remove ghost flag when we're putting actual content there
                     if props.get("g") is True:
                         props["g"] = False
-                    # Set a=7 alignment to center content for:
-                    # - Home row HRM keys (tap centered, hold at bottom)
-                    # - Outer special keys with holds (like sticky shift)
-                    # - Thumb keys (always centered, with or without hold)
-                    if is_home_row_hrm or is_outer_with_hold or is_thumb_key:
+                    # Set alignment based on key type:
+                    # - a=4: Keys with shifted char + hold (need all 3 positions visible)
+                    # - a=7: HRM keys without shifted char (tap centered, hold at bottom)
+                    # - a=5: Keys with just shifted characters (two-line legend)
+                    if has_shifted_and_hold:
+                        # Keys like semicolon with shifted : and hold control
+                        # Use a=7 since label format combines shifted/tap on one line
+                        props["a"] = 7
+                    elif is_home_row_hrm or is_outer_with_hold or is_thumb_key:
                         props["a"] = 7
                     # Set a=5 alignment for keys with shifted characters (two-line legend)
                     elif has_shifted_char:
@@ -406,6 +421,17 @@ def generate_kle_from_template(
                             del props["fa"]
                 # Note: We intentionally do NOT insert new property dicts here
                 # The template structure must be preserved - inserting would break layout
+
+    # Post-processing: Reset alignment at row boundaries where shifted chars cascade
+    # Row 10 (bottom letter row) needs a=7 to center X,C,V,B,N,M after Row 9's a=5
+    rows_needing_alignment_reset = [10]
+    for row_idx in rows_needing_alignment_reset:
+        if row_idx < len(kle_data) and isinstance(kle_data[row_idx], list):
+            row = kle_data[row_idx]
+            # Find first props dict in row and ensure a=7
+            if row and isinstance(row[0], dict):
+                if "a" not in row[0]:
+                    row[0]["a"] = 7
 
     return json.dumps(kle_data, indent=2)
 
@@ -453,16 +479,97 @@ def _format_hold_label(hold: str, os_style: str = "mac") -> str:
     return hold
 
 
+# Keys that should show as words (not icons) on non-thumb keys
+# Format: ZMK_KEY -> "Word" or "Line1\nLine2" for multi-word
+KLE_WORD_LABELS = {
+    "HOME": "Home",
+    "END": "End",
+    "PG_UP": "Page\nUp",
+    "PG_DN": "Page\nDn",
+    "PG UP": "Page\nUp",
+    "PG DN": "Page\nDn",
+    "PAGE_UP": "Page\nUp",
+    "PAGE_DN": "Page\nDn",
+    "PAGE UP": "Page\nUp",
+    "PAGE DN": "Page\nDn",
+    "ENTER": "Enter",
+    "RET": "Enter",
+    "RETURN": "Enter",
+    "SPACE": "Space",
+    "SPC": "Space",
+    "TAB": "Tab",
+    "BSPC": "Bksp",
+    "BACKSPACE": "Bksp",
+    "DEL": "Del",
+    "DELETE": "Del",
+    "INS": "Ins",
+    "INSERT": "Ins",
+    "ESC": "Esc",
+    "ESCAPE": "Esc",
+    "CAPS": "Caps",
+    "CAPSLOCK": "Caps",
+}
+
+# Thumb cluster positions - icons are OK here since space is limited
+THUMB_POSITIONS = set(range(52, 58)) | set(range(69, 75))
+
+
+def _format_tap_label_kle(tap: str, position: int, os_style: str = "mac") -> str:
+    """
+    Format a tap label for KLE output.
+
+    Non-thumb keys use word labels for navigation/action keys.
+    Thumb keys use icons (via format_key_label) since space is limited.
+    """
+    if not tap:
+        return ""
+
+    # Handle behavior macros with special formatting
+    if tap.startswith("&"):
+        tap_lower = tap.lower()
+        # Extend behaviors
+        if "extend_line" in tap_lower:
+            return "Extnd\nLine"
+        if "extend_word" in tap_lower:
+            return "Extnd\nWord"
+        # Select behaviors
+        if "select_line" in tap_lower:
+            return "Sel\nLine"
+        if "select_word" in tap_lower:
+            return "Sel\nWord"
+
+    # For thumb keys, use standard icon formatting
+    if position in THUMB_POSITIONS:
+        return format_key_label(tap, os_style)
+
+    # For non-thumb keys, check if we should use word labels
+    tap_upper = tap.upper()
+    if tap_upper in KLE_WORD_LABELS:
+        return KLE_WORD_LABELS[tap_upper]
+
+    # Fall back to standard formatting
+    return format_key_label(tap, os_style)
+
+
 def _format_binding_label(binding: KeyBinding, os_style: str = "mac") -> str:
     """Format a binding as a KLE label string."""
     tap = binding.tap or ""
     hold = binding.hold if binding.hold and binding.hold != "None" else ""
     shifted = binding.shifted if binding.shifted and binding.shifted != "None" else ""
 
-    # Format for nice display
-    tap_fmt = format_key_label(tap, os_style) if tap else ""
+    # Format for nice display - use KLE-specific tap formatting
+    tap_fmt = _format_tap_label_kle(tap, binding.position, os_style) if tap else ""
     # Use icons for modifiers (respecting OS style), text for layer names
     hold_fmt = _format_hold_label(hold, os_style) if hold else ""
+
+    # If shifted is a behavior macro, format it the same way as tap
+    # For extend/select behaviors, we don't want to show both directions
+    if shifted and shifted.startswith("&"):
+        shifted_lower = shifted.lower()
+        # Skip shifted display for extend/select behaviors (left/right variants)
+        # since showing both directions is redundant
+        if any(x in shifted_lower for x in ["extend_", "select_"]):
+            shifted = ""
 
     # Auto-calculate shifted character if not already provided
     # This adds shifted characters for numbers (1→!, 2→@) and punctuation
@@ -475,7 +582,9 @@ def _format_binding_label(binding: KeyBinding, os_style: str = "mac") -> str:
     # Position 0 = top-left, 1 = bottom-left, 5 = center-left
     # For hold-tap: tap on top (or center), hold at bottom
     if shifted and hold_fmt:
-        return f"{shifted}\n{tap_fmt}\n\n\n{hold_fmt}"
+        # For HRM keys with shifted chars (like semicolon with control),
+        # combine shifted/tap on one line so a=7 centering works properly
+        return f"{shifted} {tap_fmt}\n\n\n\n{hold_fmt}"
     elif shifted:
         return f"{shifted}\n{tap_fmt}"
     elif hold_fmt:
