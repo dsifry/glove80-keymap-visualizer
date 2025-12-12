@@ -574,7 +574,6 @@ class TestKLEHeldKeyIndicator:
                 source_layer_name="QWERTY",
                 source_position=69,
                 target_layer_name="Cursor",
-                activation_type="hold"
             )
         ]
 
@@ -603,7 +602,6 @@ class TestKLEHeldKeyIndicator:
                 source_layer_name="QWERTY",
                 source_position=69,
                 target_layer_name="Cursor",
-                activation_type="hold"
             )
         ]
 
@@ -632,7 +630,6 @@ class TestKLEHeldKeyIndicator:
                 source_layer_name="QWERTY",
                 source_position=69,
                 target_layer_name="Cursor",
-                activation_type="hold"
             )
         ]
 
@@ -683,7 +680,6 @@ class TestKLEHeldKeyIndicator:
                 source_layer_name="QWERTY",
                 source_position=69,
                 target_layer_name="Cursor",
-                activation_type="hold"
             )
         ]
 
