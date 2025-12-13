@@ -2228,6 +2228,50 @@ class TestCenteredLayerName:
         # Allow tolerance for different approaches
         assert 490 <= x_value <= 540, f"Label x={x_value} should be centered (490-540)"
 
+    def test_layer_label_has_subtitle(self):
+        """SPEC-LN-003: Layer label includes subtitle 'MoErgo Glove80 keyboard' below the title."""
+        import re
+
+        from glove80_visualizer.svg_generator import _center_layer_label
+
+        # Simulate input from keymap-drawer
+        svg_input = '<text x="0" y="28" class="label" id="QWERTY">QWERTY:</text>'
+        result = _center_layer_label(svg_input, "QWERTY")
+
+        # Should have two text elements: title and subtitle
+        text_elements = re.findall(r"<text[^>]*>([^<]+)</text>", result)
+        assert len(text_elements) >= 2, "Should have at least title and subtitle text elements"
+
+        # First element should be the layer name
+        assert "QWERTY" in text_elements[0], "First text should be the layer name"
+
+        # Second element should be the subtitle
+        assert "MoErgo Glove80 keyboard" in text_elements[1], "Second text should be the subtitle"
+
+    def test_layer_label_title_styling(self):
+        """SPEC-LN-004: Layer title has larger font like H1."""
+        from glove80_visualizer.svg_generator import _center_layer_label
+
+        # Simulate input from keymap-drawer
+        svg_input = '<text x="0" y="28" class="label" id="Test">Test:</text>'
+        result = _center_layer_label(svg_input, "Test")
+
+        # Title should have layer-title class for H1-like styling
+        assert 'class="layer-title"' in result or 'class="label layer-title"' in result, (
+            "Layer title should have layer-title class"
+        )
+
+    def test_layer_label_subtitle_styling(self):
+        """SPEC-LN-005: Subtitle has smaller font like paragraph text."""
+        from glove80_visualizer.svg_generator import _center_layer_label
+
+        # Simulate input from keymap-drawer
+        svg_input = '<text x="0" y="28" class="label" id="Test">Test:</text>'
+        result = _center_layer_label(svg_input, "Test")
+
+        # Subtitle should have layer-subtitle class for paragraph-like styling
+        assert 'class="layer-subtitle"' in result, "Subtitle should have layer-subtitle class"
+
 
 class TestColorOutput:
     """Tests for --color semantic coloring output."""
@@ -2939,8 +2983,8 @@ class TestTypographyCSS:
         assert "text.tap" in svg
         assert "font-size: 14px" in svg
 
-    def test_tap_has_stroke_for_weight(self):
-        """SPEC-TYPO-011: Tap labels use stroke for bolder appearance."""
+    def test_tap_has_no_stroke_for_readability(self):
+        """SPEC-TYPO-011: Tap labels do NOT use stroke (removed for better readability)."""
         from glove80_visualizer.config import VisualizerConfig
         from glove80_visualizer.models import KeyBinding, Layer
         from glove80_visualizer.svg_generator import generate_layer_svg
@@ -2952,7 +2996,8 @@ class TestTypographyCSS:
         )
         svg = generate_layer_svg(layer, config=VisualizerConfig())
 
-        assert "stroke-width: 0.3px" in svg
+        # Stroke was removed from tap labels because it made text too heavy
+        assert "stroke-width: 0.3px" not in svg
 
     def test_shifted_font_size_is_10px(self):
         """SPEC-TYPO-012: Shifted labels use 10px font size."""
@@ -3291,6 +3336,37 @@ class TestCairoSvgCompatibility:
         # &bootloader_custom matches &bootloader prefix
         result = format_key_label("&bootloader_reset", "mac")
         assert result == "Boot", f"Expected Boot for &bootloader prefix, got {result}"
+
+    def test_add_explicit_font_sizes_default_size(self):
+        """Coverage: Text elements without known class get default font-size=12."""
+        from glove80_visualizer.svg_generator import _add_explicit_font_sizes
+
+        # Text element with unknown class
+        svg = '<text class="unknown-class">Test</text>'
+        result = _add_explicit_font_sizes(svg)
+        assert 'font-size="12"' in result
+
+    def test_add_explicit_font_sizes_tspan_no_parent_font(self):
+        """Coverage: tspan in text without font-size returns unchanged."""
+        from glove80_visualizer.svg_generator import _add_explicit_font_sizes
+
+        # Text with tspan but no font-size attribute (edge case)
+        svg = '<text class="no-size"><tspan x="0">Test</tspan></text>'
+        result = _add_explicit_font_sizes(svg)
+        # After first pass, text gets font-size="12", then tspans get it too
+        assert 'font-size="12"' in result
+
+    def test_add_explicit_font_sizes_tspan_already_has_size(self):
+        """Coverage: tspan that already has font-size is unchanged."""
+        from glove80_visualizer.svg_generator import _add_explicit_font_sizes
+
+        # tspan already has font-size - should not be modified
+        svg = '<text font-size="14" class="tap"><tspan font-size="10">Test</tspan></text>'
+        result = _add_explicit_font_sizes(svg)
+        # The existing font-size="10" should be preserved
+        assert 'font-size="10"' in result
+        # And it should only appear once (not duplicated)
+        assert result.count('font-size="10"') == 1
 
 
 class TestErrorHandling:
