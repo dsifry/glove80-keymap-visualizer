@@ -426,15 +426,40 @@ def generate_kle_from_template(
                 new_props: dict[str, Any] = {"g": False}
                 if needs_multiline:
                     new_props["a"] = 0  # 12-position grid
+                    # Calculate max label part length for font sizing
+                    label_parts = [p for p in label.split('\n') if p]
+                    max_part_len = max(len(p) for p in label_parts) if label_parts else 0
+
                     if has_shifted and has_hold:
-                        new_props["f"] = 5
-                        new_props["f2"] = 4
+                        # 3 items: shifted, tap, hold - smallest base
+                        if max_part_len >= 4:
+                            new_props["f"] = 4
+                            new_props["f2"] = 3
+                        else:
+                            new_props["f"] = 5
+                            new_props["f2"] = 4
                     elif has_shifted:
-                        new_props["f"] = 7
-                        new_props["f2"] = 6
+                        # 2 items: shifted, tap
+                        if max_part_len >= 4:
+                            new_props["f"] = 5
+                            new_props["f2"] = 4
+                        elif max_part_len >= 3:
+                            new_props["f"] = 6
+                            new_props["f2"] = 5
+                        else:
+                            new_props["f"] = 7
+                            new_props["f2"] = 6
                     elif has_hold:
-                        new_props["f"] = 6
-                        new_props["f2"] = 5
+                        # 2 items: tap, hold
+                        if max_part_len >= 4:
+                            new_props["f"] = 5
+                            new_props["f2"] = 4
+                        elif max_part_len >= 3:
+                            new_props["f"] = 5
+                            new_props["f2"] = 4
+                        else:
+                            new_props["f"] = 6
+                            new_props["f2"] = 5
                     else:
                         new_props["f"] = 5
                         new_props["f2"] = 4
@@ -455,6 +480,61 @@ def generate_kle_from_template(
                     props.update(new_props)
 
     return json.dumps(kle_data, indent=2)
+
+
+def _simplify_direction_labels(shifted: str, tap: str) -> tuple[str, str] | None:
+    """
+    Simplify redundant direction labels like "Sel←L" / "Sel→L".
+
+    When shifted and tap share a common prefix and suffix but differ only
+    by an arrow direction, return simplified labels:
+    - shifted: the common prefix (e.g., "Sel", "Ext")
+    - tap: the expanded suffix (e.g., "Line", "Word")
+
+    Returns None if the pattern doesn't match.
+    """
+    # Direction arrows that might differ between shifted/tap
+    arrows = {"←", "→", "↑", "↓"}
+
+    # Suffix mappings
+    suffix_map = {
+        "L": "Line",
+        "W": "Word",
+        "P": "Para",  # Paragraph
+    }
+
+    # Check if both have same length and differ only by arrow
+    if len(shifted) != len(tap) or len(shifted) < 3:
+        return None
+
+    # Find common prefix (before arrow)
+    prefix = ""
+    arrow_idx = -1
+    for i, (s, t) in enumerate(zip(shifted, tap)):
+        if s in arrows or t in arrows:
+            arrow_idx = i
+            break
+        if s == t:
+            prefix += s
+        else:
+            return None  # Mismatch before arrow
+
+    if arrow_idx == -1 or not prefix:
+        return None
+
+    # Check that arrows are at same position and are different
+    if shifted[arrow_idx] not in arrows or tap[arrow_idx] not in arrows:
+        return None
+
+    # Check common suffix after arrow
+    suffix = shifted[arrow_idx + 1:]
+    if suffix != tap[arrow_idx + 1:]:
+        return None
+
+    # Expand suffix if possible
+    expanded_suffix = suffix_map.get(suffix, suffix)
+
+    return (prefix, expanded_suffix)
 
 
 def _format_binding_label(
@@ -484,6 +564,13 @@ def _format_binding_label(
         hold_fmt = ""
 
     shifted_fmt = format_key_label(shifted, os_style) if shifted else ""
+
+    # Simplify redundant shifted/tap labels like "Sel←L" / "Sel→L"
+    # When both share a common prefix and suffix, show prefix on shifted, suffix on tap
+    if shifted_fmt and tap_fmt:
+        simplified = _simplify_direction_labels(shifted_fmt, tap_fmt)
+        if simplified:
+            shifted_fmt, tap_fmt = simplified
 
     # Auto-calculate shifted character if not already provided
     # This adds shifted characters for numbers (1→!, 2→@) and punctuation
