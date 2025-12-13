@@ -355,13 +355,14 @@ class TestKeyLabelAbbreviations:
         assert format_key_label("DOWN") == "↓"
 
     def test_page_navigation_abbreviated(self):
-        """SPEC-S017: Page navigation keys should be abbreviated."""
+        """SPEC-S017: Page navigation keys should use multiline format."""
         from glove80_visualizer.svg_generator import format_key_label
 
         result_pgup = format_key_label("PG_UP")
         result_pgdn = format_key_label("PG_DN")
-        assert result_pgup in ["PgUp", "⇞", "PgU"]
-        assert result_pgdn in ["PgDn", "⇟", "PgD"]
+        # Now uses 12-position grid format: Page at position 8, Up/Dn at position 10
+        assert "Page" in result_pgup and "Up" in result_pgup
+        assert "Page" in result_pgdn and "Dn" in result_pgdn
 
     def test_insert_delete_abbreviated(self):
         """SPEC-S018: INSERT and DELETE should be abbreviated."""
@@ -609,7 +610,7 @@ class TestArrowKeyIcons:
         assert result_end in ["⇲", "↘", "End", "⤓"]
 
     def test_page_up_down_use_symbols(self):
-        """SPEC-S039: Page Up and Page Down keys should use appropriate symbols."""
+        """SPEC-S039: Page Up and Page Down keys should use multiline text format."""
         from glove80_visualizer.svg_generator import format_key_label
 
         result_pgup = format_key_label("PG_UP")
@@ -617,12 +618,12 @@ class TestArrowKeyIcons:
         result_pgup2 = format_key_label("PAGE_UP")
         result_pgdn2 = format_key_label("PAGE_DOWN")
 
-        # Page Up - double up arrow or abbreviated
-        assert result_pgup in ["⇞", "PgUp", "PgU", "⇑"]
-        assert result_pgdn in ["⇟", "PgDn", "PgD", "⇓"]
-        # Alternative formats should also work
-        assert result_pgup2 in ["⇞", "PgUp", "PgU", "⇑"]
-        assert result_pgdn2 in ["⇟", "PgDn", "PgD", "⇓"]
+        # Now uses 12-position grid format with "Page" and "Up"/"Dn"
+        assert "Page" in result_pgup and "Up" in result_pgup
+        assert "Page" in result_pgdn and "Dn" in result_pgdn
+        # Alternative formats should produce same result
+        assert "Page" in result_pgup2 and "Up" in result_pgup2
+        assert "Page" in result_pgdn2 and "Dn" in result_pgdn2
 
     def test_arrow_key_with_modifier_combo(self):
         """SPEC-S040: Arrow keys with modifiers should show both symbols."""
@@ -3278,6 +3279,18 @@ class TestCairoSvgCompatibility:
         assert dark_ratio < 0.1, (
             f"CairoSVG rendered {dark_ratio:.1%} dark pixels - likely artifact bug"
         )
+
+    def test_format_key_label_prefix_match_without_args(self):
+        """Coverage: Behavior prefix match without args returns abbreviation."""
+        from glove80_visualizer.svg_generator import format_key_label
+
+        # &caps_word_custom matches &caps_word prefix (no shorter prefix matches)
+        result = format_key_label("&caps_word_mode", "mac")
+        assert result == "⇪W", f"Expected ⇪W for &caps_word prefix, got {result}"
+
+        # &bootloader_custom matches &bootloader prefix
+        result = format_key_label("&bootloader_reset", "mac")
+        assert result == "Boot", f"Expected Boot for &bootloader prefix, got {result}"
 
 
 class TestErrorHandling:

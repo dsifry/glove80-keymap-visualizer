@@ -241,16 +241,16 @@ KEY_LABEL_MAP = {
     "RIGHT": "→",
     "UP": "↑",
     "DOWN": "↓",
-    # Home/End navigation
-    "HOME": "⇱",
-    "END": "⇲",
-    # Page navigation
-    "PG_UP": "⇞",
-    "PG_DN": "⇟",
-    "PAGE_UP": "⇞",
-    "PAGE_DOWN": "⇟",
-    "PG UP": "⇞",
-    "PG DN": "⇟",
+    # Home/End navigation - use text labels for clarity
+    "HOME": "Home",
+    "END": "End",
+    # Page navigation - 12-position grid format (position 8=top-center, 10=center-center)
+    "PG_UP": "\n\n\n\n\n\n\n\nPage\n\nUp",
+    "PG_DN": "\n\n\n\n\n\n\n\nPage\n\nDn",
+    "PAGE_UP": "\n\n\n\n\n\n\n\nPage\n\nUp",
+    "PAGE_DOWN": "\n\n\n\n\n\n\n\nPage\n\nDn",
+    "PG UP": "\n\n\n\n\n\n\n\nPage\n\nUp",
+    "PG DN": "\n\n\n\n\n\n\n\nPage\n\nDn",
     # Word jump keys
     "WORD_LEFT": "⇐",
     "WORD_RIGHT": "⇒",
@@ -740,6 +740,11 @@ def _format_behavior(behavior: str, os_style: str) -> str:
         "&rgb_ug_status_macro": "RGB",
         "&rgb_ug": "RGB",
         "&bt": "BT",
+        "&bt_0": "BT 0",
+        "&bt_1": "BT 1",
+        "&bt_2": "BT 2",
+        "&bt_3": "BT 3",
+        "&bt_4": "BT 4",
         "&out": "Out",
         "&ext_power": "Pwr",
         "&sys_reset": "Reset",
