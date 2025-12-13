@@ -241,16 +241,16 @@ KEY_LABEL_MAP = {
     "RIGHT": "→",
     "UP": "↑",
     "DOWN": "↓",
-    # Home/End navigation
-    "HOME": "⇱",
-    "END": "⇲",
-    # Page navigation
-    "PG_UP": "⇞",
-    "PG_DN": "⇟",
-    "PAGE_UP": "⇞",
-    "PAGE_DOWN": "⇟",
-    "PG UP": "⇞",
-    "PG DN": "⇟",
+    # Home/End navigation - use text labels for clarity
+    "HOME": "Home",
+    "END": "End",
+    # Page navigation - multiline for readability
+    "PG_UP": "Page\nUp",
+    "PG_DN": "Page\nDn",
+    "PAGE_UP": "Page\nUp",
+    "PAGE_DOWN": "Page\nDn",
+    "PG UP": "Page\nUp",
+    "PG DN": "Page\nDn",
     # Word jump keys
     "WORD_LEFT": "⇐",
     "WORD_RIGHT": "⇒",
