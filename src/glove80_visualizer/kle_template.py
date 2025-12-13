@@ -124,9 +124,9 @@ TEMPLATE_POSITIONS = [
     # Template structure mirrors left/right (2 outer + 3 inner per side):
     # - Row 2: Inner function keys (C4,C3,C2 left | C2,C3,C4 right)
     # - Row 3: Outer function keys (C6,C5 left | C5,C6 right)
-    # Left outer (row 3)
+    # Left outer (row 3) - each key has its own props dict
     (3, 3),   # slot 70: ZMK 0 - C6 outer left
-    (3, 4),   # slot 71: ZMK 1 - C5 outer left
+    (3, 5),   # slot 71: ZMK 1 - C5 outer left
     # Left inner (row 2) - each key has its own props dict
     (2, 1),   # slot 72: ZMK 2 - C4 inner left
     (2, 3),   # slot 73: ZMK 3 - C3 inner left
@@ -135,9 +135,9 @@ TEMPLATE_POSITIONS = [
     (2, 9),   # slot 75: ZMK 5 - C2 inner right
     (2, 11),  # slot 76: ZMK 6 - C3 inner right
     (2, 13),  # slot 77: ZMK 7 - C4 inner right
-    # Right outer (row 3) - C5,C6 mirroring left's C5,C6
-    (3, 6),   # slot 78: ZMK 8 - C5 outer right
-    (3, 7),   # slot 79: ZMK 9 - C6 outer right
+    # Right outer (row 3) - each key has its own props dict
+    (3, 7),   # slot 78: ZMK 8 - C5 outer right
+    (3, 9),   # slot 79: ZMK 9 - C6 outer right
     # R2 outer left (slot 80) - ZMK 10 (equals/backtick)
     (5, 3),  # slot 80: R2C6 left (=/+) - ZMK 10
 ]
@@ -304,24 +304,21 @@ def _expand_function_row(kle_data: list[Any]) -> None:
                 row2[idx]["a"] = 7
 
     # === Modify Row 3 for OUTER function keys ===
-    # Row 3: indices 3,4 (left C6,C5) and 6,7 (right C5,C6)
+    # Row 3 structure after template update:
+    # idx 0: R1 label props, idx 1: 'R1'
+    # idx 2: props, idx 3: left C6, idx 4: props, idx 5: left C5
+    # idx 6: props (with x offset), idx 7: right C5, idx 8: props, idx 9: right C6
+    # idx 10: R1 label props, idx 11: 'R1'
     row3 = kle_data[3]
-    if isinstance(row3, list) and len(row3) >= 8:
-        # Update left outer props (index 2)
-        if isinstance(row3[2], dict):
-            row3[2]["g"] = False
-            row3[2]["c"] = "#cccccc"
-            row3[2]["t"] = "#000000"
-            row3[2]["f"] = 3
-            row3[2]["a"] = 7
-
-        # Update right outer props (index 5, the one with x=15.25)
-        if isinstance(row3[5], dict):
-            row3[5]["g"] = False
-            row3[5]["c"] = "#cccccc"
-            row3[5]["t"] = "#000000"
-            row3[5]["f"] = 3
-            row3[5]["a"] = 7
+    if isinstance(row3, list) and len(row3) >= 10:
+        # Update all outer function key props (indices 2, 4, 6, 8)
+        for idx in [2, 4, 6, 8]:
+            if isinstance(row3[idx], dict):
+                row3[idx]["g"] = False
+                row3[idx]["c"] = "#cccccc"
+                row3[idx]["t"] = "#000000"
+                row3[idx]["f"] = 3
+                row3[idx]["a"] = 7
 
 
 def generate_kle_from_template(
