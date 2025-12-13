@@ -437,7 +437,14 @@ def generate_kle_from_template(
                         new_props["f2"] = 4
                 else:
                     new_props["a"] = 7  # Centered single-line
-                    new_props["f"] = 5  # Consistent font for single-line labels
+                    # Adjust font size based on label length
+                    label_len = len(label)
+                    if label_len >= 4:
+                        new_props["f"] = 3  # Small font for 4+ chars (e.g., ⌃F16)
+                    elif label_len >= 3:
+                        new_props["f"] = 4  # Medium font for 3 chars
+                    else:
+                        new_props["f"] = 5  # Standard font for 1-2 chars
 
                 # Update preceding props dict if it exists
                 if item_idx > 0 and isinstance(row[item_idx - 1], dict):
