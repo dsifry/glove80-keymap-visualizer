@@ -855,12 +855,305 @@ class TestKLEMissingKeyPositions:
         # The Caps key content should appear (formatted as ⇪ symbol, may be unicode escaped in JSON)
         assert "\\u21ea" in result or "⇪" in result, f"Caps key (⇪) should appear in KLE output"
 
-    def test_zmk_0_and_1_outer_function_keys_not_in_template(self):
-        """KLE-048: ZMK 0 and 1 are outermost keys - Sunaku's template has no slots for them."""
+    def test_zmk_0_and_1_outer_function_keys_have_slots(self):
+        """KLE-048: ZMK 0 and 1 (outermost R1 keys) now have slots for arrow keys."""
         from glove80_visualizer.kle_template import ZMK_TO_SLOT
 
         # ZMK 0 and 1 are the outermost keys on the function row (R1C5, R1C6)
-        # Sunaku's template doesn't have visual positions for these outer columns
-        # This test documents the expected behavior (not a bug, just a template limitation)
-        assert 0 not in ZMK_TO_SLOT, "ZMK 0 has no slot in Sunaku's template"
-        assert 1 not in ZMK_TO_SLOT, "ZMK 1 has no slot in Sunaku's template"
+        # We've added slots for these to support keymaps with arrows on R1
+        assert 0 in ZMK_TO_SLOT, "ZMK 0 should have a slot for R1 outer left"
+        assert 1 in ZMK_TO_SLOT, "ZMK 1 should have a slot for R1 outer left"
+
+    def test_zmk_5_is_on_right_side_of_r1(self):
+        """KLE-051: ZMK 5 is the first right-hand R1 key, should appear on right side."""
+        from glove80_visualizer.kle_template import generate_kle_from_template, ZMK_TO_SLOT, TEMPLATE_POSITIONS
+
+        # ZMK 5 is the innermost key on the RIGHT side of R1 (first right-hand function key)
+        bindings = [KeyBinding(position=i, tap="X") for i in range(80)]
+        bindings[5] = KeyBinding(position=5, tap="Zmk5")  # Use mixed case to test actual output
+        layer = Layer(name="Test", index=0, bindings=bindings)
+
+        result = generate_kle_from_template(layer, os_style="mac")
+        parsed = json.loads(result)
+
+        slot = ZMK_TO_SLOT[5]
+        row_idx, item_idx = TEMPLATE_POSITIONS[slot]
+
+        # Row 3 has left keys at items 3-4, gap at item 5, right keys at items 6-7
+        # ZMK 5 should be at item 6 or 7 (right side), NOT at item 3 or 4 (left side)
+        assert item_idx >= 6, f"ZMK 5 should be on right side (item >= 6), got item {item_idx} at row {row_idx}"
+
+        # Also verify it shows up in the output (format_key_label converts to title case)
+        assert "Zmk5" in result, f"ZMK 5 key content should appear in output"
+
+
+class TestKLEShiftedKeyAlignment:
+    """Test that keys with shifted characters have proper alignment."""
+
+    def test_shifted_key_has_a5_alignment(self):
+        """KLE-049: Keys with auto-shifted chars (like ;/:) should have a=5 alignment."""
+        from glove80_visualizer.kle_template import generate_kle_from_template, ZMK_TO_SLOT, TEMPLATE_POSITIONS
+
+        # Create a binding with semicolon (which auto-calculates shifted ':')
+        bindings = [KeyBinding(position=i, tap="X") for i in range(80)]
+        bindings[44] = KeyBinding(position=44, tap=";")  # semicolon
+        layer = Layer(name="Test", index=0, bindings=bindings)
+
+        result = generate_kle_from_template(layer, os_style="mac")
+        parsed = json.loads(result)
+
+        slot = ZMK_TO_SLOT[44]
+        row_idx, item_idx = TEMPLATE_POSITIONS[slot]
+
+        # Check the label has both shifted and unshifted
+        label = parsed[row_idx][item_idx]
+        assert ":" in label, f"Should have shifted colon, got {repr(label)}"
+        assert ";" in label, f"Should have unshifted semicolon, got {repr(label)}"
+
+        # Check the props dict before this key has a=5 alignment
+        if item_idx > 0 and isinstance(parsed[row_idx][item_idx - 1], dict):
+            props = parsed[row_idx][item_idx - 1]
+            assert props.get("a") == 5, f"Shifted key should have a=5 alignment, got a={props.get('a')}"
+        else:
+            # Need to search backward for props
+            found_props = False
+            for i in range(item_idx - 1, -1, -1):
+                if isinstance(parsed[row_idx][i], dict):
+                    props = parsed[row_idx][i]
+                    assert props.get("a") == 5, f"Shifted key should inherit a=5, got a={props.get('a')}"
+                    found_props = True
+                    break
+            assert found_props, "Could not find props dict for shifted key"
+
+
+class TestKLESingleCharAlignment:
+    """Test that single-character keys are centered, not shifted."""
+
+    def test_single_letter_key_has_a7_centered(self):
+        """KLE-052: Single letter keys should have a=7 (centered), not inherit a=5."""
+        from glove80_visualizer.kle_template import generate_kle_from_template, ZMK_TO_SLOT, TEMPLATE_POSITIONS
+
+        # Create a binding with just a letter (no shifted, no hold)
+        bindings = [KeyBinding(position=i, tap="X") for i in range(80)]
+        bindings[24] = KeyBinding(position=24, tap="W")  # W key on QWERTY row
+        layer = Layer(name="Test", index=0, bindings=bindings)
+
+        result = generate_kle_from_template(layer, os_style="mac")
+        parsed = json.loads(result)
+
+        slot = ZMK_TO_SLOT[24]
+        row_idx, item_idx = TEMPLATE_POSITIONS[slot]
+
+        # Label should just be "W" (no newlines)
+        label = parsed[row_idx][item_idx]
+        assert label == "W", f"Single letter should be just 'W', got {repr(label)}"
+
+        # Check the props dict - should have a=7 for centered alignment
+        if item_idx > 0 and isinstance(parsed[row_idx][item_idx - 1], dict):
+            props = parsed[row_idx][item_idx - 1]
+            assert props.get("a") == 7, f"Single letter should have a=7 centered, got a={props.get('a')}"
+
+    def test_tab_key_has_a7_centered(self):
+        """KLE-053: Tab key should have a=7 (centered)."""
+        from glove80_visualizer.kle_template import generate_kle_from_template, ZMK_TO_SLOT, TEMPLATE_POSITIONS
+
+        bindings = [KeyBinding(position=i, tap="X") for i in range(80)]
+        bindings[22] = KeyBinding(position=22, tap="TAB")  # Tab key
+        layer = Layer(name="Test", index=0, bindings=bindings)
+
+        result = generate_kle_from_template(layer, os_style="mac")
+        parsed = json.loads(result)
+
+        slot = ZMK_TO_SLOT[22]
+        row_idx, item_idx = TEMPLATE_POSITIONS[slot]
+
+        # Check the props dict - should have a=7 for centered alignment
+        if item_idx > 0 and isinstance(parsed[row_idx][item_idx - 1], dict):
+            props = parsed[row_idx][item_idx - 1]
+            assert props.get("a") == 7, f"Tab key should have a=7 centered, got a={props.get('a')}"
+
+    def test_hold_tap_key_not_forced_to_a7(self):
+        """KLE-054: Keys with hold behavior should NOT get a=7 (they need multi-position)."""
+        from glove80_visualizer.kle_template import generate_kle_from_template, ZMK_TO_SLOT, TEMPLATE_POSITIONS
+
+        bindings = [KeyBinding(position=i, tap="X") for i in range(80)]
+        bindings[24] = KeyBinding(position=24, tap="W", hold="CTRL")  # W with hold
+        layer = Layer(name="Test", index=0, bindings=bindings)
+
+        result = generate_kle_from_template(layer, os_style="mac")
+        parsed = json.loads(result)
+
+        slot = ZMK_TO_SLOT[24]
+        row_idx, item_idx = TEMPLATE_POSITIONS[slot]
+
+        # Label should have newlines for tap+hold
+        label = parsed[row_idx][item_idx]
+        assert "\n" in label, f"Hold-tap key should have newlines, got {repr(label)}"
+
+        # a=7 should NOT be set for hold-tap keys (they need multi-position layout)
+        if item_idx > 0 and isinstance(parsed[row_idx][item_idx - 1], dict):
+            props = parsed[row_idx][item_idx - 1]
+            # Should NOT be a=7 (centered is wrong for multi-line)
+            assert props.get("a") != 7, f"Hold-tap key should NOT have a=7, got a={props.get('a')}"
+
+    def test_explicit_shifted_key_has_a5_alignment(self):
+        """KLE-050: Keys with explicit shifted value should have a=5 alignment."""
+        from glove80_visualizer.kle_template import generate_kle_from_template, ZMK_TO_SLOT, TEMPLATE_POSITIONS
+
+        # Create a binding with explicit shifted value
+        bindings = [KeyBinding(position=i, tap="X") for i in range(80)]
+        bindings[44] = KeyBinding(position=44, tap="a", shifted="A")
+        layer = Layer(name="Test", index=0, bindings=bindings)
+
+        result = generate_kle_from_template(layer, os_style="mac")
+        parsed = json.loads(result)
+
+        slot = ZMK_TO_SLOT[44]
+        row_idx, item_idx = TEMPLATE_POSITIONS[slot]
+
+        # Should have both a and A in label
+        label = parsed[row_idx][item_idx]
+        assert "A" in label and "a" in label.lower(), f"Should have both shifted and unshifted, got {repr(label)}"
+
+        # Check the props dict before this key has a=5 alignment
+        if item_idx > 0 and isinstance(parsed[row_idx][item_idx - 1], dict):
+            props = parsed[row_idx][item_idx - 1]
+            assert props.get("a") == 5, f"Shifted key should have a=5 alignment, got a={props.get('a')}"
+        else:
+            # Need to search backward for props
+            found_props = False
+            for i in range(item_idx - 1, -1, -1):
+                if isinstance(parsed[row_idx][i], dict):
+                    props = parsed[row_idx][i]
+                    assert props.get("a") == 5, f"Shifted key should inherit a=5, got a={props.get('a')}"
+                    found_props = True
+                    break
+            assert found_props, "Could not find props dict for shifted key"
+
+
+class TestKLESingleCharAlignment:
+    """Test that single-character keys are centered, not shifted."""
+
+    def test_single_letter_key_has_a7_centered(self):
+        """KLE-052: Single letter keys should have a=7 (centered), not inherit a=5."""
+        from glove80_visualizer.kle_template import generate_kle_from_template, ZMK_TO_SLOT, TEMPLATE_POSITIONS
+
+        # Create a binding with just a letter (no shifted, no hold)
+        bindings = [KeyBinding(position=i, tap="X") for i in range(80)]
+        bindings[24] = KeyBinding(position=24, tap="W")  # W key on QWERTY row
+        layer = Layer(name="Test", index=0, bindings=bindings)
+
+        result = generate_kle_from_template(layer, os_style="mac")
+        parsed = json.loads(result)
+
+        slot = ZMK_TO_SLOT[24]
+        row_idx, item_idx = TEMPLATE_POSITIONS[slot]
+
+        # Label should just be "W" (no newlines)
+        label = parsed[row_idx][item_idx]
+        assert label == "W", f"Single letter should be just 'W', got {repr(label)}"
+
+        # Check the props dict - should have a=7 for centered alignment
+        if item_idx > 0 and isinstance(parsed[row_idx][item_idx - 1], dict):
+            props = parsed[row_idx][item_idx - 1]
+            assert props.get("a") == 7, f"Single letter should have a=7 centered, got a={props.get('a')}"
+
+    def test_tab_key_has_a7_centered(self):
+        """KLE-053: Tab key should have a=7 (centered)."""
+        from glove80_visualizer.kle_template import generate_kle_from_template, ZMK_TO_SLOT, TEMPLATE_POSITIONS
+
+        bindings = [KeyBinding(position=i, tap="X") for i in range(80)]
+        bindings[22] = KeyBinding(position=22, tap="TAB")  # Tab key
+        layer = Layer(name="Test", index=0, bindings=bindings)
+
+        result = generate_kle_from_template(layer, os_style="mac")
+        parsed = json.loads(result)
+
+        slot = ZMK_TO_SLOT[22]
+        row_idx, item_idx = TEMPLATE_POSITIONS[slot]
+
+        # Check the props dict - should have a=7 for centered alignment
+        if item_idx > 0 and isinstance(parsed[row_idx][item_idx - 1], dict):
+            props = parsed[row_idx][item_idx - 1]
+            assert props.get("a") == 7, f"Tab key should have a=7 centered, got a={props.get('a')}"
+
+    def test_hold_tap_key_not_forced_to_a7(self):
+        """KLE-054: Keys with hold behavior should NOT get a=7 (they need multi-position)."""
+        from glove80_visualizer.kle_template import generate_kle_from_template, ZMK_TO_SLOT, TEMPLATE_POSITIONS
+
+        bindings = [KeyBinding(position=i, tap="X") for i in range(80)]
+        bindings[24] = KeyBinding(position=24, tap="W", hold="CTRL")  # W with hold
+        layer = Layer(name="Test", index=0, bindings=bindings)
+
+        result = generate_kle_from_template(layer, os_style="mac")
+        parsed = json.loads(result)
+
+        slot = ZMK_TO_SLOT[24]
+        row_idx, item_idx = TEMPLATE_POSITIONS[slot]
+
+        # Label should have newlines for tap+hold
+        label = parsed[row_idx][item_idx]
+        assert "\n" in label, f"Hold-tap key should have newlines, got {repr(label)}"
+
+        # a=7 should NOT be set for hold-tap keys (they need multi-position layout)
+        if item_idx > 0 and isinstance(parsed[row_idx][item_idx - 1], dict):
+            props = parsed[row_idx][item_idx - 1]
+            # Should NOT be a=7 (centered is wrong for multi-line)
+            assert props.get("a") != 7, f"Hold-tap key should NOT have a=7, got a={props.get('a')}"
+
+    def test_hold_tap_key_gets_a0_grid(self):
+        """KLE-055: Hold-tap keys (4+ newlines) should get a=0 for 12-position grid."""
+        from glove80_visualizer.kle_template import generate_kle_from_template, ZMK_TO_SLOT, TEMPLATE_POSITIONS
+
+        bindings = [KeyBinding(position=i, tap="X") for i in range(80)]
+        bindings[36] = KeyBinding(position=36, tap="S", hold="CTRL")  # S with hold (like HRM)
+        layer = Layer(name="Test", index=0, bindings=bindings)
+
+        result = generate_kle_from_template(layer, os_style="mac")
+        parsed = json.loads(result)
+
+        slot = ZMK_TO_SLOT[36]
+        row_idx, item_idx = TEMPLATE_POSITIONS[slot]
+
+        # Label should have 4 newlines for tap+hold format
+        label = parsed[row_idx][item_idx]
+        newline_count = label.count("\n")
+        assert newline_count == 4, f"Hold-tap should have 4 newlines, got {newline_count}: {repr(label)}"
+
+        # Should have a=0 for 12-position grid (not a=5 which shifts tap to top)
+        if item_idx > 0 and isinstance(parsed[row_idx][item_idx - 1], dict):
+            props = parsed[row_idx][item_idx - 1]
+            assert props.get("a") == 0, f"Hold-tap key should have a=0 for grid, got a={props.get('a')}"
+
+
+class TestKLER1ArrowKeys:
+    """Test that R1 outer keys (ZMK 0, 1) are properly mapped."""
+
+    def test_zmk_0_up_arrow_has_slot(self):
+        """KLE-056: ZMK 0 (UP arrow position) should have a slot mapping."""
+        from glove80_visualizer.kle_template import ZMK_TO_SLOT
+
+        # ZMK 0 is the outermost left key on R1 (often UP arrow in custom keymaps)
+        assert 0 in ZMK_TO_SLOT, "ZMK 0 should have a slot mapping for R1 outer left"
+
+    def test_zmk_1_down_arrow_has_slot(self):
+        """KLE-057: ZMK 1 (DOWN arrow position) should have a slot mapping."""
+        from glove80_visualizer.kle_template import ZMK_TO_SLOT
+
+        # ZMK 1 is the second outermost left key on R1 (often DOWN arrow)
+        assert 1 in ZMK_TO_SLOT, "ZMK 1 should have a slot mapping for R1 outer left"
+
+    def test_zmk_0_and_1_appear_in_output(self):
+        """KLE-058: ZMK 0 and 1 keys should appear in KLE output."""
+        from glove80_visualizer.kle_template import generate_kle_from_template
+
+        bindings = [KeyBinding(position=i, tap="X") for i in range(80)]
+        bindings[0] = KeyBinding(position=0, tap="UP")
+        bindings[1] = KeyBinding(position=1, tap="DOWN")
+        layer = Layer(name="Test", index=0, bindings=bindings)
+
+        result = generate_kle_from_template(layer, os_style="mac")
+
+        # Both arrows should appear (formatted as ↑ and ↓)
+        assert "\\u2191" in result or "↑" in result, "UP arrow should appear in output"
+        assert "\\u2193" in result or "↓" in result, "DOWN arrow should appear in output"

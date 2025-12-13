@@ -118,18 +118,23 @@ TEMPLATE_POSITIONS = [
     (7, 3),  # slot 68: R3C6 left (Tab) - ZMK 22
     (9, 3),  # slot 69: R4C6 left (Caps) - ZMK 34 (alternate to slot 29)
     # Function row R1 (slots 70-79) - ZMK 0-9
-    # Left side R1: ZMK 0-4 (C6 to C2)
-    (2, 1),  # slot 70: R1C4 left - ZMK 2
-    (2, 2),  # slot 71: R1C3 left - ZMK 3
-    (2, 3),  # slot 72: R1C2 left - ZMK 4
-    (3, 3),  # slot 73: R1C1 left - ZMK 5 (inner)
-    (3, 4),  # slot 74: Extra left slot
-    # Right side R1: ZMK 5-9 (C2 to C6)
-    (3, 6),  # slot 75: R1C1 right - ZMK 6 (inner)
-    (3, 7),  # slot 76: Extra right slot
-    (2, 7),  # slot 77: R1C2 right - ZMK 7
-    (2, 8),  # slot 78: R1C3 right - ZMK 8
-    (2, 9),  # slot 79: R1C4 right - ZMK 9
+    # Template structure mirrors left/right (2 outer + 3 inner per side):
+    # - Row 2: Inner function keys (C4,C3,C2 left | C2,C3,C4 right)
+    # - Row 3: Outer function keys (C6,C5 left | C5,C6 right)
+    # Left outer (row 3)
+    (3, 3),   # slot 70: ZMK 0 - C6 outer left
+    (3, 4),   # slot 71: ZMK 1 - C5 outer left
+    # Left inner (row 2)
+    (2, 1),   # slot 72: ZMK 2 - C4 inner left
+    (2, 2),   # slot 73: ZMK 3 - C3 inner left
+    (2, 3),   # slot 74: ZMK 4 - C2 inner left
+    # Right inner (row 2) - C2,C3,C4 mirroring left's C2,C3,C4
+    (2, 7),   # slot 75: ZMK 5 - C2 inner right
+    (2, 8),   # slot 76: ZMK 6 - C3 inner right
+    (2, 9),   # slot 77: ZMK 7 - C4 inner right
+    # Right outer (row 3) - C5,C6 mirroring left's C5,C6
+    (3, 6),   # slot 78: ZMK 8 - C5 outer right
+    (3, 7),   # slot 79: ZMK 9 - C6 outer right
     # R2 outer left (slot 80) - ZMK 10 (equals/backtick)
     (5, 3),  # slot 80: R2C6 left (=/+) - ZMK 10
 ]
@@ -146,17 +151,19 @@ TEMPLATE_POSITIONS = [
 # Row 5 (64-79): Lower + right thumb - 5 left + 6 thumb + 5 right
 
 ZMK_TO_SLOT = {
-    # Function row (ZMK 0-9): R1 - now mapped to slots 70-79
-    # ZMK 0-4: Left side (C6 to C2), ZMK 5-9: Right side (C2 to C6)
-    # Note: ZMK 0, 1 have no visual slots (outer edges)
-    2: 70,  # ZMK 2 -> slot 70 (R1C4 left)
-    3: 71,  # ZMK 3 -> slot 71 (R1C3 left)
-    4: 72,  # ZMK 4 -> slot 72 (R1C2 left)
-    5: 73,  # ZMK 5 -> slot 73 (R1C1 left)
-    6: 75,  # ZMK 6 -> slot 75 (R1C1 right)
-    7: 77,  # ZMK 7 -> slot 77 (R1C2 right)
-    8: 78,  # ZMK 8 -> slot 78 (R1C3 right)
-    9: 79,  # ZMK 9 -> slot 79 (R1C4 right)
+    # Function row (ZMK 0-9): R1 - mapped to slots 70-79 in row 2 (after dynamic modification)
+    # ZMK 0-4: Left side (C6 to C2)
+    0: 70,  # ZMK 0 -> slot 70 (R1C6 left - outermost, UP arrow)
+    1: 71,  # ZMK 1 -> slot 71 (R1C5 left - DOWN arrow)
+    2: 72,  # ZMK 2 -> slot 72 (R1C4 left - A)
+    3: 73,  # ZMK 3 -> slot 73 (R1C3 left - ^F16)
+    4: 74,  # ZMK 4 -> slot 74 (R1C2 left - ^F18)
+    # ZMK 5-9: Right side (C1 to C5)
+    5: 75,  # ZMK 5 -> slot 75 (R1C1 right - ^F19)
+    6: 76,  # ZMK 6 -> slot 76 (R1C2 right - ^F17)
+    7: 77,  # ZMK 7 -> slot 77 (R1C3 right - F)
+    8: 78,  # ZMK 8 -> slot 78 (R1C4 right - LEFT arrow)
+    9: 79,  # ZMK 9 -> slot 79 (R1C5 right - RIGHT arrow)
     # Number row (ZMK 10-21)
     # ZMK: 10=`/~, 11=1, 12=2, 13=3, 14=4, 15=5 | 16=6, 17=7, 18=8, 19=9, 20=0, 21=-
     # Note: ZMK 21 (minus) has no dedicated slot - Sunaku's template doesn't show it
@@ -254,6 +261,63 @@ ZMK_TO_SLOT = {
 ZMK_TO_KLE_SLOT = ZMK_TO_SLOT
 
 
+def _expand_function_row(kle_data: list[Any]) -> None:
+    """
+    Enable function row keys in the template.
+
+    The template has two rows for function keys (matching inner/outer pattern):
+    - Row 2: Inner function keys (C4,C3,C2 left | C1,C2,C3,C4 right)
+    - Row 3: Outer function keys (C6,C5 left | C5 right)
+
+    This function:
+    1. Modifies row 2 to enable inner function keys with y=-0.5 offset
+    2. Modifies row 3 to enable outer function keys (already has y=-0.5)
+    """
+    if len(kle_data) < 4:
+        return
+
+    # === Modify Row 2 for INNER function keys ===
+    # Row 2: indices 1,2,3 (left C4,C3,C2) and 7,8,9,10 (right C1,C2,C3,C4)
+    row2 = kle_data[2]
+    if isinstance(row2, list) and len(row2) >= 5:
+        # Update left inner props (index 0) - add y offset and make visible
+        if isinstance(row2[0], dict):
+            row2[0]["y"] = -0.5  # Move up to R1 level
+            row2[0]["g"] = False
+            row2[0]["c"] = "#cccccc"
+            row2[0]["t"] = "#000000"
+            row2[0]["f"] = 3
+            row2[0]["a"] = 7
+
+        # Update right inner props (index 6, after title block)
+        if len(row2) > 6 and isinstance(row2[6], dict):
+            row2[6]["g"] = False
+            row2[6]["c"] = "#cccccc"
+            row2[6]["t"] = "#000000"
+            row2[6]["f"] = 3
+            row2[6]["a"] = 7
+
+    # === Modify Row 3 for OUTER function keys ===
+    # Row 3: indices 3,4 (left C6,C5) and 6,7 (right C5,C6)
+    row3 = kle_data[3]
+    if isinstance(row3, list) and len(row3) >= 8:
+        # Update left outer props (index 2)
+        if isinstance(row3[2], dict):
+            row3[2]["g"] = False
+            row3[2]["c"] = "#cccccc"
+            row3[2]["t"] = "#000000"
+            row3[2]["f"] = 3
+            row3[2]["a"] = 7
+
+        # Update right outer props (index 5, the one with x=15.25)
+        if isinstance(row3[5], dict):
+            row3[5]["g"] = False
+            row3[5]["c"] = "#cccccc"
+            row3[5]["t"] = "#000000"
+            row3[5]["f"] = 3
+            row3[5]["a"] = 7
+
+
 def generate_kle_from_template(
     layer: Layer,
     title: str | None = None,
@@ -276,6 +340,9 @@ def generate_kle_from_template(
     """
     template = load_template()
     kle_data = copy.deepcopy(template)
+
+    # Expand row 2 to accommodate all function row keys (ZMK 0-9)
+    _expand_function_row(kle_data)
 
     # Build position map from layer bindings
     pos_map = {b.position: b for b in layer.bindings}
@@ -332,13 +399,23 @@ def generate_kle_from_template(
                 label = _format_binding_label(binding, os_style)
                 row[item_idx] = label
 
-                # Check if preceding item is a property dict with ghost flag
-                # In KLE, properties cascade to subsequent keys, so we need to
-                # remove ghost flag when we're putting actual content there
+                # Check if preceding item is a property dict
+                # In KLE, properties cascade to subsequent keys
                 if item_idx > 0 and isinstance(row[item_idx - 1], dict):
                     props = row[item_idx - 1]
                     if props.get("g") is True:
                         props["g"] = False
+                    # Set alignment based on label structure to prevent cascade issues
+                    if "\n" not in label:
+                        # Single-line labels (letters, tab, etc.) need a=7 (centered)
+                        props["a"] = 7
+                    elif label.count("\n") <= 3:
+                        # Two-line labels (shifted on top, tap below) need a=5
+                        props["a"] = 5
+                    else:
+                        # 4+ newlines means hold-tap format: tap\n\n\n\nhold
+                        # Need a=0 for 12-position grid
+                        props["a"] = 0
 
     return json.dumps(kle_data, indent=2)
 
