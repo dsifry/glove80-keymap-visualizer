@@ -411,13 +411,18 @@ def generate_kle_from_template(
                 # Check for shifted from binding OR from auto-calculated shifted in label
                 # Label format for shifted+tap: 8 newlines, shifted, 2 newlines, tap
                 # Label format for hold+tap: 9 newlines, tap, 2 newlines, hold
+                # Label format for split layer: 9 newlines, first, 1 newline, second, 1 newline, hold
                 has_shifted = binding.shifted and binding.shifted != "None"
+                has_three_items = False  # For split layer names
                 if not has_shifted and needs_multiline:
                     # Check if label has shifted format (content at position 8)
                     parts = label.split('\n')
                     # Position 8 content means 8 empty parts before it
                     if len(parts) > 8 and parts[8] and not parts[0]:
                         has_shifted = True
+                    # Check for split layer name (3 items at positions 9, 10, 11)
+                    elif len(parts) >= 12 and parts[9] and parts[10] and parts[11] and not parts[8]:
+                        has_three_items = True
 
                 # Build props for this key
                 new_props: dict[str, Any] = {"g": False}
@@ -429,12 +434,26 @@ def generate_kle_from_template(
 
                     if has_shifted and has_hold:
                         # 3 items: shifted, tap, hold - smallest base
-                        if max_part_len >= 4:
-                            new_props["f"] = 4
+                        if max_part_len >= 6:
+                            new_props["f"] = 3
+                            new_props["f2"] = 2
+                        elif max_part_len >= 4:
+                            new_props["f"] = 3
                             new_props["f2"] = 3
                         else:
-                            new_props["f"] = 5
-                            new_props["f2"] = 4
+                            new_props["f"] = 4
+                            new_props["f2"] = 3
+                    elif has_three_items:
+                        # 3 items: split layer name + hold - smallest fonts
+                        if max_part_len >= 6:
+                            new_props["f"] = 3
+                            new_props["f2"] = 2
+                        elif max_part_len >= 4:
+                            new_props["f"] = 3
+                            new_props["f2"] = 3
+                        else:
+                            new_props["f"] = 4
+                            new_props["f2"] = 3
                     elif has_shifted:
                         # 2 items: shifted, tap
                         if max_part_len >= 4:
@@ -641,9 +660,9 @@ def _format_binding_label(
         if is_layer_tap:
             split = _split_long_name(tap_fmt)
             if split:
-                # Split layer name: first at 8, second at 10, hold at 11
+                # Split layer name: first at 9 (bottom-center), second at 10 (center-center), hold at 11
                 first, second = split
-                return f"\n\n\n\n\n\n\n\n{first}\n\n{second}\n{hold_fmt}"
+                return f"\n\n\n\n\n\n\n\n\n{first}\n{second}\n{hold_fmt}"
         # tap at bottom-center (9), hold at front-center (11)
         return f"\n\n\n\n\n\n\n\n\n{tap_fmt}\n\n{hold_fmt}"
     else:
