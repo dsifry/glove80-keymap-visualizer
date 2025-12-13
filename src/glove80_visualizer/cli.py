@@ -257,7 +257,11 @@ def main(
     include_list = [name.strip() for name in layers.split(",")] if layers else None
     exclude_list = [name.strip() for name in exclude_layers.split(",")] if exclude_layers else None
 
-    # Extract layers
+    # Extract all layers first (for layer name lookup), then filter
+    all_layers = extract_layers(yaml_content)
+    all_layer_names = {layer.name for layer in all_layers}
+
+    # Apply filtering
     extracted_layers = extract_layers(yaml_content, include=include_list, exclude=exclude_list)
 
     if not extracted_layers:  # pragma: no cover
@@ -370,8 +374,9 @@ def main(
         # No filtering needed, all svgs should be strings
         filtered_svgs = [s for s in svgs if s is not None]
 
-    # Create set of layer names for KLE formatting (distinguishes layer names from modifiers)
-    layer_names = {layer.name for layer in extracted_layers}
+    # Use all layer names for KLE formatting (distinguishes layer names from modifiers)
+    # This ensures layer toggles display correctly even when filtering layers
+    layer_names = all_layer_names
 
     # Output based on format
     if output_format == "svg":

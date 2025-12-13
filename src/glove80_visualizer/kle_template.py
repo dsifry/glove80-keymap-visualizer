@@ -539,6 +539,46 @@ def _simplify_direction_labels(shifted: str, tap: str) -> tuple[str, str] | None
     return (prefix, expanded_suffix)
 
 
+def _split_long_name(name: str, max_len: int = 7) -> tuple[str, str] | None:
+    """
+    Split a long name into two parts for display on two lines.
+
+    Returns None if the name fits on one line.
+    Returns (first_part, second_part) if split is needed.
+    Truncates if the name is too long even for two lines.
+    """
+    if len(name) <= max_len:
+        return None
+
+    # Try to split at CamelCase boundaries
+    # Find positions where lowercase is followed by uppercase
+    split_points = []
+    for i in range(1, len(name)):
+        if name[i-1].islower() and name[i].isupper():
+            split_points.append(i)
+
+    # Choose the best split point (closest to middle)
+    if split_points:
+        middle = len(name) // 2
+        best_split = min(split_points, key=lambda x: abs(x - middle))
+        first = name[:best_split]
+        second = name[best_split:]
+    else:
+        # No CamelCase boundary, split at middle
+        mid = len(name) // 2
+        first = name[:mid]
+        second = name[mid:]
+
+    # Truncate if parts are still too long (max 7 chars each for 2 lines)
+    max_part_len = 7
+    if len(first) > max_part_len:
+        first = first[:max_part_len-1] + "…"
+    if len(second) > max_part_len:
+        second = second[:max_part_len-1] + "…"
+
+    return (first, second)
+
+
 def _format_binding_label(
     binding: KeyBinding, os_style: str = "mac", layer_names: set[str] | None = None
 ) -> str:
@@ -596,6 +636,14 @@ def _format_binding_label(
         # shifted at 8 (top-center), tap at 10 (center-center)
         return f"\n\n\n\n\n\n\n\n{shifted_fmt}\n\n{tap_fmt}"
     elif hold_fmt:
+        # Check if tap is a layer name that needs splitting
+        is_layer_tap = layer_names and tap_fmt in layer_names
+        if is_layer_tap:
+            split = _split_long_name(tap_fmt)
+            if split:
+                # Split layer name: first at 8, second at 10, hold at 11
+                first, second = split
+                return f"\n\n\n\n\n\n\n\n{first}\n\n{second}\n{hold_fmt}"
         # tap at bottom-center (9), hold at front-center (11)
         return f"\n\n\n\n\n\n\n\n\n{tap_fmt}\n\n{hold_fmt}"
     else:
