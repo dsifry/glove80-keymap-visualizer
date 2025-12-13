@@ -125,19 +125,19 @@ TEMPLATE_POSITIONS = [
     # - Row 2: Inner function keys (C4,C3,C2 left | C2,C3,C4 right)
     # - Row 3: Outer function keys (C6,C5 left | C5,C6 right)
     # Left outer (row 3) - each key has its own props dict
-    (3, 3),   # slot 70: ZMK 0 - C6 outer left
-    (3, 5),   # slot 71: ZMK 1 - C5 outer left
+    (3, 3),  # slot 70: ZMK 0 - C6 outer left
+    (3, 5),  # slot 71: ZMK 1 - C5 outer left
     # Left inner (row 2) - each key has its own props dict
-    (2, 1),   # slot 72: ZMK 2 - C4 inner left
-    (2, 3),   # slot 73: ZMK 3 - C3 inner left
-    (2, 5),   # slot 74: ZMK 4 - C2 inner left
+    (2, 1),  # slot 72: ZMK 2 - C4 inner left
+    (2, 3),  # slot 73: ZMK 3 - C3 inner left
+    (2, 5),  # slot 74: ZMK 4 - C2 inner left
     # Right inner (row 2) - C2,C3,C4 mirroring left's C2,C3,C4
-    (2, 9),   # slot 75: ZMK 5 - C2 inner right
+    (2, 9),  # slot 75: ZMK 5 - C2 inner right
     (2, 11),  # slot 76: ZMK 6 - C3 inner right
     (2, 13),  # slot 77: ZMK 7 - C4 inner right
     # Right outer (row 3) - each key has its own props dict
-    (3, 7),   # slot 78: ZMK 8 - C5 outer right
-    (3, 9),   # slot 79: ZMK 9 - C6 outer right
+    (3, 7),  # slot 78: ZMK 8 - C5 outer right
+    (3, 9),  # slot 79: ZMK 9 - C6 outer right
     # R2 outer left (slot 80) - ZMK 10 (equals/backtick)
     (5, 3),  # slot 80: R2C6 left (=/+) - ZMK 10
 ]
@@ -282,7 +282,7 @@ def _expand_function_row(kle_data: list[Any]) -> None:
     # === Modify Row 2 for INNER function keys ===
     # Row 2 structure after template update:
     # idx 0: props, idx 1: key1, idx 2: props, idx 3: key2, idx 4: props, idx 5: key3
-    # idx 6: title props, idx 7: title, idx 8: props, idx 9: key4, idx 10: props, idx 11: key5, idx 12: props, idx 13: key6
+    # idx 6: title props, idx 7: title, idx 8: props, idx 9-13: key4-key6
     row2 = kle_data[2]
     if isinstance(row2, list) and len(row2) >= 14:
         # Update all left inner props (indices 0, 2, 4)
@@ -338,7 +338,7 @@ def generate_kle_from_template(
         combos: Optional list of combos to display in text blocks
         os_style: OS style for modifier symbols ("mac", "windows", or "linux")
         activators: Optional list of LayerActivator objects for marking held keys
-        layer_names: Optional set of all layer names (used to distinguish layer activations from modifiers)
+        layer_names: Optional set of layer names (distinguishes layer activations)
 
     Returns:
         KLE JSON string
@@ -409,14 +409,14 @@ def generate_kle_from_template(
                 has_hold = binding.hold and binding.hold != "None"
 
                 # Check for shifted from binding OR from auto-calculated shifted in label
-                # Label format for shifted+tap: 8 newlines, shifted, 2 newlines, tap
-                # Label format for hold+tap: 9 newlines, tap, 2 newlines, hold
-                # Label format for split layer: 9 newlines, first, 1 newline, second, 1 newline, hold
+                # shifted+tap: 8 newlines, shifted, 2 newlines, tap
+                # hold+tap: 9 newlines, tap, 2 newlines, hold
+                # split layer: 9 newlines, first, 1 newline, second, 1 newline, hold
                 has_shifted = binding.shifted and binding.shifted != "None"
                 has_three_items = False  # For split layer names
                 if not has_shifted and needs_multiline:
                     # Check if label has shifted format (content at position 8)
-                    parts = label.split('\n')
+                    parts = label.split("\n")
                     # Position 8 content means 8 empty parts before it
                     if len(parts) > 8 and parts[8] and not parts[0]:
                         has_shifted = True
@@ -429,7 +429,7 @@ def generate_kle_from_template(
                 if needs_multiline:
                     new_props["a"] = 0  # 12-position grid
                     # Calculate max label part length for font sizing
-                    label_parts = [p for p in label.split('\n') if p]
+                    label_parts = [p for p in label.split("\n") if p]
                     max_part_len = max(len(p) for p in label_parts) if label_parts else 0
 
                     if has_shifted and has_hold:
@@ -552,8 +552,8 @@ def _simplify_direction_labels(shifted: str, tap: str) -> tuple[str, str] | None
         return None
 
     # Check common suffix after arrow
-    suffix = shifted[arrow_idx + 1:]
-    if suffix != tap[arrow_idx + 1:]:
+    suffix = shifted[arrow_idx + 1 :]
+    if suffix != tap[arrow_idx + 1 :]:
         return None
 
     # Expand suffix if possible
@@ -577,7 +577,7 @@ def _split_long_name(name: str, max_len: int = 5) -> tuple[str, str] | None:
     # Find positions where lowercase is followed by uppercase
     split_points = []
     for i in range(1, len(name)):
-        if name[i-1].islower() and name[i].isupper():
+        if name[i - 1].islower() and name[i].isupper():
             split_points.append(i)
 
     # Choose the best split point (closest to middle)
@@ -595,9 +595,9 @@ def _split_long_name(name: str, max_len: int = 5) -> tuple[str, str] | None:
     # Truncate if parts are still too long (max 7 chars each for 2 lines)
     max_part_len = 7
     if len(first) > max_part_len:
-        first = first[:max_part_len-1] + "…"
+        first = first[: max_part_len - 1] + "…"
     if len(second) > max_part_len:
-        second = second[:max_part_len-1] + "…"
+        second = second[: max_part_len - 1] + "…"
 
     return (first, second)
 
@@ -664,7 +664,7 @@ def _format_binding_label(
         if is_layer_tap:
             split = _split_long_name(tap_fmt)
             if split:
-                # Split layer name: first at 9 (bottom-center), second at 10 (center-center), hold at 11
+                # Split layer: first@9 (bottom), second@10 (center), hold@11
                 first, second = split
                 return f"\n\n\n\n\n\n\n\n\n{first}\n{second}\n{hold_fmt}"
         # tap at bottom-center (9), hold at front-center (11)
@@ -676,8 +676,8 @@ def _format_binding_label(
 def _is_thumb_only_combo(combo: Combo) -> bool:
     """Check if a combo uses only thumb cluster keys."""
     # Thumb cluster positions: left thumb (52-57), right thumb (69-74)
-    THUMB_POSITIONS = set(range(52, 58)) | set(range(69, 75))
-    return all(pos in THUMB_POSITIONS for pos in combo.positions)
+    thumb_positions = set(range(52, 58)) | set(range(69, 75))
+    return all(pos in thumb_positions for pos in combo.positions)
 
 
 def _update_combo_text_blocks(
@@ -699,8 +699,7 @@ def _update_combo_text_blocks(
     """
     # Filter combos: active on this layer AND using only thumb keys
     active_combos = [
-        c for c in combos
-        if c.is_active_on_layer(layer_name) and _is_thumb_only_combo(c)
+        c for c in combos if c.is_active_on_layer(layer_name) and _is_thumb_only_combo(c)
     ]
 
     # Separate into left/cross-hand and right-hand

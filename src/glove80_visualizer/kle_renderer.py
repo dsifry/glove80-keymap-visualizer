@@ -194,7 +194,9 @@ def render_layer_kle(
     template_kwargs = {k: v for k, v in kwargs.items() if k in ("activators", "layer_names")}
     render_kwargs = {k: v for k, v in kwargs.items() if k in ("width", "height", "timeout")}
 
-    kle_json = generate_kle_from_template(layer, combos=combos, os_style=os_style, **template_kwargs)
+    kle_json = generate_kle_from_template(
+        layer, combos=combos, os_style=os_style, **template_kwargs
+    )
 
     if output_format.lower() == "pdf":
         return render_kle_to_pdf(kle_json, output_path, **render_kwargs)
