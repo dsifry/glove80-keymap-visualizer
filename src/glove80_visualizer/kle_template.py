@@ -127,14 +127,14 @@ TEMPLATE_POSITIONS = [
     # Left outer (row 3)
     (3, 3),   # slot 70: ZMK 0 - C6 outer left
     (3, 4),   # slot 71: ZMK 1 - C5 outer left
-    # Left inner (row 2)
+    # Left inner (row 2) - each key has its own props dict
     (2, 1),   # slot 72: ZMK 2 - C4 inner left
-    (2, 2),   # slot 73: ZMK 3 - C3 inner left
-    (2, 3),   # slot 74: ZMK 4 - C2 inner left
+    (2, 3),   # slot 73: ZMK 3 - C3 inner left
+    (2, 5),   # slot 74: ZMK 4 - C2 inner left
     # Right inner (row 2) - C2,C3,C4 mirroring left's C2,C3,C4
-    (2, 7),   # slot 75: ZMK 5 - C2 inner right
-    (2, 8),   # slot 76: ZMK 6 - C3 inner right
-    (2, 9),   # slot 77: ZMK 7 - C4 inner right
+    (2, 9),   # slot 75: ZMK 5 - C2 inner right
+    (2, 11),  # slot 76: ZMK 6 - C3 inner right
+    (2, 13),  # slot 77: ZMK 7 - C4 inner right
     # Right outer (row 3) - C5,C6 mirroring left's C5,C6
     (3, 6),   # slot 78: ZMK 8 - C5 outer right
     (3, 7),   # slot 79: ZMK 9 - C6 outer right
@@ -280,25 +280,28 @@ def _expand_function_row(kle_data: list[Any]) -> None:
         return
 
     # === Modify Row 2 for INNER function keys ===
-    # Row 2: indices 1,2,3 (left C4,C3,C2) and 7,8,9,10 (right C1,C2,C3,C4)
-    # No y offset - keep keys below column labels
+    # Row 2 structure after template update:
+    # idx 0: props, idx 1: key1, idx 2: props, idx 3: key2, idx 4: props, idx 5: key3
+    # idx 6: title props, idx 7: title, idx 8: props, idx 9: key4, idx 10: props, idx 11: key5, idx 12: props, idx 13: key6
     row2 = kle_data[2]
-    if isinstance(row2, list) and len(row2) >= 5:
-        # Update left inner props (index 0) - make visible but no y offset
-        if isinstance(row2[0], dict):
-            row2[0]["g"] = False
-            row2[0]["c"] = "#cccccc"
-            row2[0]["t"] = "#000000"
-            row2[0]["f"] = 3
-            row2[0]["a"] = 7
+    if isinstance(row2, list) and len(row2) >= 14:
+        # Update all left inner props (indices 0, 2, 4)
+        for idx in [0, 2, 4]:
+            if isinstance(row2[idx], dict):
+                row2[idx]["g"] = False
+                row2[idx]["c"] = "#cccccc"
+                row2[idx]["t"] = "#000000"
+                row2[idx]["f"] = 3
+                row2[idx]["a"] = 7
 
-        # Update right inner props (index 6, after title block)
-        if len(row2) > 6 and isinstance(row2[6], dict):
-            row2[6]["g"] = False
-            row2[6]["c"] = "#cccccc"
-            row2[6]["t"] = "#000000"
-            row2[6]["f"] = 3
-            row2[6]["a"] = 7
+        # Update all right inner props (indices 8, 10, 12)
+        for idx in [8, 10, 12]:
+            if isinstance(row2[idx], dict):
+                row2[idx]["g"] = False
+                row2[idx]["c"] = "#cccccc"
+                row2[idx]["t"] = "#000000"
+                row2[idx]["f"] = 3
+                row2[idx]["a"] = 7
 
     # === Modify Row 3 for OUTER function keys ===
     # Row 3: indices 3,4 (left C6,C5) and 6,7 (right C5,C6)
