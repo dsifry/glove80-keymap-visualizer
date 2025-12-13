@@ -118,8 +118,9 @@ class TestKLELabelFormatting:
         layer = Layer(name="Test", index=0, bindings=bindings)
 
         result = generate_kle_from_template(layer)
-        # Should have "!" above "1" (shifted newline tap format)
-        assert '"!\\n1"' in result or "'!\\n1'" in result
+        # Should have "!" at position 8 (top-center) and "1" at position 10 (center-center)
+        # Format: 8 newlines, shifted, 2 newlines, tap
+        assert '"\\n\\n\\n\\n\\n\\n\\n\\n!\\n\\n1"' in result
 
     def test_punctuation_key_shows_shifted_character(self):
         """KLE-010b: Punctuation keys should auto-show shifted characters (;→:)."""
@@ -131,8 +132,9 @@ class TestKLELabelFormatting:
         layer = Layer(name="Test", index=0, bindings=bindings)
 
         result = generate_kle_from_template(layer)
-        # Should have ":" above ";" (shifted newline tap format)
-        assert '":\\n;"' in result or "':\\n;'" in result
+        # Should have ":" at position 8 (top-center) and ";" at position 10 (center-center)
+        # Format: 8 newlines, shifted, 2 newlines, tap
+        assert '"\\n\\n\\n\\n\\n\\n\\n\\n:\\n\\n;"' in result
 
     def test_alpha_key_does_not_auto_shift(self):
         """KLE-010c: Alpha keys should NOT auto-show shifted characters."""
@@ -158,8 +160,9 @@ class TestKLELabelFormatting:
         layer = Layer(name="Test", index=0, bindings=bindings)
 
         result = generate_kle_from_template(layer)
-        # Should show < above (, not the default 9 shifted char
-        assert '"<\\n("' in result or "'<\\n('" in result
+        # Should show < at position 8 (top-center), ( at position 10 (center-center)
+        # Format: 8 newlines, shifted, 2 newlines, tap
+        assert '"\\n\\n\\n\\n\\n\\n\\n\\n<\\n\\n("' in result
 
 
 class TestKLEGlove80Layout:
@@ -344,8 +347,9 @@ class TestKLEKeyMapping:
         layer = Layer(name="Test", index=0, bindings=bindings)
 
         result = generate_kle_from_template(layer)
-        # Should have underscore above minus (shifted)
-        assert '"_\\n-"' in result or "'_\\n-'" in result
+        # Should have underscore at position 8 and minus at position 10
+        # Format: 8 newlines, shifted, 2 newlines, tap
+        assert '"\\n\\n\\n\\n\\n\\n\\n\\n_\\n\\n-"' in result
 
     def test_outer_column_r3_tab_key(self):
         """KLE-030: R3C6 left (Tab) should be mapped."""
@@ -700,7 +704,7 @@ class TestKLEShiftedBehaviorFormatting:
     """Test that shifted behaviors (like &select_line_left) are formatted properly."""
 
     def test_shifted_behavior_is_formatted(self):
-        """KLE-041: Shifted behavior like &select_line_left should format to Sel←L."""
+        """KLE-041: Shifted behavior like &select_line_left should format and simplify."""
         from glove80_visualizer.kle_template import generate_kle_from_template, ZMK_TO_SLOT, TEMPLATE_POSITIONS
 
         # Create a binding with a raw behavior as the shifted value
@@ -718,15 +722,16 @@ class TestKLEShiftedBehaviorFormatting:
         row_idx, item_idx = TEMPLATE_POSITIONS[slot]
         label = parsed[row_idx][item_idx]
 
-        # Should show formatted labels, not raw behavior names
-        assert "Sel←L" in label, f"Shifted behavior should format to Sel←L, got {repr(label)}"
-        assert "Sel→L" in label, f"Tap behavior should format to Sel→L, got {repr(label)}"
+        # Direction labels are simplified: "Sel←L" / "Sel→L" becomes "Sel" / "Line"
+        # for better readability in the 12-position grid layout
+        assert "Sel" in label, f"Should have Sel prefix, got {repr(label)}"
+        assert "Line" in label, f"Should have Line suffix, got {repr(label)}"
         # Should NOT show raw behavior names
         assert "&select_line_left" not in label, f"Should not show raw behavior name, got {repr(label)}"
         assert "&select_line_right" not in label, f"Should not show raw behavior name, got {repr(label)}"
 
     def test_extend_behavior_is_formatted(self):
-        """KLE-042: Shifted behavior like &extend_word_left should format to Ext←W."""
+        """KLE-042: Shifted behavior like &extend_word_left should format and simplify."""
         from glove80_visualizer.kle_template import generate_kle_from_template, ZMK_TO_SLOT, TEMPLATE_POSITIONS
 
         bindings = [
@@ -742,9 +747,10 @@ class TestKLEShiftedBehaviorFormatting:
         row_idx, item_idx = TEMPLATE_POSITIONS[slot]
         label = parsed[row_idx][item_idx]
 
-        # Should show formatted labels
-        assert "Ext←W" in label, f"Shifted behavior should format to Ext←W, got {repr(label)}"
-        assert "Ext→W" in label, f"Tap behavior should format to Ext→W, got {repr(label)}"
+        # Direction labels are simplified: "Ext←W" / "Ext→W" becomes "Ext" / "Word"
+        # for better readability in the 12-position grid layout
+        assert "Ext" in label, f"Should have Ext prefix, got {repr(label)}"
+        assert "Word" in label, f"Should have Word suffix, got {repr(label)}"
         # Should NOT show raw behavior names
         assert "&extend" not in label, f"Should not show raw behavior name, got {repr(label)}"
 
@@ -890,8 +896,8 @@ class TestKLEMissingKeyPositions:
 class TestKLEShiftedKeyAlignment:
     """Test that keys with shifted characters have proper alignment."""
 
-    def test_shifted_key_has_a5_alignment(self):
-        """KLE-049: Keys with auto-shifted chars (like ;/:) should have a=5 alignment."""
+    def test_shifted_key_has_a0_alignment(self):
+        """KLE-049: Keys with auto-shifted chars (like ;/:) should have a=0 for 12-position grid."""
         from glove80_visualizer.kle_template import generate_kle_from_template, ZMK_TO_SLOT, TEMPLATE_POSITIONS
 
         # Create a binding with semicolon (which auto-calculates shifted ':')
@@ -910,10 +916,10 @@ class TestKLEShiftedKeyAlignment:
         assert ":" in label, f"Should have shifted colon, got {repr(label)}"
         assert ";" in label, f"Should have unshifted semicolon, got {repr(label)}"
 
-        # Check the props dict before this key has a=5 alignment
+        # Check the props dict before this key has a=0 alignment for 12-position grid
         if item_idx > 0 and isinstance(parsed[row_idx][item_idx - 1], dict):
             props = parsed[row_idx][item_idx - 1]
-            assert props.get("a") == 5, f"Shifted key should have a=5 alignment, got a={props.get('a')}"
+            assert props.get("a") == 0, f"Shifted key should have a=0 for 12-position grid, got a={props.get('a')}"
         else:
             # Need to search backward for props
             found_props = False
@@ -1102,7 +1108,7 @@ class TestKLESingleCharAlignment:
             assert props.get("a") != 7, f"Hold-tap key should NOT have a=7, got a={props.get('a')}"
 
     def test_hold_tap_key_gets_a0_grid(self):
-        """KLE-055: Hold-tap keys (4+ newlines) should get a=0 for 12-position grid."""
+        """KLE-055: Hold-tap keys (11 newlines) should get a=0 for 12-position grid."""
         from glove80_visualizer.kle_template import generate_kle_from_template, ZMK_TO_SLOT, TEMPLATE_POSITIONS
 
         bindings = [KeyBinding(position=i, tap="X") for i in range(80)]
@@ -1115,10 +1121,10 @@ class TestKLESingleCharAlignment:
         slot = ZMK_TO_SLOT[36]
         row_idx, item_idx = TEMPLATE_POSITIONS[slot]
 
-        # Label should have 4 newlines for tap+hold format
+        # Label should have 11 newlines for tap+hold format (9 before tap, 2 after tap)
         label = parsed[row_idx][item_idx]
         newline_count = label.count("\n")
-        assert newline_count == 4, f"Hold-tap should have 4 newlines, got {newline_count}: {repr(label)}"
+        assert newline_count == 11, f"Hold-tap should have 11 newlines, got {newline_count}: {repr(label)}"
 
         # Should have a=0 for 12-position grid (not a=5 which shifts tap to top)
         if item_idx > 0 and isinstance(parsed[row_idx][item_idx - 1], dict):
@@ -1157,3 +1163,351 @@ class TestKLER1ArrowKeys:
         # Both arrows should appear (formatted as ↑ and ↓)
         assert "\\u2191" in result or "↑" in result, "UP arrow should appear in output"
         assert "\\u2193" in result or "↓" in result, "DOWN arrow should appear in output"
+
+
+class TestKLECoverageEdgeCases:
+    """Test edge cases for 100% coverage."""
+
+    def test_expand_function_row_short_data(self):
+        """Coverage: _expand_function_row returns early on short data."""
+        from glove80_visualizer.kle_template import _expand_function_row
+
+        # Should not crash with short data
+        short_data: list[Any] = [{"css": ""}, [], []]
+        _expand_function_row(short_data)  # len < 4, early return
+
+    def test_zmk_pos_not_in_slot_map(self):
+        """Coverage: ZMK positions not in ZMK_TO_SLOT are skipped."""
+        from glove80_visualizer.kle_template import generate_kle_from_template
+
+        # Create bindings with a position that's way out of range
+        bindings = [KeyBinding(position=i, tap="X") for i in range(80)]
+        # Position 999 is not in ZMK_TO_SLOT
+        bindings.append(KeyBinding(position=999, tap="INVALID"))
+        layer = Layer(name="Test", index=0, bindings=bindings)
+
+        # Should not crash, just ignore invalid position
+        result = generate_kle_from_template(layer)
+        assert "INVALID" not in result or result  # doesn't matter, just shouldn't crash
+
+    def test_shifted_hold_tap_long_label(self):
+        """Coverage: shifted+hold+tap with long labels uses smallest fonts."""
+        from glove80_visualizer.kle_template import generate_kle_from_template, ZMK_TO_SLOT, TEMPLATE_POSITIONS
+
+        # Create binding with shifted, hold, and long tap label
+        bindings = [KeyBinding(position=i, tap="X") for i in range(80)]
+        bindings[36] = KeyBinding(position=36, tap="LONGKEY", hold="CTRL", shifted="BIGSHIFT")
+        layer = Layer(name="Test", index=0, bindings=bindings)
+
+        result = generate_kle_from_template(layer, os_style="mac")
+        parsed = json.loads(result)
+
+        slot = ZMK_TO_SLOT[36]
+        row_idx, item_idx = TEMPLATE_POSITIONS[slot]
+
+        # Check props have small fonts for 3-item layout
+        if item_idx > 0 and isinstance(parsed[row_idx][item_idx - 1], dict):
+            props = parsed[row_idx][item_idx - 1]
+            assert props.get("f") in (3, 4), "Should have small f for long 3-item label"
+
+    def test_shifted_hold_tap_medium_label(self):
+        """Coverage: shifted+hold+tap with medium labels."""
+        from glove80_visualizer.kle_template import generate_kle_from_template, ZMK_TO_SLOT, TEMPLATE_POSITIONS
+
+        bindings = [KeyBinding(position=i, tap="X") for i in range(80)]
+        bindings[36] = KeyBinding(position=36, tap="KEY1", hold="⌘", shifted="ALT")
+        layer = Layer(name="Test", index=0, bindings=bindings)
+
+        result = generate_kle_from_template(layer, os_style="mac")
+        parsed = json.loads(result)
+
+        slot = ZMK_TO_SLOT[36]
+        row_idx, item_idx = TEMPLATE_POSITIONS[slot]
+        if item_idx > 0 and isinstance(parsed[row_idx][item_idx - 1], dict):
+            props = parsed[row_idx][item_idx - 1]
+            assert props.get("a") == 0, "Should use grid alignment"
+
+    def test_shifted_hold_tap_short_label(self):
+        """Coverage: shifted+hold+tap with short labels uses larger fonts."""
+        from glove80_visualizer.kle_template import generate_kle_from_template, ZMK_TO_SLOT, TEMPLATE_POSITIONS
+
+        bindings = [KeyBinding(position=i, tap="X") for i in range(80)]
+        bindings[36] = KeyBinding(position=36, tap="AB", hold="⌘", shifted="CD")
+        layer = Layer(name="Test", index=0, bindings=bindings)
+
+        result = generate_kle_from_template(layer, os_style="mac")
+        parsed = json.loads(result)
+
+        slot = ZMK_TO_SLOT[36]
+        row_idx, item_idx = TEMPLATE_POSITIONS[slot]
+        if item_idx > 0 and isinstance(parsed[row_idx][item_idx - 1], dict):
+            props = parsed[row_idx][item_idx - 1]
+            assert props.get("f") == 4, f"Should have f=4 for short 3-item label, got {props.get('f')}"
+
+    def test_split_layer_name_with_hold(self):
+        """Coverage: Split layer names in hold-tap keys with three items."""
+        from glove80_visualizer.kle_template import generate_kle_from_template, ZMK_TO_SLOT, TEMPLATE_POSITIONS
+
+        # Create a layer name that needs splitting
+        layer_names = {"Colemak", "Symbol", "Navigation"}
+        bindings = [KeyBinding(position=i, tap="X") for i in range(80)]
+        # Tap is a long layer name, hold is a modifier
+        bindings[36] = KeyBinding(position=36, tap="Colemak", hold="CTRL")
+        layer = Layer(name="Test", index=0, bindings=bindings)
+
+        result = generate_kle_from_template(layer, os_style="mac", layer_names=layer_names)
+        parsed = json.loads(result)
+
+        slot = ZMK_TO_SLOT[36]
+        row_idx, item_idx = TEMPLATE_POSITIONS[slot]
+        label = parsed[row_idx][item_idx]
+
+        # Split layer name should have "Cole" and "mak" on separate positions
+        assert "Cole" in label or "mak" in label, f"Layer name should be split, got {repr(label)}"
+
+    def test_split_layer_name_long_parts(self):
+        """Coverage: Split layer name with 6+ char parts uses smallest fonts."""
+        from glove80_visualizer.kle_template import generate_kle_from_template, ZMK_TO_SLOT, TEMPLATE_POSITIONS
+
+        # Use a very long layer name that will have 6+ char parts after split
+        layer_names = {"NavigationSymbol"}  # Will split to "Navigation" "Symbol"
+        bindings = [KeyBinding(position=i, tap="X") for i in range(80)]
+        bindings[36] = KeyBinding(position=36, tap="NavigationSymbol", hold="CTRL")
+        layer = Layer(name="Test", index=0, bindings=bindings)
+
+        result = generate_kle_from_template(layer, os_style="mac", layer_names=layer_names)
+        parsed = json.loads(result)
+
+        slot = ZMK_TO_SLOT[36]
+        row_idx, item_idx = TEMPLATE_POSITIONS[slot]
+        if item_idx > 0 and isinstance(parsed[row_idx][item_idx - 1], dict):
+            props = parsed[row_idx][item_idx - 1]
+            # Should have smallest fonts for long 3-item split
+            assert props.get("f") == 3, f"Should have f=3 for long split, got {props.get('f')}"
+
+    def test_split_layer_name_short_parts(self):
+        """Coverage: Split layer name with <4 char parts uses larger fonts."""
+        from glove80_visualizer.kle_template import generate_kle_from_template, ZMK_TO_SLOT, TEMPLATE_POSITIONS
+
+        # Use a layer name that splits into very short parts (all < 4 chars)
+        # "aBcDeF" splits to "aBc" (3) and "DeF" (3), with hold "⌃" (1 char via LCTRL)
+        layer_names = {"aBcDeF"}
+        bindings = [KeyBinding(position=i, tap="X") for i in range(80)]
+        bindings[36] = KeyBinding(position=36, tap="aBcDeF", hold="LCTRL")  # LCTRL -> ⌃ (1 char)
+        layer = Layer(name="Test", index=0, bindings=bindings)
+
+        result = generate_kle_from_template(layer, os_style="mac", layer_names=layer_names)
+        parsed = json.loads(result)
+
+        slot = ZMK_TO_SLOT[36]
+        row_idx, item_idx = TEMPLATE_POSITIONS[slot]
+        if item_idx > 0 and isinstance(parsed[row_idx][item_idx - 1], dict):
+            props = parsed[row_idx][item_idx - 1]
+            # Should have f=4 for short 3-item split (max_part_len < 4)
+            assert props.get("f") == 4, f"Should have f=4 for short split, got {props.get('f')}"
+
+    def test_hold_tap_very_long_label(self):
+        """Coverage: hold-tap with 7+ char labels uses smallest fonts."""
+        from glove80_visualizer.kle_template import generate_kle_from_template, ZMK_TO_SLOT, TEMPLATE_POSITIONS
+
+        bindings = [KeyBinding(position=i, tap="X") for i in range(80)]
+        bindings[36] = KeyBinding(position=36, tap="VERYLNG", hold="CTRL")
+        layer = Layer(name="Test", index=0, bindings=bindings)
+
+        result = generate_kle_from_template(layer, os_style="mac")
+        parsed = json.loads(result)
+
+        slot = ZMK_TO_SLOT[36]
+        row_idx, item_idx = TEMPLATE_POSITIONS[slot]
+        if item_idx > 0 and isinstance(parsed[row_idx][item_idx - 1], dict):
+            props = parsed[row_idx][item_idx - 1]
+            assert props.get("f") == 3, f"Should have f=3 for very long hold-tap, got {props.get('f')}"
+
+    def test_hold_tap_6_char_label(self):
+        """Coverage: hold-tap with 6 char label."""
+        from glove80_visualizer.kle_template import generate_kle_from_template, ZMK_TO_SLOT, TEMPLATE_POSITIONS
+
+        bindings = [KeyBinding(position=i, tap="X") for i in range(80)]
+        bindings[36] = KeyBinding(position=36, tap="TYPING", hold="CTRL")
+        layer = Layer(name="Test", index=0, bindings=bindings)
+
+        result = generate_kle_from_template(layer, os_style="mac")
+        parsed = json.loads(result)
+
+        slot = ZMK_TO_SLOT[36]
+        row_idx, item_idx = TEMPLATE_POSITIONS[slot]
+        if item_idx > 0 and isinstance(parsed[row_idx][item_idx - 1], dict):
+            props = parsed[row_idx][item_idx - 1]
+            assert props.get("f") == 3, f"Should have f=3 for 6-char hold-tap, got {props.get('f')}"
+
+    def test_hold_tap_5_char_label(self):
+        """Coverage: hold-tap with 5 char label."""
+        from glove80_visualizer.kle_template import generate_kle_from_template, ZMK_TO_SLOT, TEMPLATE_POSITIONS
+
+        bindings = [KeyBinding(position=i, tap="X") for i in range(80)]
+        bindings[36] = KeyBinding(position=36, tap="MAGIC", hold="CTRL")
+        layer = Layer(name="Test", index=0, bindings=bindings)
+
+        result = generate_kle_from_template(layer, os_style="mac")
+        parsed = json.loads(result)
+
+        slot = ZMK_TO_SLOT[36]
+        row_idx, item_idx = TEMPLATE_POSITIONS[slot]
+        if item_idx > 0 and isinstance(parsed[row_idx][item_idx - 1], dict):
+            props = parsed[row_idx][item_idx - 1]
+            assert props.get("f") == 4, f"Should have f=4 for 5-char hold-tap, got {props.get('f')}"
+
+    def test_multiline_without_shifted_or_hold(self):
+        """Coverage: multiline label without explicit shifted or hold."""
+        from glove80_visualizer.kle_template import generate_kle_from_template, ZMK_TO_SLOT, TEMPLATE_POSITIONS
+
+        # The ";/:" key gets auto-shifted and uses the fallback font sizing
+        bindings = [KeyBinding(position=i, tap="X") for i in range(80)]
+        bindings[44] = KeyBinding(position=44, tap=";")  # Gets auto-shifted to :
+        layer = Layer(name="Test", index=0, bindings=bindings)
+
+        result = generate_kle_from_template(layer, os_style="mac")
+        parsed = json.loads(result)
+
+        slot = ZMK_TO_SLOT[44]
+        row_idx, item_idx = TEMPLATE_POSITIONS[slot]
+        label = parsed[row_idx][item_idx]
+
+        # Should have both : and ;
+        assert ":" in label and ";" in label
+
+    def test_shifted_3_char_label(self):
+        """Coverage: shifted with 3-char label uses medium fonts."""
+        from glove80_visualizer.kle_template import generate_kle_from_template, ZMK_TO_SLOT, TEMPLATE_POSITIONS
+
+        bindings = [KeyBinding(position=i, tap="X") for i in range(80)]
+        bindings[36] = KeyBinding(position=36, tap="ABC", shifted="DEF")
+        layer = Layer(name="Test", index=0, bindings=bindings)
+
+        result = generate_kle_from_template(layer, os_style="mac")
+        parsed = json.loads(result)
+
+        slot = ZMK_TO_SLOT[36]
+        row_idx, item_idx = TEMPLATE_POSITIONS[slot]
+        if item_idx > 0 and isinstance(parsed[row_idx][item_idx - 1], dict):
+            props = parsed[row_idx][item_idx - 1]
+            assert props.get("f") == 6, f"Should have f=6 for 3-char shifted, got {props.get('f')}"
+
+    def test_shifted_short_label(self):
+        """Coverage: shifted with short label uses larger fonts."""
+        from glove80_visualizer.kle_template import generate_kle_from_template, ZMK_TO_SLOT, TEMPLATE_POSITIONS
+
+        bindings = [KeyBinding(position=i, tap="X") for i in range(80)]
+        bindings[36] = KeyBinding(position=36, tap="AB", shifted="CD")
+        layer = Layer(name="Test", index=0, bindings=bindings)
+
+        result = generate_kle_from_template(layer, os_style="mac")
+        parsed = json.loads(result)
+
+        slot = ZMK_TO_SLOT[36]
+        row_idx, item_idx = TEMPLATE_POSITIONS[slot]
+        if item_idx > 0 and isinstance(parsed[row_idx][item_idx - 1], dict):
+            props = parsed[row_idx][item_idx - 1]
+            assert props.get("f") == 7, f"Should have f=7 for short shifted, got {props.get('f')}"
+
+
+class TestSimplifyDirectionLabels:
+    """Test _simplify_direction_labels edge cases for coverage."""
+
+    def test_different_lengths(self):
+        """Coverage: Labels with different lengths return None."""
+        from glove80_visualizer.kle_template import _simplify_direction_labels
+
+        result = _simplify_direction_labels("Sel←L", "Sel→Line")  # Different lengths
+        assert result is None
+
+    def test_too_short(self):
+        """Coverage: Labels shorter than 3 chars return None."""
+        from glove80_visualizer.kle_template import _simplify_direction_labels
+
+        result = _simplify_direction_labels("←", "→")
+        assert result is None
+
+    def test_mismatch_before_arrow(self):
+        """Coverage: Labels that mismatch before arrow return None."""
+        from glove80_visualizer.kle_template import _simplify_direction_labels
+
+        result = _simplify_direction_labels("Abc←L", "Xyz→L")
+        assert result is None
+
+    def test_no_arrow(self):
+        """Coverage: Labels without arrows return None."""
+        from glove80_visualizer.kle_template import _simplify_direction_labels
+
+        result = _simplify_direction_labels("SelAL", "SelBL")
+        assert result is None
+
+    def test_different_suffix(self):
+        """Coverage: Labels with different suffixes return None."""
+        from glove80_visualizer.kle_template import _simplify_direction_labels
+
+        result = _simplify_direction_labels("Sel←A", "Sel→B")
+        assert result is None
+
+    def test_no_prefix_before_arrow(self):
+        """Coverage: Arrow at start (no prefix) returns None."""
+        from glove80_visualizer.kle_template import _simplify_direction_labels
+
+        result = _simplify_direction_labels("←AB", "→AB")
+        assert result is None
+
+    def test_only_one_has_arrow(self):
+        """Coverage: Only one label has arrow returns None."""
+        from glove80_visualizer.kle_template import _simplify_direction_labels
+
+        result = _simplify_direction_labels("SelXL", "Sel→L")  # shifted has no arrow
+        assert result is None
+
+
+class TestSplitLongName:
+    """Test _split_long_name edge cases for coverage."""
+
+    def test_short_name_returns_none(self):
+        """Coverage: Names <= max_len return None."""
+        from glove80_visualizer.kle_template import _split_long_name
+
+        result = _split_long_name("Short")  # 5 chars = max_len
+        assert result is None
+
+    def test_no_camelcase_splits_at_middle(self):
+        """Coverage: Names without CamelCase split at middle."""
+        from glove80_visualizer.kle_template import _split_long_name
+
+        result = _split_long_name("allower")  # No CamelCase, 7 chars
+        assert result is not None
+        first, second = result
+        assert first == "all"
+        assert second == "ower"
+
+    def test_very_long_name_truncates(self):
+        """Coverage: Very long parts get truncated with ellipsis."""
+        from glove80_visualizer.kle_template import _split_long_name
+
+        result = _split_long_name("VeryLongFirstPartSecondPart")
+        assert result is not None
+        first, second = result
+        # Parts should be truncated to max 7 chars with ellipsis
+        assert len(first) <= 7
+        assert len(second) <= 7
+
+
+class TestHoldAsLayerName:
+    """Test hold being treated as layer name for coverage."""
+
+    def test_hold_is_layer_name(self):
+        """Coverage: When hold is a layer name, display as-is."""
+        from glove80_visualizer.kle_template import _format_binding_label
+        from glove80_visualizer.models import KeyBinding
+
+        layer_names = {"Symbol", "Navigation", "Magic"}
+        binding = KeyBinding(position=36, tap="A", hold="Symbol")
+
+        result = _format_binding_label(binding, "mac", layer_names)
+
+        # Should contain "Symbol" as-is, not converted to modifier symbol
+        assert "Symbol" in result

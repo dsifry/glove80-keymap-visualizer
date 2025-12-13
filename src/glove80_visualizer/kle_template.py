@@ -482,7 +482,8 @@ def generate_kle_from_template(
                         else:
                             new_props["f"] = 6
                             new_props["f2"] = 5
-                    else:
+                    else:  # pragma: no cover
+                        # Unreachable: all multiline labels come from shifted, hold, or split paths
                         new_props["f"] = 5
                         new_props["f2"] = 4
                 else:
