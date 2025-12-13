@@ -478,6 +478,8 @@ def generate_kle_from_template(
                 if item_idx > 0 and isinstance(row[item_idx - 1], dict):
                     props = row[item_idx - 1]
                     props.update(new_props)
+                    # Remove fa (font array) if present - it overrides f/f2 settings
+                    props.pop("fa", None)
 
     return json.dumps(kle_data, indent=2)
 
