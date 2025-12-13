@@ -561,7 +561,7 @@ def _simplify_direction_labels(shifted: str, tap: str) -> tuple[str, str] | None
     return (prefix, expanded_suffix)
 
 
-def _split_long_name(name: str, max_len: int = 7) -> tuple[str, str] | None:
+def _split_long_name(name: str, max_len: int = 5) -> tuple[str, str] | None:
     """
     Split a long name into two parts for display on two lines.
 
