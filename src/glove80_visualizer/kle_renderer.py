@@ -190,12 +190,16 @@ def render_layer_kle(
     """
     from glove80_visualizer.kle_template import generate_kle_from_template
 
-    kle_json = generate_kle_from_template(layer, combos=combos, os_style=os_style, **kwargs)
+    # Separate template kwargs from render kwargs
+    template_kwargs = {k: v for k, v in kwargs.items() if k in ("activators", "layer_names")}
+    render_kwargs = {k: v for k, v in kwargs.items() if k in ("width", "height", "timeout")}
+
+    kle_json = generate_kle_from_template(layer, combos=combos, os_style=os_style, **template_kwargs)
 
     if output_format.lower() == "pdf":
-        return render_kle_to_pdf(kle_json, output_path, **kwargs)
+        return render_kle_to_pdf(kle_json, output_path, **render_kwargs)
     else:
-        return render_kle_to_png(kle_json, output_path, **kwargs)
+        return render_kle_to_png(kle_json, output_path, **render_kwargs)
 
 
 def render_all_layers_kle(
