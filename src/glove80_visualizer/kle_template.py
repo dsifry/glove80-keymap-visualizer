@@ -266,11 +266,11 @@ def _expand_function_row(kle_data: list[Any]) -> None:
     Enable function row keys in the template.
 
     The template has two rows for function keys (matching inner/outer pattern):
-    - Row 2: Inner function keys (C4,C3,C2 left | C1,C2,C3,C4 right)
-    - Row 3: Outer function keys (C6,C5 left | C5 right)
+    - Row 2: Inner function keys (C4,C3,C2 left | C2,C3,C4 right)
+    - Row 3: Outer function keys (C6,C5 left | C5,C6 right)
 
     This function:
-    1. Modifies row 2 to enable inner function keys with y=-0.5 offset
+    1. Modifies row 2 to enable inner function keys (no y offset - stays below labels)
     2. Modifies row 3 to enable outer function keys (already has y=-0.5)
     """
     if len(kle_data) < 4:
@@ -278,11 +278,11 @@ def _expand_function_row(kle_data: list[Any]) -> None:
 
     # === Modify Row 2 for INNER function keys ===
     # Row 2: indices 1,2,3 (left C4,C3,C2) and 7,8,9,10 (right C1,C2,C3,C4)
+    # No y offset - keep keys below column labels
     row2 = kle_data[2]
     if isinstance(row2, list) and len(row2) >= 5:
-        # Update left inner props (index 0) - add y offset and make visible
+        # Update left inner props (index 0) - make visible but no y offset
         if isinstance(row2[0], dict):
-            row2[0]["y"] = -0.5  # Move up to R1 level
             row2[0]["g"] = False
             row2[0]["c"] = "#cccccc"
             row2[0]["t"] = "#000000"
