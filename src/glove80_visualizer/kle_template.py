@@ -32,26 +32,28 @@ def load_template() -> list[Any]:
 TEMPLATE_POSITIONS = [
     # Main body keys (slots 0-54)
     # Row 4 (JSON index 4): Number row inner 2-5, 6-9
+    # Each key has its own props dict preceding it
     (4, 1),  # slot 0: 2
-    (4, 2),  # slot 1: 3
-    (4, 3),  # slot 2: 4
-    (4, 4),  # slot 3: 5
-    (4, 6),  # slot 4: 6
-    (4, 7),  # slot 5: 7
-    (4, 8),  # slot 6: 8
-    (4, 9),  # slot 7: 9
+    (4, 3),  # slot 1: 3
+    (4, 5),  # slot 2: 4
+    (4, 7),  # slot 3: 5
+    (4, 9),  # slot 4: 6
+    (4, 11),  # slot 5: 7
+    (4, 13),  # slot 6: 8
+    (4, 15),  # slot 7: 9
     # Row 5 (JSON index 5): Number row outer 1, 0
     (5, 5),  # slot 8: 1
     (5, 7),  # slot 9: 0
     # Row 6 (JSON index 6): QWERTY inner W,E,R,T | Y,U,I,O
+    # Each key has its own props dict preceding it
     (6, 1),  # slot 10: W
-    (6, 2),  # slot 11: E
-    (6, 3),  # slot 12: R
-    (6, 4),  # slot 13: T
-    (6, 6),  # slot 14: Y
-    (6, 7),  # slot 15: U
-    (6, 8),  # slot 16: I
-    (6, 9),  # slot 17: O
+    (6, 3),  # slot 11: E
+    (6, 5),  # slot 12: R
+    (6, 7),  # slot 13: T
+    (6, 9),  # slot 14: Y
+    (6, 11),  # slot 15: U
+    (6, 13),  # slot 16: I
+    (6, 15),  # slot 17: O
     # Row 7 (JSON index 7): QWERTY outer Q | P
     (7, 5),  # slot 18: Q
     (7, 7),  # slot 19: P
@@ -71,27 +73,28 @@ TEMPLATE_POSITIONS = [
     (9, 7),  # slot 31: ;
     (9, 9),  # slot 32: '
     # Row 10 (JSON index 10): Bottom inner X,C,V,B | N,M,<,>
-    # Note: [0]=props, [1]=key, [2]=props, [3-5]=keys, [6]=gap props, [7-10]=keys
+    # Each key has its own props dict preceding it
     (10, 1),  # slot 33: X
-    (10, 3),  # slot 34: C (skip [2] which is props)
-    (10, 4),  # slot 35: V
-    (10, 5),  # slot 36: B
-    (10, 7),  # slot 37: N (skip [6] which is gap props)
-    (10, 8),  # slot 38: M
-    (10, 9),  # slot 39: ,
-    (10, 10),  # slot 40: .
+    (10, 3),  # slot 34: C
+    (10, 5),  # slot 35: V
+    (10, 7),  # slot 36: B
+    (10, 9),  # slot 37: N
+    (10, 11),  # slot 38: M
+    (10, 13),  # slot 39: ,
+    (10, 15),  # slot 40: .
     # Row 11 (JSON index 11): Bottom outer Lower,Z | /,Lower
     (11, 3),  # slot 41: Lower_L
     (11, 5),  # slot 42: Z
     (11, 7),  # slot 43: /
     (11, 9),  # slot 44: Lower_R
     # Row 12 (JSON index 12): Lower row [,] | \,PageUp,ScrollUp,ScrollDown
+    # Each key has its own props dict preceding it
     (12, 1),  # slot 45: [
-    (12, 2),  # slot 46: ]
-    (12, 4),  # slot 47: \ (Emoji slot)
-    (12, 6),  # slot 48: PgUp/World
-    (12, 8),  # slot 49: ScrollUp
-    (12, 9),  # slot 50: ScrollDown
+    (12, 3),  # slot 46: ]
+    (12, 5),  # slot 47: \ (Emoji slot)
+    (12, 7),  # slot 48: PgUp/World
+    (12, 9),  # slot 49: ScrollUp
+    (12, 11),  # slot 50: ScrollDown
     # Row 13 (JSON index 13): R6 Magic,` | PgDn,Magic
     (13, 3),  # slot 51: Magic_L
     (13, 5),  # slot 52: `
@@ -399,31 +402,45 @@ def generate_kle_from_template(
                 label = _format_binding_label(binding, os_style)
                 row[item_idx] = label
 
-                # Check if preceding item is a property dict
-                # In KLE, properties cascade to subsequent keys
+                # Determine required properties for this label
+                needs_multiline = "\n" in label
+                has_hold = binding.hold and binding.hold != "None"
+
+                # Check for shifted from binding OR from auto-calculated shifted in label
+                # Label format for shifted+tap: 8 newlines, shifted, 2 newlines, tap
+                # Label format for hold+tap: 9 newlines, tap, 2 newlines, hold
+                has_shifted = binding.shifted and binding.shifted != "None"
+                if not has_shifted and needs_multiline:
+                    # Check if label has shifted format (content at position 8)
+                    parts = label.split('\n')
+                    # Position 8 content means 8 empty parts before it
+                    if len(parts) > 8 and parts[8] and not parts[0]:
+                        has_shifted = True
+
+                # Build props for this key
+                new_props: dict[str, Any] = {"g": False}
+                if needs_multiline:
+                    new_props["a"] = 0  # 12-position grid
+                    if has_shifted and has_hold:
+                        new_props["f"] = 5
+                        new_props["f2"] = 4
+                    elif has_shifted:
+                        new_props["f"] = 7
+                        new_props["f2"] = 6
+                    elif has_hold:
+                        new_props["f"] = 6
+                        new_props["f2"] = 5
+                    else:
+                        new_props["f"] = 5
+                        new_props["f2"] = 4
+                else:
+                    new_props["a"] = 7  # Centered single-line
+                    new_props["f"] = 5  # Consistent font for single-line labels
+
+                # Update preceding props dict if it exists
                 if item_idx > 0 and isinstance(row[item_idx - 1], dict):
                     props = row[item_idx - 1]
-                    if props.get("g") is True:
-                        props["g"] = False
-                    # Set alignment based on label structure to prevent cascade issues
-                    if "\n" not in label:
-                        # Single-line labels (letters, tab, etc.) need a=7 (centered)
-                        props["a"] = 7
-                    else:
-                        # Multi-line labels use 12-position grid (a=0)
-                        # Format uses positions: 8=top-center, 9=bottom-center, 11=front-center
-                        props["a"] = 0
-                        # Check if this is shifted+tap (no hold) - use larger font
-                        has_shifted = binding.shifted and binding.shifted != "None"
-                        has_hold = binding.hold and binding.hold != "None"
-                        if has_shifted and not has_hold:
-                            # Shifted+tap only - larger font since more room
-                            props["f"] = 6
-                            props["f2"] = 5
-                        else:
-                            # Hold-tap or shifted+hold+tap - smaller font
-                            props["f"] = 5
-                            props["f2"] = 4
+                    props.update(new_props)
 
     return json.dumps(kle_data, indent=2)
 
