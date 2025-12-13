@@ -409,13 +409,21 @@ def generate_kle_from_template(
                     if "\n" not in label:
                         # Single-line labels (letters, tab, etc.) need a=7 (centered)
                         props["a"] = 7
-                    elif label.count("\n") <= 3:
-                        # Two-line labels (shifted on top, tap below) need a=5
-                        props["a"] = 5
                     else:
-                        # 4+ newlines means hold-tap format: tap\n\n\n\nhold
-                        # Need a=0 for 12-position grid
+                        # Multi-line labels use 12-position grid (a=0)
+                        # Format uses positions: 8=top-center, 9=bottom-center, 11=front-center
                         props["a"] = 0
+                        # Check if this is shifted+tap (no hold) - use larger font
+                        has_shifted = binding.shifted and binding.shifted != "None"
+                        has_hold = binding.hold and binding.hold != "None"
+                        if has_shifted and not has_hold:
+                            # Shifted+tap only - larger font since more room
+                            props["f"] = 6
+                            props["f2"] = 5
+                        else:
+                            # Hold-tap or shifted+hold+tap - smaller font
+                            props["f"] = 5
+                            props["f2"] = 4
 
     return json.dumps(kle_data, indent=2)
 
@@ -438,15 +446,23 @@ def _format_binding_label(binding: KeyBinding, os_style: str = "mac") -> str:
         if auto_shifted:
             shifted_fmt = auto_shifted
 
-    # KLE uses newlines for 12-position legend format
-    # Position 0 = top-left, 1 = bottom-left, 5 = center-left
-    # For hold-tap: tap on top (or center), hold at bottom
+    # KLE uses newlines for 12-position legend format with a=0
+    # Grid layout:
+    # [0]  [8]  [2]    (top row)
+    # [6] [10]  [7]    (center row)
+    # [1]  [9]  [3]    (bottom row)
+    # [4] [11]  [5]    (front row)
+    #
+    # For hold-tap: tap at bottom-center (9), hold at front-center (11)
     if shifted_fmt and hold_fmt:
-        return f"{shifted_fmt}\n{tap_fmt}\n\n\n{hold_fmt}"
+        # shifted at 8 (top-center), tap at 10 (center-center), hold at 11 (front-center)
+        return f"\n\n\n\n\n\n\n\n{shifted_fmt}\n\n{tap_fmt}\n{hold_fmt}"
     elif shifted_fmt:
-        return f"{shifted_fmt}\n{tap_fmt}"
+        # shifted at 8 (top-center), tap at 10 (center-center)
+        return f"\n\n\n\n\n\n\n\n{shifted_fmt}\n\n{tap_fmt}"
     elif hold_fmt:
-        return f"{tap_fmt}\n\n\n\n{hold_fmt}"
+        # tap at bottom-center (9), hold at front-center (11)
+        return f"\n\n\n\n\n\n\n\n\n{tap_fmt}\n\n{hold_fmt}"
     else:
         return tap_fmt
 
