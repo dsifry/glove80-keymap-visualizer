@@ -244,13 +244,13 @@ KEY_LABEL_MAP = {
     # Home/End navigation - use text labels for clarity
     "HOME": "Home",
     "END": "End",
-    # Page navigation - multiline for readability
-    "PG_UP": "Page\nUp",
-    "PG_DN": "Page\nDn",
-    "PAGE_UP": "Page\nUp",
-    "PAGE_DOWN": "Page\nDn",
-    "PG UP": "Page\nUp",
-    "PG DN": "Page\nDn",
+    # Page navigation - 12-position grid format (position 8=top-center, 10=center-center)
+    "PG_UP": "\n\n\n\n\n\n\n\nPage\n\nUp",
+    "PG_DN": "\n\n\n\n\n\n\n\nPage\n\nDn",
+    "PAGE_UP": "\n\n\n\n\n\n\n\nPage\n\nUp",
+    "PAGE_DOWN": "\n\n\n\n\n\n\n\nPage\n\nDn",
+    "PG UP": "\n\n\n\n\n\n\n\nPage\n\nUp",
+    "PG DN": "\n\n\n\n\n\n\n\nPage\n\nDn",
     # Word jump keys
     "WORD_LEFT": "⇐",
     "WORD_RIGHT": "⇒",
