@@ -98,6 +98,7 @@
       "y": -0.5,
       "t": "#9E9E9E",
       "g": false,
+      "a": 7,
       "f": 5,
       "d": true
     },
@@ -118,6 +119,7 @@
     {
       "t": "#9E9E9E",
       "g": false,
+      "a": 7,
       "f": 5,
       "d": true
     },
@@ -152,9 +154,10 @@
     {
       "y": -0.5,
       "t": "#9E9E9E",
+      "g": false,
       "a": 7,
-      "d": true,
-      "f": 5
+      "f": 5,
+      "d": true
     },
     "R2",
     {
@@ -182,6 +185,7 @@
     {
       "t": "#9E9E9E",
       "g": false,
+      "a": 7,
       "f": 5,
       "d": true
     },
@@ -215,8 +219,10 @@
     {
       "y": -0.5,
       "t": "#9E9E9E",
-      "d": true,
-      "f": 5
+      "g": false,
+      "a": 7,
+      "f": 5,
+      "d": true
     },
     "R3",
     {
@@ -242,6 +248,7 @@
     {
       "t": "#9E9E9E",
       "g": false,
+      "a": 7,
       "f": 5,
       "d": true
     },
@@ -292,15 +299,17 @@
   [
     {
       "y": -0.5,
-      "c": "#cccccc",
       "t": "#9E9E9E",
-      "p": "CHICKLET",
-      "d": true,
-      "f": 5
+      "g": false,
+      "a": 7,
+      "f": 5,
+      "d": true
     },
     "R4",
     {
-      "t": "#000000"
+      "c": "#cccccc",
+      "t": "#000000",
+      "p": "CHICKLET"
     },
     "",
     {
@@ -319,8 +328,10 @@
     "",
     {
       "t": "#9E9E9E",
-      "d": true,
-      "f": 5
+      "g": false,
+      "a": 7,
+      "f": 5,
+      "d": true
     },
     "R4"
   ],
@@ -355,8 +366,10 @@
     {
       "y": -0.5,
       "t": "#9E9E9E",
-      "d": true,
-      "f": 5
+      "g": false,
+      "a": 7,
+      "f": 5,
+      "d": true
     },
     "R5",
     {
@@ -394,9 +407,8 @@
     },
     "<i class='fa fa-lock'></i> Lock layer&hellip;\nOSS Shift\n\n\nLower",
     {
-      "c": "#cccccc",
       "t": "#9E9E9E",
-      "p": "CHICKLET",
+      "g": false,
       "a": 7,
       "f": 5,
       "d": true
@@ -438,6 +450,7 @@
     {
       "y": -0.5,
       "t": "#9E9E9E",
+      "g": false,
       "a": 7,
       "f": 5,
       "d": true
@@ -467,7 +480,8 @@
     "Magic\n\n\n\nMagic",
     {
       "t": "#9E9E9E",
-      "p": "CHICKLET",
+      "g": false,
+      "a": 7,
       "f": 5,
       "d": true
     },
