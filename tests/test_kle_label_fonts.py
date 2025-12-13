@@ -63,15 +63,10 @@ class TestKLELabelFonts:
     """Tests for consistent label fonts and positions in KLE output."""
 
     @pytest.fixture
-    def sample_kle_output(self, tmp_path):
-        """Generate sample KLE output for testing."""
-        # This would normally use the actual generator
-        # For now, we load from a known location if available
-        kle_path = Path("/tmp/kle_json/QWERTY.json")
-        if kle_path.exists():
-            with open(kle_path) as f:
-                return json.load(f)
-        pytest.skip("KLE JSON not available")
+    def sample_kle_output(self) -> list:
+        """Load committed KLE fixture for hermetic testing."""
+        kle_path = Path(__file__).parent / "fixtures" / "kle" / "sunaku-base-layer.json"
+        return json.loads(kle_path.read_text(encoding="utf-8"))
 
     def test_column_labels_consistent_font(self, sample_kle_output):
         """All column labels (C1-C6) should have the same font size."""

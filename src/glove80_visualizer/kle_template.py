@@ -397,6 +397,7 @@ def generate_kle_from_template(
                     label = "\n\n\n\n\n\n\n\n\n✋\n\nLayer"  # 9 newlines, hand, 2 newlines, Layer
                     row[item_idx] = label
                     if item_idx > 0 and isinstance(row[item_idx - 1], dict):
+                        row[item_idx - 1]["g"] = False  # Clear ghost flag
                         row[item_idx - 1]["f"] = 3  # Medium font
                         row[item_idx - 1]["a"] = 0  # 12-position grid
                     continue  # Skip further processing for held keys
