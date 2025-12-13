@@ -467,8 +467,11 @@ def generate_kle_from_template(
                             new_props["f2"] = 6
                     elif has_hold:
                         # 2 items: tap, hold
-                        if max_part_len >= 6:
-                            new_props["f"] = 4
+                        if max_part_len >= 7:
+                            new_props["f"] = 3
+                            new_props["f2"] = 3
+                        elif max_part_len >= 6:
+                            new_props["f"] = 3
                             new_props["f2"] = 3
                         elif max_part_len >= 5:
                             new_props["f"] = 4
