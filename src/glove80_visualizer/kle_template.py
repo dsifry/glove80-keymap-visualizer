@@ -327,6 +327,7 @@ def generate_kle_from_template(
     combos: list[Combo] | None = None,
     os_style: str = "mac",
     activators: list[LayerActivator] | None = None,
+    layer_names: set[str] | None = None,
 ) -> str:
     """
     Generate KLE JSON using Sunaku's template.
@@ -337,6 +338,7 @@ def generate_kle_from_template(
         combos: Optional list of combos to display in text blocks
         os_style: OS style for modifier symbols ("mac", "windows", or "linux")
         activators: Optional list of LayerActivator objects for marking held keys
+        layer_names: Optional set of all layer names (used to distinguish layer activations from modifiers)
 
     Returns:
         KLE JSON string
@@ -399,7 +401,7 @@ def generate_kle_from_template(
                         row[item_idx - 1]["a"] = 0  # 12-position grid
                     continue  # Skip further processing for held keys
 
-                label = _format_binding_label(binding, os_style)
+                label = _format_binding_label(binding, os_style, layer_names)
                 row[item_idx] = label
 
                 # Determine required properties for this label
@@ -445,15 +447,32 @@ def generate_kle_from_template(
     return json.dumps(kle_data, indent=2)
 
 
-def _format_binding_label(binding: KeyBinding, os_style: str = "mac") -> str:
-    """Format a binding as a KLE label string."""
+def _format_binding_label(
+    binding: KeyBinding, os_style: str = "mac", layer_names: set[str] | None = None
+) -> str:
+    """Format a binding as a KLE label string.
+
+    Args:
+        binding: The key binding to format
+        os_style: OS style for modifier symbols ("mac", "windows", or "linux")
+        layer_names: Set of layer names to distinguish from modifiers
+    """
     tap = binding.tap or ""
     hold = binding.hold if binding.hold and binding.hold != "None" else ""
     shifted = binding.shifted if binding.shifted and binding.shifted != "None" else ""
 
     # Format for nice display
     tap_fmt = format_key_label(tap, os_style) if tap else ""
-    hold_fmt = format_key_label(hold, os_style) if hold else ""
+
+    # For hold: if it's a layer name, display as-is; otherwise format as modifier
+    if hold:
+        if layer_names and hold in layer_names:
+            hold_fmt = hold  # Layer name - display as-is
+        else:
+            hold_fmt = format_key_label(hold, os_style)  # Modifier - convert to symbol
+    else:
+        hold_fmt = ""
+
     shifted_fmt = format_key_label(shifted, os_style) if shifted else ""
 
     # Auto-calculate shifted character if not already provided

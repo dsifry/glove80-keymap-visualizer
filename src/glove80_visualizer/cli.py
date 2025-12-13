@@ -370,6 +370,9 @@ def main(
         # No filtering needed, all svgs should be strings
         filtered_svgs = [s for s in svgs if s is not None]
 
+    # Create set of layer names for KLE formatting (distinguishes layer names from modifiers)
+    layer_names = {layer.name for layer in extracted_layers}
+
     # Output based on format
     if output_format == "svg":
         # Create output directory
@@ -393,6 +396,7 @@ def main(
                 combos=combos,
                 os_style=os_style,
                 activators=activators,
+                layer_names=layer_names,
             )
             json_path = output / f"{layer.name}.json"
             json_path.write_text(kle_json)
@@ -413,6 +417,7 @@ def main(
                 combos=combos,
                 os_style=os_style,
                 activators=activators,
+                layer_names=layer_names,
             )
             png_path = output / f"{layer.name}.png"
             try:
@@ -432,7 +437,7 @@ def main(
 
         log("Generating KLE PDF via headless browser...")
         try:
-            create_combined_pdf_kle(extracted_layers, output, combos=combos, os_style=os_style, activators=activators)
+            create_combined_pdf_kle(extracted_layers, output, combos=combos, os_style=os_style, activators=activators, layer_names=layer_names)
             if not quiet:
                 click.echo(f"Generated KLE PDF: {output}")
         except Exception as e:
