@@ -3368,6 +3368,19 @@ class TestCairoSvgCompatibility:
         # And it should only appear once (not duplicated)
         assert result.count('font-size="10"') == 1
 
+    def test_add_explicit_font_sizes_converts_percentage_to_absolute(self):
+        """Coverage: tspan with style="font-size: XX%" converts to absolute font-size."""
+        from glove80_visualizer.svg_generator import _add_explicit_font_sizes
+
+        # Text with percentage font-size in tspan (CairoSVG doesn't handle %)
+        svg = '<text font-size="14" class="tap"><tspan style="font-size: 78%">Test</tspan></text>'
+        result = _add_explicit_font_sizes(svg)
+
+        # 78% of 14 = 10.92, should truncate to 10
+        assert 'font-size="10"' in result
+        # Percentage style should be removed
+        assert 'style="font-size: 78%"' not in result
+
 
 class TestErrorHandling:
     """Tests for error handling in SVG generator."""
