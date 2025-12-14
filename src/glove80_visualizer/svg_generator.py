@@ -474,11 +474,9 @@ svg.keymap text {
     font-size: 12px;
 }
 
-/* Tap labels - bolder appearance via size and subtle stroke */
+/* Tap labels - primary key labels */
 text.tap {
     font-size: 14px !important;
-    stroke: currentColor;
-    stroke-width: 0.3px;
 }
 
 /* Shifted characters - smaller and lighter */
@@ -498,15 +496,21 @@ text.trans {
     fill: #999 !important;
 }
 
-/* Centered layer label styling */
-text.centered-label {
+/* Centered layer label styling - KLE-inspired title and subtitle */
+/* Layer title - prominent but readable */
+text.layer-title {
     text-anchor: middle !important;
     font-size: 20px;
     fill: #24292e !important;
-    stroke: white;
-    stroke-width: 3;
-    paint-order: stroke;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.05em;
+}
+
+/* Layer subtitle - paragraph style: smaller, lighter */
+text.layer-subtitle {
+    text-anchor: middle !important;
+    font-size: 12px;
+    fill: #666 !important;
+    letter-spacing: 0.05em;
 }
 """
 
@@ -538,6 +542,14 @@ text.centered-label {
     # Replace glyph <use> elements with inline SVG paths for CairoSVG compatibility
     svg_content = _inline_fingerprint_glyphs(svg_content)
 
+    # Center the layer name between left and right keyboard halves
+    # Must run BEFORE font-size fix to avoid pattern mismatch
+    svg_content = _center_layer_label(svg_content, working_layer.name)
+
+    # Add explicit font-size attributes to all text elements for CairoSVG compatibility
+    # CairoSVG ignores CSS font-size rules and defaults to giant size without explicit attributes
+    svg_content = _add_explicit_font_sizes(svg_content)
+
     # Adjust tap label positions for keys with shifted but no hold
     # This creates balanced top/bottom positioning like a physical keycap
     svg_content = _adjust_tap_positions_for_shifted(svg_content)
@@ -545,9 +557,6 @@ text.centered-label {
     # Add held key indicator styling
     if held_positions:
         svg_content = _add_held_key_indicators(svg_content, held_positions)
-
-    # Center the layer name between left and right keyboard halves
-    svg_content = _center_layer_label(svg_content, working_layer.name)
 
     # Add color legend if colors are enabled and legend is not disabled
     if config.show_colors and config.show_legend:
@@ -1561,17 +1570,21 @@ def _center_layer_label(svg_content: str, layer_name: str) -> str:
     Move the layer label to be centered between the left and right keyboard halves.
 
     The Glove80 has a gap between left and right halves. This positions the
-    layer name in that center area like sunaku's diagrams.
+    layer name in that center area like KLE format with title and subtitle.
+
+    Creates two text elements:
+    - Layer title (H1-style): Large, bold layer name
+    - Subtitle (paragraph-style): "MoErgo Glove80 keyboard"
 
     Args:
         svg_content: The SVG string to modify
         layer_name: The layer name to find and reposition
 
     Returns:
-        Modified SVG with centered layer label
+        Modified SVG with centered layer label including title and subtitle
     """
     # The keymap-drawer generates: <text x="0" y="28" class="label" id="LayerName">LayerName:</text>
-    # We want to move it to the center and change styling
+    # We want to move it to the center and add subtitle like KLE format
 
     # Center X position between left and right keyboard halves
     # Left hand extends to ~460, right hand starts at ~550
@@ -1585,10 +1598,15 @@ def _center_layer_label(svg_content: str, layer_name: str) -> str:
         rf'<text x="0" y="28" class="label" id="{escaped_name}">{escaped_name}:</text>'
     )
 
-    # Replacement with centered position and middle anchor
+    # Replacement with centered position, title styling, and subtitle
+    # Title at y="28", subtitle at y="44" (16px below)
+    # Include explicit font-size and fill attributes for CairoSVG compatibility
+    # (CairoSVG ignores CSS rules, needs inline attributes)
     replacement = (
-        f'<text x="{center_x}" y="28" class="label centered-label" '
-        f'id="{layer_name}" text-anchor="middle">{layer_name}</text>'
+        f'<text x="{center_x}" y="28" class="layer-title" '
+        f'id="{layer_name}" text-anchor="middle" font-size="20" fill="#ccc">{layer_name}</text>\n'
+        f'<text x="{center_x}" y="44" class="layer-subtitle" '
+        f'text-anchor="middle" font-size="11" fill="#888">MoErgo Glove80 keyboard</text>'
     )
 
     svg_content = label_pattern.sub(replacement, svg_content)
@@ -1718,6 +1736,116 @@ def _inline_fingerprint_glyphs(svg_content: str) -> str:
         svg_content,
         flags=re.DOTALL,
     )
+
+    return svg_content
+
+
+def _add_explicit_font_sizes(svg_content: str) -> str:
+    """
+    Add explicit font-size attributes to all text elements for CairoSVG compatibility.
+
+    CairoSVG ignores CSS font-size rules (including !important ones) and defaults
+    to a giant font size if no explicit font-size attribute is present on the
+    <text> element. This causes layer toggle labels like "Canary", "Engrammer"
+    to render as huge black splotches in PDFs.
+
+    This function adds explicit font-size attributes based on the text element's
+    class, matching the CSS rules defined in the SVG:
+    - text.tap: 14px
+    - text.shifted: 10px
+    - text.hold: 9px
+    - default: 12px
+
+    Args:
+        svg_content: The SVG string to modify
+
+    Returns:
+        Modified SVG content with explicit font-size attributes on all text elements
+    """
+    # Font size mappings based on CSS classes
+    font_sizes = {
+        "tap": "14",
+        "shifted": "10",
+        "hold": "9",
+        "layer-title": "20",  # centered layer title
+        "layer-subtitle": "11",  # centered layer subtitle
+        "label": "20",  # legacy layer label
+        "legend-text": "11",  # color legend
+    }
+
+    def add_font_size(match: re.Match[str]) -> str:
+        """Add font-size attribute to a text element if it doesn't have one."""
+        opening_tag = match.group(0)
+
+        # If already has font-size attribute, don't modify
+        if 'font-size="' in opening_tag:
+            return opening_tag
+
+        # Extract class attribute to determine font size
+        class_match = re.search(r'class="([^"]*)"', opening_tag)
+        if class_match:
+            classes = class_match.group(1).split()
+            # Check for specific class in priority order
+            priority_classes = [
+                "tap",
+                "shifted",
+                "hold",
+                "layer-title",
+                "layer-subtitle",
+                "label",
+                "legend-text",
+            ]
+            for cls in priority_classes:
+                if cls in classes:
+                    font_size = font_sizes[cls]
+                    # Insert font-size attribute before the closing >
+                    return opening_tag[:-1] + f' font-size="{font_size}">'
+
+        # Default font size if no specific class found
+        return opening_tag[:-1] + ' font-size="12">'
+
+    # Pattern to match <text ...> opening tags
+    text_pattern = re.compile(r"<text\s+[^>]*>")
+    svg_content = text_pattern.sub(add_font_size, svg_content)
+
+    # Also add font-size to tspan elements - CairoSVG doesn't inherit from parent text
+    # Find text elements with tspans and propagate font-size to tspan children
+    def add_font_size_to_tspans(match: re.Match[str]) -> str:
+        """Add font-size to tspan elements based on parent text's font-size."""
+        full_match = match.group(0)
+
+        # Extract font-size from parent text element
+        font_size_match = re.search(r'font-size="(\d+)"', full_match)
+        if not font_size_match:
+            # Defensive: first pass always adds font-size, so this shouldn't happen
+            return full_match  # pragma: no cover
+
+        parent_font_size = int(font_size_match.group(1))
+
+        # Add font-size to all tspan elements, handling percentage styles
+        def add_to_tspan(tspan_match: re.Match[str]) -> str:
+            tspan_tag = tspan_match.group(0)
+
+            # Check for style="font-size: XX%" and convert to absolute
+            style_pct_match = re.search(r'style="font-size:\s*(\d+)%"', tspan_tag)
+            if style_pct_match:
+                pct = int(style_pct_match.group(1))
+                abs_size = int(parent_font_size * pct / 100)
+                # Remove the style attribute and add absolute font-size
+                tspan_tag = re.sub(r'\s*style="font-size:\s*\d+%"', "", tspan_tag)
+                if 'font-size="' not in tspan_tag:
+                    tspan_tag = tspan_tag[:-1] + f' font-size="{abs_size}">'
+                return tspan_tag
+
+            if 'font-size="' in tspan_tag:
+                return tspan_tag
+            return tspan_tag[:-1] + f' font-size="{parent_font_size}">'
+
+        return re.sub(r"<tspan\s+[^>]*>", add_to_tspan, full_match)
+
+    # Pattern to match text elements containing tspans
+    text_with_tspan_pattern = re.compile(r"<text\s+[^>]*>.*?</text>", re.DOTALL)
+    svg_content = text_with_tspan_pattern.sub(add_font_size_to_tspans, svg_content)
 
     return svg_content
 
