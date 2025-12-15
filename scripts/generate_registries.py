@@ -590,8 +590,12 @@ def validate_function(
     # Check for missing Args section (if function has parameters)
     # We need to check signature for parameters
     sig = func.signature
-    # Simple heuristic: if signature has more than just 'self' or is non-empty
-    has_params = sig and sig not in ("()", "(self)") and not sig.startswith("(self)")
+    # Simple heuristic: if signature has more than just 'self'/'cls' or is non-empty
+    # Check for params beyond self/cls - signatures like "(self, x)" have real params
+    has_params = sig and sig not in ("()", "(self)", "(cls)")
+    # Methods with additional params start with "(self," or "(cls,"
+    if sig and (sig.startswith("(self,") or sig.startswith("(cls,")):
+        has_params = True
     if has_params and func.args == "":
         # Check if all params are documented
         # This is a simplified check - could be more rigorous
