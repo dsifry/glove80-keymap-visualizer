@@ -1,0 +1,30 @@
+meta:
+  generated: "2025-12-15T21:35:07.793263+00:00"
+  generator: scripts/generate_registries.py
+  version: "1.0"
+factories[2]:
+  name: PlaywrightMockFactory
+  purpose: Factory for creating Playwright browser mocks.
+  location: tests/conftest.py
+  fixtures[0]:
+  name: PILMockFactory
+  purpose: Factory for creating PIL/Pillow Image mocks.
+  location: tests/conftest.py
+  fixtures[0]:
+fixtures[16]{name,description,returns,location}:
+  fixtures_dir,Return the path to the test fixtures directory.,Path,tests/conftest.py
+  simple_keymap_path,Return path to the simple single-layer keymap fixture.,Path,tests/conftest.py
+  multi_layer_keymap_path,Return path to the multi-layer keymap fixture.,Path,tests/conftest.py
+  hold_tap_keymap_path,Return path to the keymap with hold-tap behaviors fixture.,Path,tests/conftest.py
+  invalid_keymap_path,Return path to the intentionally invalid keymap fixture.,Path,tests/conftest.py
+  daves_keymap_path,Return path to Dave's full 32-layer keymap.,Path,tests/conftest.py
+  sample_layer,Create a sample Layer object for testing.,"",tests/conftest.py
+  sample_layers,Create multiple sample Layer objects for testing.,"",tests/conftest.py
+  sample_svg,Return a minimal valid SVG for testing.,str,tests/conftest.py
+  sample_pdf_pages,Return a list of sample PDF bytes for testing merging.,list,tests/conftest.py
+  runner,Return a Click CLI test runner.,"",tests/conftest.py
+  tmp_output_dir,Create a temporary directory for test outputs.,Path,tests/conftest.py
+  playwright_mocks,Create a complete set of Playwright mocks for browser testing.,"tuple[MagicMock, MagicMock, MagicMock]",tests/conftest.py
+  pil_image_mock,Create a mock PIL Image for testing image operations.,MagicMock,tests/conftest.py
+  pil_module_mock,Create a mock PIL.Image module for patching.,MagicMock,tests/conftest.py
+  kle_renderer_mocks,Complete set of mocks for testing kle_renderer.py.,"dict[str, Any]",tests/conftest.py

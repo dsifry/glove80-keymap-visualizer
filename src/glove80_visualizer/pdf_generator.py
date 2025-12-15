@@ -51,7 +51,14 @@ def svg_to_pdf(
 
 
 def _svg_to_pdf_rsvg(svg_content: str) -> bytes:
-    """Convert SVG to PDF using rsvg-convert."""
+    """Convert SVG to PDF using rsvg-convert.
+
+    Args:
+        svg_content: The SVG content as a string
+
+    Returns:
+        PDF content as bytes
+    """
     with tempfile.NamedTemporaryFile(mode="w", suffix=".svg", delete=False) as svg_file:
         svg_file.write(svg_content)
         svg_path = svg_file.name
@@ -86,7 +93,14 @@ def _svg_to_pdf_rsvg(svg_content: str) -> bytes:
 
 
 def _svg_to_pdf_cairosvg(svg_content: str) -> bytes:
-    """Convert SVG to PDF using CairoSVG (fallback)."""
+    """Convert SVG to PDF using CairoSVG (fallback).
+
+    Args:
+        svg_content: The SVG content as a string
+
+    Returns:
+        PDF content as bytes
+    """
     try:
         import cairosvg  # type: ignore[import-untyped]
     except ImportError as e:  # pragma: no cover
@@ -215,6 +229,13 @@ def _replace_layer_label(svg_content: str, new_label: str) -> str:
 
     keymap-drawer generates labels like: <text x="0" y="28" class="label" id="Base">Base:</text>
     We replace the content to use our format (e.g., "Layer 0: Base")
+
+    Args:
+        svg_content: The SVG content as a string
+        new_label: The new label to use for the layer
+
+    Returns:
+        Modified SVG content with the new label
     """
     import re
 
@@ -231,6 +252,13 @@ def _add_header_to_svg(svg_content: str, header: str) -> str:
     Add a header text element to an SVG.
 
     The header is inserted inside the SVG element, after the opening tag.
+
+    Args:
+        svg_content: The SVG content as a string
+        header: The header text to add
+
+    Returns:
+        Modified SVG content with header added
     """
     header_element = f'<text x="30" y="30" font-size="18" font-weight="bold">{header}</text>\n'
 
@@ -328,7 +356,11 @@ def _generate_toc_pages(layers: list[Layer], config: VisualizerConfig) -> list[b
 
 
 def _create_empty_pdf() -> bytes:
-    """Create a minimal empty PDF with a blank page."""
+    """Create a minimal empty PDF with a blank page.
+
+    Returns:
+        PDF content as bytes containing a single blank page
+    """
     # Create a minimal SVG to convert to PDF
     empty_svg = """<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="612" height="792" viewBox="0 0 612 792">

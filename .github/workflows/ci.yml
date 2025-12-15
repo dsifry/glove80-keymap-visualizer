@@ -98,3 +98,33 @@ jobs:
 
       - name: Run mypy
         run: mypy src/
+
+  registry:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install toon-python
+
+      - name: Validate registry docstrings
+        run: python scripts/generate_registries.py --check
+
+      - name: Check registries are up-to-date
+        run: |
+          python scripts/generate_registries.py
+          # Ignore the 'generated' timestamp line when comparing
+          # Filter out: diff headers (---/+++), generated timestamp lines
+          # Only fail if there are actual content changes (lines starting with - or + but not --, ++, or timestamp)
+          if git diff service-registry.toon mock-registry.toon | grep -E "^[-+][^-+]" | grep -v "generated:" | grep -q "^[-+]"; then
+            echo "::error::Registry files are out of date. Run 'python scripts/generate_registries.py' and commit the changes."
+            git diff service-registry.toon mock-registry.toon | head -50
+            exit 1
+          fi

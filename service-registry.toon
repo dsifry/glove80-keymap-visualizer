@@ -1,0 +1,148 @@
+meta:
+  generated: "2025-12-15T21:35:07.791590+00:00"
+  generator: scripts/generate_registries.py
+  version: "1.0"
+modules[11]{name,path,description}:
+  __init__,src/glove80_visualizer/__init__.py,Glove80 Keymap Visualizer
+  cli,src/glove80_visualizer/cli.py,Command-line interface for the Glove80 keymap visualizer.
+  colors,src/glove80_visualizer/colors.py,Color scheme and key categorization for semantic coloring.
+  config,src/glove80_visualizer/config.py,Configuration handling for the Glove80 keymap visualizer.
+  extractor,src/glove80_visualizer/extractor.py,Layer extraction module.
+  kle_renderer,src/glove80_visualizer/kle_renderer.py,KLE (Keyboard Layout Editor) renderer using headless browser.
+  kle_template,src/glove80_visualizer/kle_template.py,KLE Template-based generator.
+  models,src/glove80_visualizer/models.py,Data models for the Glove80 keymap visualizer.
+  parser,src/glove80_visualizer/parser.py,ZMK keymap parser module.
+  pdf_generator,src/glove80_visualizer/pdf_generator.py,PDF generation module.
+  svg_generator,src/glove80_visualizer/svg_generator.py,SVG generation module.
+functions[85]{module,name,signature,description,args,returns,raises,is_private,is_method,class_name}:
+  __init__,generate_visualization,"(keymap_path: str | Path, output_path: str | Path, config: VisualizerConfig | None = None) -> VisualizationResult",Generate a PDF visualization of a Glove80 keymap.,"keymap_path: Path to the ZMK .keymap file, output_path: Path for the output PDF (or directory for SVG output), config: Optional VisualizerConfig for customization",VisualizationResult with success status and any error information,"",false,false,""
+  cli,__init__,"(self, *args: object, **kwargs: object) -> None","","","","",true,true,MutuallyExclusiveOption
+  cli,handle_parse_result,"(self, ctx: click.Context, opts: dict[str, object], args: list[str]) -> tuple[object, list[str]]",Handle parse result and check for mutually exclusive options.,"ctx: Click context object, opts: Dictionary of parsed options, args: Remaining command line arguments","Tuple of (parsed value, remaining args)","",false,true,MutuallyExclusiveOption
+  cli,main,"(keymap: Path, output: Path | None, output_format: str, layers: str | None, exclude_layers: str | None, list_layers: bool, config_file: Path | None, verbose: bool, quiet: bool, no_toc: bool, continue_on_error: bool, mac: bool, windows: bool, linux: bool, resolve_trans: bool, base_layer: str | None, color: bool, no_legend: bool, no_shifted: bool, kle_color_scheme: str) -> None",Generate PDF/SVG visualizations of Glove80 keyboard layers.,"","","",false,false,""
+  colors,categorize_key,"(label: str, is_hold: bool = False) -> str",Categorize a key for color coding.,"label: The formatted key label (e.g., \"⌘\", \"A\", \"←\"), is_hold: Whether this key is from a hold behavior (affects layer detection)","Category string: \"modifier\", \"navigation\", \"number\", \"symbol\", \"media\", \"mouse\", \"system\", \"transparent\", \"layer\", or \"default\"","",false,false,""
+  colors,get_key_color,"(label: str, scheme: ColorScheme, is_hold: bool = False) -> str",Get the color for a key based on its category.,"label: The formatted key label, scheme: The color scheme to use, is_hold: Whether this key is from a hold behavior","Hex color string (e.g., \"#7fbbb3\")","",false,false,""
+  config,from_yaml,"(cls, yaml_content: str) -> 'VisualizerConfig'",Create a VisualizerConfig from YAML content.,"yaml_content: YAML string with configuration values",VisualizerConfig with values from YAML merged with defaults,"",false,true,VisualizerConfig
+  config,from_file,"(cls, path: str) -> 'VisualizerConfig'",Load configuration from a YAML file.,"path: Path to the YAML configuration file",VisualizerConfig with values from file merged with defaults,"",false,true,VisualizerConfig
+  config,to_yaml,(self) -> str,Export configuration to YAML string.,"",YAML representation of this configuration,"",false,true,VisualizerConfig
+  extractor,extract_layers,"(yaml_content: str, include: list[str] | None = None, exclude: list[str] | None = None) -> list[Layer]",Extract Layer objects from parsed keymap YAML.,"yaml_content: YAML string from the parser, include: Optional list of layer names to include (others excluded), exclude: Optional list of layer names to exclude",List of Layer objects in order they appear in the keymap,"ValueError: If both include and exclude specify the same layer",false,false,""
+  extractor,_flatten_bindings,"(bindings_data: list[str | dict | list | None]) -> list[str | dict | None]",Flatten potentially nested binding data into a flat list.,"bindings_data: Potentially nested list of binding data from YAML",Flat list of binding data elements,"",true,false,""
+  extractor,_parse_key_binding,"(position: int, key_data: str | dict | None) -> KeyBinding",Parse a single key binding from YAML data.,"position: The key position index, key_data: The key data from YAML (string or dict for hold-tap)",KeyBinding object representing the key,"",true,false,""
+  extractor,extract_layer_activators,"(yaml_content: str) -> list[LayerActivator]",Extract layer activators from parsed keymap YAML.,"yaml_content: YAML string from the parser",List of LayerActivator objects,"",false,false,""
+  kle_renderer,render_kle_to_png,"(kle_json: str, output_path: Path | str, width: int = 1920, height: int = 1200, scale: float = 2.0, timeout: int = 60000) -> Path",Render KLE JSON to a PNG image using headless browser.,"kle_json: KLE-format JSON string, output_path: Path to save the PNG image, width: Browser viewport width, height: Browser viewport height, scale: Device scale factor for higher resolution, timeout: Timeout in milliseconds for page operations",Path to the saved PNG file,"RuntimeError: If rendering fails",false,false,""
+  kle_renderer,render_kle_to_pdf,"(kle_json: str, output_path: Path | str, width: int = 1920, height: int = 1200, timeout: int = 30000) -> Path",Render KLE JSON to a PDF file.,"kle_json: KLE-format JSON string, output_path: Path to save the PDF, width: Browser viewport width, height: Browser viewport height, timeout: Timeout for rendering",Path to the saved PDF file,"",false,false,""
+  kle_renderer,_png_to_pdf,"(png_path: Path, pdf_path: Path) -> None",Convert a PNG image to PDF using CairoSVG/PIL.,"","","",true,false,""
+  kle_renderer,render_layer_kle,"(layer: Layer, output_path: Path | str, output_format: str = 'png', combos: list[Combo] | None = None, os_style: str = 'mac', **kwargs: Any) -> Path",Convenience function to render a Layer object to KLE output.,"layer: Layer object to render, output_path: Path for output file, output_format: \"png\" or \"pdf\", combos: Optional list of Combo objects to display in text blocks, os_style: OS style for modifier symbols (\"mac\", \"windows\", or \"linux\") **kwargs: Additional arguments passed to render functions",Path to the output file,"",false,false,""
+  kle_renderer,render_all_layers_kle,"(layers: list[Layer], output_dir: Path | str, output_format: str = 'png', combos: list[Combo] | None = None, os_style: str = 'mac', **kwargs: Any) -> list[Path]",Render all layers to KLE output files.,"layers: List of Layer objects, output_dir: Directory to save output files, output_format: \"png\" or \"pdf\", combos: Optional list of Combo objects to display in text blocks, os_style: OS style for modifier symbols (\"mac\", \"windows\", or \"linux\") **kwargs: Additional arguments passed to render functions",List of paths to output files,"",false,false,""
+  kle_renderer,create_combined_pdf_kle,"(layers: list[Layer], output_path: Path | str, combos: list[Combo] | None = None, os_style: str = 'mac', **kwargs: Any) -> Path",Render all layers and combine into a single PDF.,"layers: List of Layer objects, output_path: Path for combined PDF, combos: Optional list of Combo objects to display in text blocks, os_style: OS style for modifier symbols (\"mac\", \"windows\", or \"linux\") **kwargs: Additional arguments passed to render functions",Path to the combined PDF,"",false,false,""
+  kle_template,load_template,() -> list[Any],Load Sunaku's KLE template.,"","","",false,false,""
+  kle_template,_expand_function_row,"(kle_data: list[Any]) -> None",Enable function row keys in the template.,"","","",true,false,""
+  kle_template,generate_kle_from_template,"(layer: Layer, title: str | None = None, combos: list[Combo] | None = None, os_style: str = 'mac', activators: list[LayerActivator] | None = None, layer_names: set[str] | None = None) -> str",Generate KLE JSON using Sunaku's template.,"layer: Layer object with bindings, title: Optional title (uses layer.name if not provided), combos: Optional list of combos to display in text blocks, os_style: OS style for modifier symbols (\"mac\", \"windows\", or \"linux\"), activators: Optional list of LayerActivator objects for marking held keys, layer_names: Optional set of layer names (distinguishes layer activations)",KLE JSON string,"",false,false,""
+  kle_template,_simplify_direction_labels,"(shifted: str, tap: str) -> tuple[str, str] | None","Simplify redundant direction labels like \"Sel←L\" / \"Sel→L\".","","","",true,false,""
+  kle_template,_split_long_name,"(name: str, max_len: int = 5) -> tuple[str, str] | None",Split a long name into two parts for display on two lines.,"","","",true,false,""
+  kle_template,_format_binding_label,"(binding: KeyBinding, os_style: str = 'mac', layer_names: set[str] | None = None) -> str",Format a binding as a KLE label string.,"binding: The key binding to format, os_style: OS style for modifier symbols (\"mac\", \"windows\", or \"linux\"), layer_names: Set of layer names to distinguish from modifiers","","",true,false,""
+  kle_template,_is_thumb_only_combo,"(combo: Combo) -> bool",Check if a combo uses only thumb cluster keys.,"","","",true,false,""
+  kle_template,_update_combo_text_blocks,"(kle_data: list[Any], layer_name: str, combos: list[Combo]) -> None",Update the combo text blocks in the KLE JSON with combo information.,"kle_data: The KLE JSON data structure to modify in place, layer_name: Name of the current layer (for filtering), combos: List of all combos to potentially display","","",true,false,""
+  kle_template,_format_combo_list_html,"(combos: list[Combo], side: str) -> str",Format a list of combos as HTML for the KLE text block.,"combos: List of combos to format, side: \"left\" or \"right\" - determines arrow direction",HTML string with combo list,"",true,false,""
+  models,is_transparent,(self) -> bool,Check if this is a transparent key (&trans).,"","True if the key is transparent, False otherwise","",false,true,KeyBinding
+  models,is_none,(self) -> bool,Check if this is a none/blocked key (&none).,"","True if the key is none/blocked, False otherwise","",false,true,KeyBinding
+  models,is_complete,(self) -> bool,Check if this layer has all 80 key bindings for Glove80.,"","True if the layer has exactly 80 bindings, False otherwise","",false,true,Layer
+  models,is_active_on_layer,"(self, layer_name: str) -> bool",Check if this combo is active on the given layer.,"","","",false,true,Combo
+  models,is_left_hand,(self) -> bool,Check if combo uses only left thumb keys.,"","","",false,true,Combo
+  models,is_right_hand,(self) -> bool,Check if combo uses only right thumb keys.,"","","",false,true,Combo
+  models,is_cross_hand,(self) -> bool,Check if combo spans both hands.,"","","",false,true,Combo
+  parser,validate_keymap_path,"(path: Path) -> None",Validate that a keymap file path is valid.,"path: Path to the keymap file","","FileNotFoundError: If the file does not exist | UserWarning: If the file has an unexpected extension",false,false,""
+  parser,parse_zmk_keymap,"(keymap_path: Path, keyboard: str = 'glove80', columns: int = 10) -> str",Parse a ZMK keymap file into YAML representation.,"keymap_path: Path to the ZMK .keymap file, keyboard: Keyboard type for physical layout (default: \"glove80\"), columns: Number of columns for layout (used by keymap-drawer)",YAML string containing the parsed keymap data with layers,"FileNotFoundError: If the keymap file does not exist | KeymapParseError: If the keymap cannot be parsed",false,false,""
+  parser,parse_mod_morph_behaviors,"(keymap_content: str) -> dict[str, dict[str, str]]",Parse mod-morph behaviors from a ZMK keymap file to extract custom shifted characters.,"keymap_content: Raw content of a .keymap file","Dictionary mapping behavior name to {tap: str, shifted: str} Only includes behaviors that use shift modifiers (MOD_LSFT or MOD_RSFT)","",false,false,""
+  parser,_positions_to_name,"(positions: list[int]) -> str",Convert ZMK positions to human-readable thumb key names.,"positions: List of ZMK key positions","String like \"LT3+LT6\" or \"RT1+RT4\" or \"25+26\" for non-thumb keys","",true,false,""
+  parser,_format_combo_action,"(key_data: dict | str, combo_name: str = '') -> str",Format a combo binding into a human-readable action label.,"key_data: The key binding data from keymap-drawer, combo_name: Optional combo node name for fallback",Human-readable action string,"",true,false,""
+  parser,_format_key_name,"(key: str) -> str",Format a key name for display.,"","","",true,false,""
+  parser,_format_sticky_key,"(tap: str) -> str",Format a sticky key modifier combo.,"","","",true,false,""
+  parser,_derive_action_from_name,"(combo_name: str) -> str",Derive a human-readable action from the combo node name.,"combo_name: The ZMK combo node name (e.g., \"combo_alt_tab_switcher\")","Human-readable action (e.g., \"Alt+Tab Switcher\")","",true,false,""
+  parser,parse_combos,"(keymap_path: Path, columns: int = 10) -> list[Combo]",Parse combos from a ZMK keymap file.,"keymap_path: Path to the ZMK .keymap file, columns: Number of columns for layout (used by keymap-drawer)",List of Combo objects,"FileNotFoundError: If the keymap file does not exist | KeymapParseError: If the keymap cannot be parsed",false,false,""
+  pdf_generator,svg_to_pdf,"(svg_content: str, config: VisualizerConfig | None = None, header: str | None = None) -> bytes",Convert an SVG string to PDF bytes.,"svg_content: The SVG content as a string, config: Optional configuration for page size/orientation, header: Optional header text to add to the page",PDF content as bytes,"",false,false,""
+  pdf_generator,_svg_to_pdf_rsvg,"(svg_content: str) -> bytes",Convert SVG to PDF using rsvg-convert.,"svg_content: The SVG content as a string",PDF content as bytes,"",true,false,""
+  pdf_generator,_svg_to_pdf_cairosvg,"(svg_content: str) -> bytes",Convert SVG to PDF using CairoSVG (fallback).,"svg_content: The SVG content as a string",PDF content as bytes,"",true,false,""
+  pdf_generator,svg_to_pdf_file,"(svg_content: str, output_path: Path, config: VisualizerConfig | None = None, create_parents: bool = False) -> None",Convert an SVG string to a PDF file.,"svg_content: The SVG content as a string, output_path: Path where the PDF should be written, config: Optional configuration for page size/orientation, create_parents: Whether to create parent directories if needed","","",false,false,""
+  pdf_generator,merge_pdfs,"(pdf_pages: list[bytes]) -> bytes",Merge multiple PDF pages into a single document.,"pdf_pages: List of PDF content as bytes",Combined PDF content as bytes,"ValueError: If the input list is empty",false,false,""
+  pdf_generator,generate_pdf_with_toc,"(layers: list[Layer], svgs: list[str], config: VisualizerConfig | None = None, include_toc: bool = True) -> bytes",Generate a complete PDF with optional table of contents.,"layers: List of Layer objects (for names/metadata), svgs: List of SVG content strings (one per layer), config: Optional configuration, include_toc: Whether to include a table of contents page(s)",Complete PDF content as bytes,"",false,false,""
+  pdf_generator,_replace_layer_label,"(svg_content: str, new_label: str) -> str",Replace keymap-drawer's layer label with our own formatted label.,"svg_content: The SVG content as a string, new_label: The new label to use for the layer",Modified SVG content with the new label,"",true,false,""
+  pdf_generator,_add_header_to_svg,"(svg_content: str, header: str) -> str",Add a header text element to an SVG.,"svg_content: The SVG content as a string, header: The header text to add",Modified SVG content with header added,"",true,false,""
+  pdf_generator,_generate_toc_pages,"(layers: list[Layer], config: VisualizerConfig) -> list[bytes]",Generate table of contents pages (may be multiple if many layers).,"layers: List of layers to include in TOC, config: Configuration for styling",List of PDF content bytes for each TOC page,"",true,false,""
+  pdf_generator,_create_empty_pdf,() -> bytes,Create a minimal empty PDF with a blank page.,"",PDF content as bytes containing a single blank page,"",true,false,""
+  svg_generator,get_shifted_char,"(char: str, mod_morphs: dict[str, dict[str, str]] | None = None) -> str | None",Get the shifted variant for a character on a US keyboard.,"char: The unshifted character (e.g., \"1\", \"'\", \";\", \"(\"), mod_morphs: Optional dict of mod-morph behaviors from the keymap. Keys are behavior names, values are {\"tap\": \"LPAR\", \"shifted\": \"LT\"}","The shifted character (e.g., \"!\", '\"', \":\", \"<\") or None if no shifted variant exists (alpha keys, symbols, special keys). If mod_morphs is provided, it checks for custom shift mappings first. For example, if parang_left maps ( to <, and char is \"(\", returns \"<\".","",false,false,""
+  svg_generator,generate_layer_svg,"(layer: Layer, config: VisualizerConfig | None = None, include_title: bool = False, os_style: str = 'mac', resolve_trans: bool = False, base_layer: Layer | None = None, activators: list | None = None, mod_morphs: dict[str, dict[str, str]] | None = None) -> str",Generate an SVG diagram for a single keyboard layer.,"layer: The Layer object to visualize, config: Optional configuration for styling, include_title: Whether to include the layer name in the SVG, os_style: Operating system style for modifier symbols (\"mac\", \"windows\", \"linux\"), resolve_trans: Whether to resolve transparent keys to their base layer values, base_layer: The base layer to use for resolving transparent keys, activators: List of LayerActivator objects for marking held keys, mod_morphs: Custom shift mappings from mod-morph behaviors in the keymap",SVG content as a string,"",false,false,""
+  svg_generator,generate_all_layer_svgs,"(layers: list[Layer], config: VisualizerConfig | None = None, os_style: str = 'mac', resolve_trans: bool = False) -> list[str]",Generate SVG diagrams for all layers.,"layers: List of Layer objects to visualize, config: Optional configuration for styling, os_style: Operating system style for modifier symbols, resolve_trans: Whether to resolve transparent keys","List of SVG content strings, one per layer","",false,false,""
+  svg_generator,format_key_label,"(key: str, os_style: str = 'mac') -> str",Format a key name for display.,"key: The ZMK key name (e.g., \"LSHIFT\", \"&trans\"), os_style: Operating system style for modifier symbols (\"mac\", \"windows\", \"linux\")","Formatted label for display (e.g., \"⇧\", \"trans\")","",false,false,""
+  svg_generator,_format_behavior,"(behavior: str, os_style: str) -> str",Format ZMK behavior strings like &sticky_key_oneshot LSFT.,"behavior: The ZMK behavior string to format, os_style: The OS style for modifier formatting ('mac' or 'windows')",Formatted display string for the behavior,"",true,false,""
+  svg_generator,_format_emoji_macro,"(behavior: str) -> str",Convert emoji macro names to actual emoji characters.,"behavior: The ZMK emoji macro behavior string",The corresponding emoji character,"",true,false,""
+  svg_generator,_format_emoji_preset,"(behavior: str) -> str",Format emoji preset behaviors that don't follow the _macro pattern.,"behavior: The ZMK emoji preset behavior string",The corresponding emoji or preset indicator,"",true,false,""
+  svg_generator,_format_world_macro,"(behavior: str) -> str",Convert world/international macro names to actual characters.,"behavior: The ZMK world macro behavior string",The corresponding international character,"",true,false,""
+  svg_generator,_format_mouse_scroll,"(behavior: str) -> str",Format mouse scroll behavior.,"behavior: The ZMK mouse scroll behavior string",Formatted display string for mouse scroll,"",true,false,""
+  svg_generator,_format_mouse_move,"(behavior: str) -> str",Format mouse move behavior.,"behavior: The ZMK mouse move behavior string",Formatted display string for mouse move,"",true,false,""
+  svg_generator,_format_mouse_click,"(behavior: str) -> str",Format mouse click behavior.,"behavior: The ZMK mouse click behavior string",Formatted display string for mouse click,"",true,false,""
+  svg_generator,_format_select_behavior,"(behavior: str) -> str",Format select behaviors.,"behavior: The ZMK select behavior string",Formatted display string for select behavior,"",true,false,""
+  svg_generator,_format_extend_behavior,"(behavior: str) -> str",Format extend behaviors.,"behavior: The ZMK extend behavior string",Formatted display string for extend behavior,"",true,false,""
+  svg_generator,_format_modifier_combo,"(combo: str, os_style: str) -> str",Format keymap-drawer modifier combos like Gui+Sft+Z.,"combo: The modifier combo string (e.g., 'Gui+Sft+Z'), os_style: The OS style for modifier formatting ('mac' or 'windows')",Formatted combo string with modifier symbols,"",true,false,""
+  svg_generator,_get_meh_label,"(os_style: str, as_prefix: bool = False) -> str",Get the label for Meh key (Ctrl+Alt+Shift).,"os_style: Operating system style, as_prefix: If True, return a prefix for combo (e.g., \"Ctrl+Alt+Shift+\") If False, return standalone label (e.g., \"Meh\")",The formatted Meh label string,"",true,false,""
+  svg_generator,_get_hyper_label,"(os_style: str, as_prefix: bool = False) -> str",Get the label for Hyper key (Ctrl+Alt+Shift+Gui).,"os_style: Operating system style, as_prefix: If True, return a prefix for combo (e.g., \"Ctrl+Alt+Shift+Win+\") If False, return standalone label (e.g., \"Hypr\")",The formatted Hyper label string,"",true,false,""
+  svg_generator,_get_modifier_label,"(modifier_code: str, os_style: str) -> str","Get the label for a modifier code like LS, LG, LA, LC.","modifier_code: The modifier code (e.g., 'LS', 'LG', 'LA', 'LC'), os_style: The OS style for symbol selection ('mac' or 'windows')",The symbol for the modifier,"",true,false,""
+  svg_generator,_resolve_transparent_keys,"(layer: Layer, base_layer: Layer) -> Layer",Create a new layer with transparent keys resolved to base layer values.,"layer: The layer with transparent keys to resolve, base_layer: The base layer to get key values from",A new Layer with transparent keys replaced by base layer values,"",true,false,""
+  svg_generator,_layer_to_keymap_drawer_format,"(layer: Layer, config: VisualizerConfig, os_style: str = 'mac', held_positions: set[int] | None = None, mod_morphs: dict[str, dict[str, str]] | None = None, physical_layout: PhysicalLayout | None = None) -> dict[str, Any]",Convert a Layer to keymap-drawer's expected format.,"layer: The layer to convert, config: Visualization configuration, os_style: OS style for modifier symbols, held_positions: Set of key positions that are held to activate this layer, mod_morphs: Custom shift mappings from mod-morph behaviors, physical_layout: Pre-built PhysicalLayout object from layout_factory",Dictionary in keymap-drawer's expected format,"",true,false,""
+  svg_generator,_binding_to_keymap_drawer,"(binding: KeyBinding, os_style: str = 'mac', config: VisualizerConfig | None = None, held_positions: set[int] | None = None, show_shifted: bool = False, mod_morphs: dict[str, dict[str, str]] | None = None) -> Any",Convert a KeyBinding to keymap-drawer format.,"binding: The KeyBinding to convert, os_style: OS style for modifier symbols, config: Visualization configuration, held_positions: Set of key positions that are held to activate this layer, show_shifted: Whether to show shifted characters, mod_morphs: Custom shift mappings from mod-morph behaviors",Key data in keymap-drawer format (string or dict),"",true,false,""
+  svg_generator,_generate_color_css,"(scheme: ColorScheme) -> str",Generate CSS for semantic key coloring.,"scheme: The ColorScheme to use for colors",CSS string to be added to svg_extra_style,"",true,false,""
+  svg_generator,_generate_color_legend,"(scheme: ColorScheme) -> str",Generate SVG elements for a color legend.,"scheme: The ColorScheme to use for colors",SVG group element string containing the legend,"",true,false,""
+  svg_generator,_add_color_legend,"(svg_content: str, scheme: ColorScheme) -> str",Add a color legend to the SVG content.,"svg_content: The SVG string to modify, scheme: The ColorScheme for legend colors",Modified SVG with legend added,"",true,false,""
+  svg_generator,_increase_svg_height,"(svg_content: str, min_height: int) -> str",Increase SVG height and viewBox if below minimum.,"svg_content: The SVG string to modify, min_height: Minimum height in pixels",Modified SVG with increased height if needed,"",true,false,""
+  svg_generator,_center_layer_label,"(svg_content: str, layer_name: str) -> str",Move the layer label to be centered between the left and right keyboard halves.,"svg_content: The SVG string to modify, layer_name: The layer name to find and reposition",Modified SVG with centered layer label including title and subtitle,"",true,false,""
+  svg_generator,_add_title_to_svg,"(svg_content: str, title: str) -> str",Add a title element to the SVG.,"svg_content: The SVG string to modify, title: The title text to add",Modified SVG with title added,"",true,false,""
+  svg_generator,_replace_emoji_for_cairo,"(svg_content: str) -> str",Replace emoji and problematic Unicode with text equivalents.,"svg_content: The SVG string to process",SVG with emoji replaced by text,"",true,false,""
+  svg_generator,_inline_fingerprint_glyphs,"(svg_content: str) -> str",Replace keymap-drawer's <use> glyph references with inline SVG paths.,"svg_content: The SVG string to modify",Modified SVG content with inlined fingerprint paths,"",true,false,""
+  svg_generator,_add_explicit_font_sizes,"(svg_content: str) -> str",Add explicit font-size attributes to all text elements for CairoSVG compatibility.,"svg_content: The SVG string to modify",Modified SVG content with explicit font-size attributes on all text elements,"",true,false,""
+  svg_generator,_adjust_tap_positions_for_shifted,"(svg_content: str) -> str",Adjust tap label vertical position when shifted char exists but no hold.,"svg_content: The SVG string to modify",Modified SVG content with adjusted tap positions,"",true,false,""
+  svg_generator,_add_held_key_indicators,"(svg_content: str, held_positions: set[int]) -> str",Add visual indicators for held keys in the SVG.,"svg_content: The SVG string to modify, held_positions: Set of key positions (0-79) that should be marked as held",Modified SVG content with held key indicators,"",true,false,""
+classes[9]:
+  module: cli
+  name: MutuallyExclusiveOption
+  description: Custom option class that enforces mutual exclusivity.
+  methods[2]: __init__,handle_parse_result
+  is_private: false
+  module: colors
+  name: ColorScheme
+  description: Color scheme for visualization.
+  methods[0]:
+  is_private: false
+  module: config
+  name: VisualizerConfig
+  description: Configuration options for the keymap visualizer.
+  methods[3]: from_yaml,from_file,to_yaml
+  is_private: false
+  module: models
+  name: KeyBinding
+  description: Represents a single key binding on the keyboard.
+  methods[2]: is_transparent,is_none
+  is_private: false
+  module: models
+  name: Layer
+  description: Represents a keyboard layer containing key bindings.
+  methods[1]: is_complete
+  is_private: false
+  module: models
+  name: LayerActivator
+  description: Tracks which key activates a layer.
+  methods[0]:
+  is_private: false
+  module: models
+  name: Combo
+  description: Represents a keyboard combo (chord) - multiple keys pressed simultaneously.
+  methods[4]: is_active_on_layer,is_left_hand,is_right_hand,is_cross_hand
+  is_private: false
+  module: models
+  name: VisualizationResult
+  description: Result of a visualization operation.
+  methods[0]:
+  is_private: false
+  module: parser
+  name: KeymapParseError
+  description: Raised when a keymap file cannot be parsed.
+  methods[0]:
+  is_private: false
