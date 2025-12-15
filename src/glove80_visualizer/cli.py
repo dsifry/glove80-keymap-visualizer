@@ -270,7 +270,11 @@ def main(
     include_list = [name.strip() for name in layers.split(",")] if layers else None
     exclude_list = [name.strip() for name in exclude_layers.split(",")] if exclude_layers else None
 
-    # Extract layers
+    # Extract all layers first (for layer name lookup), then filter
+    all_layers = extract_layers(yaml_content)
+    all_layer_names = {layer.name for layer in all_layers}
+
+    # Apply filtering
     extracted_layers = extract_layers(yaml_content, include=include_list, exclude=exclude_list)
 
     if not extracted_layers:  # pragma: no cover
@@ -383,6 +387,10 @@ def main(
         # No filtering needed, all svgs should be strings
         filtered_svgs = [s for s in svgs if s is not None]
 
+    # Use all layer names for KLE formatting (distinguishes layer names from modifiers)
+    # This ensures layer toggles display correctly even when filtering layers
+    layer_names = all_layer_names
+
     # Output based on format
     if output_format == "svg":
         # Create output directory
@@ -405,6 +413,8 @@ def main(
                 title=layer.name,
                 combos=combos,
                 os_style=os_style,
+                activators=activators,
+                layer_names=layer_names,
             )
             json_path = output / f"{layer.name}.json"
             json_path.write_text(kle_json)
@@ -424,6 +434,8 @@ def main(
                 title=layer.name,
                 combos=combos,
                 os_style=os_style,
+                activators=activators,
+                layer_names=layer_names,
             )
             png_path = output / f"{layer.name}.png"
             try:
@@ -443,7 +455,14 @@ def main(
 
         log("Generating KLE PDF via headless browser...")
         try:
-            create_combined_pdf_kle(extracted_layers, output, combos=combos, os_style=os_style)
+            create_combined_pdf_kle(
+                extracted_layers,
+                output,
+                combos=combos,
+                os_style=os_style,
+                activators=activators,
+                layer_names=layer_names,
+            )
             if not quiet:
                 click.echo(f"Generated KLE PDF: {output}")
         except Exception as e:
