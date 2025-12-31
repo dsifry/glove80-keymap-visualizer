@@ -174,6 +174,18 @@ class MutuallyExclusiveOption(click.Option):
     default="sunaku",
     help="Color scheme for KLE output (default: sunaku) [WIP - not yet implemented]",
 )
+@click.option(
+    "--layers-per-page",
+    type=click.IntRange(1, 3),
+    default=3,
+    help="Number of layers per PDF page (1, 2, or 3) [default: 3]",
+)
+@click.option(
+    "--dpi",
+    type=int,
+    default=300,
+    help="Output resolution for PDF rendering [default: 300]",
+)
 @click.version_option(version=__version__)
 def main(
     keymap: Path,
@@ -196,6 +208,8 @@ def main(
     no_legend: bool,
     no_shifted: bool,
     kle_color_scheme: str,
+    layers_per_page: int,
+    dpi: int,
 ) -> None:
     """
     Generate PDF/SVG visualizations of Glove80 keyboard layers.
@@ -257,6 +271,8 @@ def main(
     config.show_colors = color
     config.show_legend = not no_legend
     config.show_shifted = not no_shifted
+    config.layers_per_page = layers_per_page
+    config.dpi = dpi
 
     # Parse keymap file
     log(f"Parsing keymap: {keymap}")

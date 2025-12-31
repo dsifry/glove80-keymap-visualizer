@@ -288,103 +288,103 @@ KEY_LABEL_MAP = {
     "PAUSE_BREAK": "Pause",
     "PAUSE": "Pause",
     "BREAK": "Brk",
-    # Media keys - playback (ZMK codes)
-    "C_PP": "⏯",
-    "C_PLAY_PAUSE": "⏯",
-    "PP": "⏯",  # keymap-drawer shorthand
-    "C_PLAY": "▶",
-    "C_PAUSE": "⏸",
-    "C_STOP": "⏹",
-    "C_NEXT": "⏭",
-    "C_PREV": "⏮",
-    "C_FF": "⏩",
-    "C_RW": "⏪",
-    "C_EJECT": "⏏",
-    "C_REC": "⏺",
+    # Media keys - playback (ZMK codes) - use text for PDF compatibility
+    "C_PP": "Play",
+    "C_PLAY_PAUSE": "Play",
+    "PP": "Play",  # keymap-drawer shorthand
+    "C_PLAY": "Play",
+    "C_PAUSE": "Pause",
+    "C_STOP": "Stop",
+    "C_NEXT": "Next",
+    "C_PREV": "Prev",
+    "C_FF": "FF",
+    "C_RW": "Rew",
+    "C_EJECT": "Eject",
+    "C_REC": "Rec",
     # Media keys - playback (text labels from keymap-drawer - uppercase)
-    "PLAY": "▶",
-    "STOP": "⏹",
-    "NEXT": "⏭",
-    "PREV": "⏮",
-    "PREVIOUS": "⏮",
-    "EJECT": "⏏",
-    "REC": "⏺",
-    "RECORD": "⏺",
+    "PLAY": "Play",
+    "STOP": "Stop",
+    "NEXT": "Next",
+    "PREV": "Prev",
+    "PREVIOUS": "Prev",
+    "EJECT": "Eject",
+    "REC": "Rec",
+    "RECORD": "Rec",
     # Media keys - playback (text labels - title case variants)
-    "Play": "▶",
-    "Pause": "⏸",
-    "Stop": "⏹",
-    "Next": "⏭",
-    "Prev": "⏮",
-    "Previous": "⏮",
-    "FF": "⏩",
-    "Fast Forward": "⏩",
-    "RW": "⏪",
-    "Rewind": "⏪",
-    "Eject": "⏏",
-    "Rec": "⏺",
-    "Record": "⏺",
+    "Play": "Play",
+    "Pause": "Pause",
+    "Stop": "Stop",
+    "Next": "Next",
+    "Prev": "Prev",
+    "Previous": "Prev",
+    "FF": "FF",
+    "Fast Forward": "FF",
+    "RW": "Rew",
+    "Rewind": "Rew",
+    "Eject": "Eject",
+    "Rec": "Rec",
+    "Record": "Rec",
     # Media keys - volume (ZMK codes)
-    "C_VOL_UP": "🔊",
-    "C_VOLUME_UP": "🔊",
-    "C_VOL_DN": "🔉",
-    "C_VOLUME_DOWN": "🔉",
-    "C_MUTE": "🔇",
+    "C_VOL_UP": "Vol+",
+    "C_VOLUME_UP": "Vol+",
+    "C_VOL_DN": "Vol-",
+    "C_VOLUME_DOWN": "Vol-",
+    "C_MUTE": "Mute",
     # Media keys - volume (text labels from keymap-drawer - uppercase)
-    "VOL UP": "🔊",
-    "VOLUME UP": "🔊",
-    "VOL DN": "🔉",
-    "VOL DOWN": "🔉",
-    "VOLUME DOWN": "🔉",
-    "MUTE": "🔇",
+    "VOL UP": "Vol+",
+    "VOLUME UP": "Vol+",
+    "VOL DN": "Vol-",
+    "VOL DOWN": "Vol-",
+    "VOLUME DOWN": "Vol-",
+    "MUTE": "Mute",
     # Media keys - volume (text labels - title case variants)
-    "Vol Up": "🔊",
-    "Volume Up": "🔊",
-    "Vol Dn": "🔉",
-    "Vol Down": "🔉",
-    "Volume Down": "🔉",
-    "Mute": "🔇",
+    "Vol Up": "Vol+",
+    "Volume Up": "Vol+",
+    "Vol Dn": "Vol-",
+    "Vol Down": "Vol-",
+    "Volume Down": "Vol-",
+    "Mute": "Mute",
     # Media keys - brightness (ZMK codes)
-    "C_BRI_UP": "🔆",
-    "C_BRIGHTNESS_UP": "🔆",
-    "C_BRI_DN": "🔅",
-    "C_BRIGHTNESS_DOWN": "🔅",
-    "C_BRI_MAX": "☀",
-    "C_BRI_MIN": "🌑",
+    "C_BRI_UP": "Bri+",
+    "C_BRIGHTNESS_UP": "Bri+",
+    "C_BRI_DN": "Bri-",
+    "C_BRIGHTNESS_DOWN": "Bri-",
+    "C_BRI_MAX": "BriMax",
+    "C_BRI_MIN": "BriMin",
     # Media keys - brightness (text labels from keymap-drawer - uppercase)
-    "BRI UP": "🔆",
-    "BRIGHTNESS UP": "🔆",
-    "BRI DN": "🔅",
-    "BRI DOWN": "🔅",
-    "BRIGHTNESS DOWN": "🔅",
-    "BRI MAX": "☀",
-    "BRI MIN": "🌑",
-    "BRI AUTO": "🔆A",
+    "BRI UP": "Bri+",
+    "BRIGHTNESS UP": "Bri+",
+    "BRI DN": "Bri-",
+    "BRI DOWN": "Bri-",
+    "BRIGHTNESS DOWN": "Bri-",
+    "BRI MAX": "BriMax",
+    "BRI MIN": "BriMin",
+    "BRI AUTO": "BriAuto",
     # Media keys - brightness (text labels - title case variants)
-    "Bri Up": "🔆",
-    "Brightness Up": "🔆",
-    "Bri Dn": "🔅",
-    "Bri Down": "🔅",
-    "Brightness Down": "🔅",
-    "Bri Max": "☀",
-    "Bri Min": "🌑",
-    "Bri Auto": "🔆A",
-    # Layer symbols
-    "Emoji": "😀",
-    "World": "🌍",
-    "System": "⚙",
-    "Gaming": "🎮",
-    "Magic": "✨",
+    "Bri Up": "Bri+",
+    "Brightness Up": "Bri+",
+    "Bri Dn": "Bri-",
+    "Bri Down": "Bri-",
+    "Brightness Down": "Bri-",
+    "Bri Max": "BriMax",
+    "Bri Min": "BriMin",
+    "Bri Auto": "BriAuto",
+    # Layer symbols - use text for PDF compatibility
+    "Emoji": "Emoji",
+    "World": "World",
+    "System": "Sys",
+    "Gaming": "Game",
+    "Magic": "Magic",
     "Number": "#",
     "Function": "Fn",
-    "Cursor": "↔",
-    "Nav": "↔",
+    "Cursor": "Cur",
+    "Nav": "Nav",
     "Symbol": "Sym",
-    "Media": "🔊",
-    "Mouse": "🖱",
-    "MouseSlow": "🖱🐢",
-    "MouseFast": "🖱🐇",
-    "MouseWarp": "🖱⚡",
+    "Media": "Media",
+    "Mouse": "Mouse",
+    "MouseSlow": "MsSlow",
+    "MouseFast": "MsFast",
+    "MouseWarp": "MsWarp",
 }
 
 
@@ -823,108 +823,33 @@ def _format_behavior(behavior: str, os_style: str) -> str:
 
 
 def _format_emoji_macro(behavior: str) -> str:
-    """Convert emoji macro names to actual emoji characters.
+    """Convert emoji macro names to text labels for PDF compatibility.
 
     Args:
         behavior: The ZMK emoji macro behavior string
 
     Returns:
-        The corresponding emoji character
+        A text label representing the emoji
     """
     # Extract emoji name: &emoji_heart_macro -> heart
     match = re.match(r"^&emoji_(.+)_macro$", behavior)
     if not match:
-        return "😀"
+        return "Emoji"
 
     emoji_name = match.group(1)
 
-    # Emoji mappings
-    emoji_map = {
-        # Emotions & expressions
-        "heart": "❤",
-        "fire": "🔥",
-        "thumbs_up": "👍",
-        "thumbs_down": "👎",
-        "tada": "🎉",
-        "muscle": "💪",
-        "rocket": "🚀",
-        "pray": "🙏",
-        "ok_hand": "👌",
-        "raised_hands": "🙌",
-        "clap": "👏",
-        "wave": "👋",
-        "joy": "😂",
-        "rofl": "🤣",
-        "star_struck": "🤩",
-        "love_struck": "😍",
-        "thinking": "🤔",
-        "wink": "😉",
-        "smile": "😊",
-        "grin": "😁",
-        "laugh": "😆",
-        "sweat_smile": "😅",
-        "rolling_eyes": "🙄",
-        "unamused": "😒",
-        "cry": "😢",
-        "sob": "😭",
-        "angry": "😠",
-        "rage": "😡",
-        "scream": "😱",
-        "flushed": "😳",
-        "dizzy": "😵",
-        "shrug": "🤷",
-        "facepalm": "🤦",
-        "snap_fingers": "🫰",
-        "disappointed": "😞",
-        "shocked_face": "😲",
-        "face_joke_wink": "😜",
-        "face_fear_scared": "😨",
-        # Weather
-        "sunny": "☀",
-        "cloudy": "☁",
-        "partly_cloudy": "⛅",
-        "mostly_cloudy": "🌥",
-        "mostly_sunny": "🌤",
-        "rainbow": "🌈",
-        "lightning": "⚡",
-        "snowflake": "❄",
-        "umbrella": "☂",
-        # Moon phases
-        "new_moon": "🌑",
-        "waxing_crescent_moon": "🌒",
-        "first_quarter_moon": "🌓",
-        "waxing_gibbous_moon": "🌔",
-        "full_moon": "🌕",
-        "waning_gibbous_moon": "🌖",
-        "last_quarter_moon": "🌗",
-        "waning_crescent_moon": "🌘",
-        # Objects & symbols
-        "check": "✓",
-        "x": "✗",
-        "star": "⭐",
-        "sparkles": "✨",
-        "heart_eyes": "😍",
-        "100": "💯",
-        "poop": "💩",
-        "skull": "💀",
-        "ghost": "👻",
-        "alien": "👽",
-        "robot": "🤖",
-        "eyes": "👀",
-        "brain": "🧠",
-        # Skin tone modifiers
-        "light_skin_tone": "🏻",
-        "medium_light_skin_tone": "🏼",
-        "medium_skin_tone": "🏽",
-        "medium_dark_skin_tone": "🏾",
-        "dark_skin_tone": "🏿",
-        # Gender signs and modifiers
-        "male_sign": "♂",
-        "female_sign": "♀",
-        "zwj": "⊕",  # Zero-width joiner indicator
-    }
+    # Convert to display name: snake_case -> Title Case, truncated
+    # e.g., "thumbs_up" -> "ThumbsUp", "waxing_crescent_moon" -> "WaxCres"
+    parts = emoji_name.split("_")
+    if len(parts) == 1:
+        # Single word: capitalize and truncate
+        display = parts[0].capitalize()[:6]
+    else:
+        # Multi-word: take first 3 chars of each word
+        display = "".join(p.capitalize()[:3] for p in parts[:3])
 
-    return emoji_map.get(emoji_name, "😀")
+    # Truncate to fit in key
+    return display[:7] if len(display) > 7 else display
 
 
 def _format_emoji_preset(behavior: str) -> str:
@@ -934,26 +859,27 @@ def _format_emoji_preset(behavior: str) -> str:
         behavior: The ZMK emoji preset behavior string
 
     Returns:
-        The corresponding emoji or preset indicator
+        A text label representing the preset
     """
     # Remove the & prefix
     name = behavior[1:] if behavior.startswith("&") else behavior
 
+    # Use text labels for PDF compatibility
     emoji_preset_map = {
         # Skin tone presets
-        "emoji_skin_tone_preset": "👤",
+        "emoji_skin_tone_preset": "Skin",
         # Zero-width joiner for combining emoji
-        "emoji_zwj_macro": "⊕",
-        "emoji_zwj": "⊕",
+        "emoji_zwj_macro": "ZWJ",
+        "emoji_zwj": "ZWJ",
         # Gender sign presets
-        "emoji_gender_sign_preset": "⚥",
-        "emoji_male_sign": "♂",
-        "emoji_female_sign": "♀",
+        "emoji_gender_sign_preset": "Gender",
+        "emoji_male_sign": "Male",
+        "emoji_female_sign": "Female",
         # Hair style presets
-        "emoji_hair_style_preset": "💇",
+        "emoji_hair_style_preset": "Hair",
     }
 
-    return emoji_preset_map.get(name, "😀")
+    return emoji_preset_map.get(name, "Emoji")
 
 
 def _format_world_macro(behavior: str) -> str:
@@ -1074,17 +1000,17 @@ def _format_mouse_scroll(behavior: str) -> str:
     Returns:
         Formatted display string for mouse scroll
     """
-    # &msc SCRL_UP -> ⊘↑
+    # &msc SCRL_UP -> Scr↑ (text for PDF compatibility)
     scroll_map = {
-        "SCRL_UP": "⊘↑",
-        "SCRL_DOWN": "⊘↓",
-        "SCRL_LEFT": "⊘←",
-        "SCRL_RIGHT": "⊘→",
+        "SCRL_UP": "Scr↑",
+        "SCRL_DOWN": "Scr↓",
+        "SCRL_LEFT": "Scr←",
+        "SCRL_RIGHT": "Scr→",
     }
     parts = behavior.split()
     if len(parts) >= 2:
-        return scroll_map.get(parts[1], "⊘")
-    return "⊘"
+        return scroll_map.get(parts[1], "Scroll")
+    return "Scroll"
 
 
 def _format_mouse_move(behavior: str) -> str:
@@ -1096,17 +1022,17 @@ def _format_mouse_move(behavior: str) -> str:
     Returns:
         Formatted display string for mouse move
     """
-    # &mmv MOVE_UP -> 🖱↑
+    # &mmv MOVE_UP -> Ms↑ (text for PDF compatibility)
     move_map = {
-        "MOVE_UP": "🖱↑",
-        "MOVE_DOWN": "🖱↓",
-        "MOVE_LEFT": "🖱←",
-        "MOVE_RIGHT": "🖱→",
+        "MOVE_UP": "Ms↑",
+        "MOVE_DOWN": "Ms↓",
+        "MOVE_LEFT": "Ms←",
+        "MOVE_RIGHT": "Ms→",
     }
     parts = behavior.split()
     if len(parts) >= 2:
-        return move_map.get(parts[1], "🖱")
-    return "🖱"
+        return move_map.get(parts[1], "Mouse")
+    return "Mouse"
 
 
 def _format_mouse_click(behavior: str) -> str:
@@ -1118,18 +1044,18 @@ def _format_mouse_click(behavior: str) -> str:
     Returns:
         Formatted display string for mouse click
     """
-    # &mkp LCLK -> 🖱L
+    # &mkp LCLK -> MsL (text for PDF compatibility)
     click_map = {
-        "LCLK": "🖱L",
-        "RCLK": "🖱R",
-        "MCLK": "🖱M",
-        "MB4": "🖱◀",
-        "MB5": "🖱▶",
+        "LCLK": "MsL",
+        "RCLK": "MsR",
+        "MCLK": "MsM",
+        "MB4": "Ms4",
+        "MB5": "Ms5",
     }
     parts = behavior.split()
     if len(parts) >= 2:
-        return click_map.get(parts[1], "🖱")
-    return "🖱"
+        return click_map.get(parts[1], "Mouse")
+    return "Mouse"
 
 
 def _format_select_behavior(behavior: str) -> str:
@@ -1769,8 +1695,8 @@ def _add_title_to_svg(svg_content: str, title: str) -> str:
     return svg_content
 
 
-# Emoji to text replacements for CairoSVG compatibility
-# CairoSVG often fails to render emoji, so we replace them with text equivalents
+# Emoji to text replacements for PDF compatibility
+# rsvg-convert and CairoSVG often fail to render emoji, so we replace with text
 EMOJI_REPLACEMENTS = {
     # Layer/function emoji
     "😀": "Emoji",
@@ -1779,6 +1705,7 @@ EMOJI_REPLACEMENTS = {
     "✨": "Magic",
     "🖱": "Mouse",
     "↔": "Swap",
+    "🎮": "Game",
     # Volume/media emoji
     "🔊": "Vol+",
     "🔉": "Vol-",
@@ -1787,11 +1714,30 @@ EMOJI_REPLACEMENTS = {
     "🔅": "Bri-",
     "☀": "Bri",
     "🌑": "Dark",
+    # Media playback symbols
+    "⏯": "Play",
+    "▶": "Play",
+    "⏸": "Pause",
+    "⏹": "Stop",
+    "⏭": "Next",
+    "⏮": "Prev",
+    "⏩": "FF",
+    "⏪": "Rew",
+    "⏏": "Eject",
+    "⏺": "Rec",
     # Other problematic Unicode that may not render
     "⇱": "Home",
     "⇲": "End",
     "⇞": "PgUp",
     "⇟": "PgDn",
+    # Skin tone/emoji modifiers
+    "🏻": "LtSkin",
+    "🏼": "MdLtSk",
+    "🏽": "MdSkin",
+    "🏾": "MdDkSk",
+    "🏿": "DkSkin",
+    # Scroll symbol
+    "⊘": "Scroll",
 }
 
 

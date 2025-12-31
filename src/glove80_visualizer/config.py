@@ -70,6 +70,10 @@ class VisualizerConfig:
     # Shifted character display
     show_shifted: bool = True  # Show shifted chars on keys (e.g., ! above 1)
 
+    # Multi-layer page layout
+    layers_per_page: int = 3  # Number of layers per PDF page (1, 2, or 3)
+    dpi: int = 300  # Output resolution for PDF rendering
+
     @classmethod
     def from_yaml(cls, yaml_content: str) -> "VisualizerConfig":
         """
