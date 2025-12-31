@@ -208,6 +208,9 @@ def generate_pdf_with_toc(
     if config is None:
         config = VisualizerConfig()
 
+    if config.layers_per_page < 1:
+        raise ValueError("layers_per_page must be >= 1")
+
     layers_per_page = config.layers_per_page
     pdf_pages = []
 
@@ -264,9 +267,17 @@ def _combine_pdfs_on_page(
     if not pdf_bytes_list:
         raise ValueError("Cannot combine empty list of PDFs")
 
-    # Page dimensions (8.5" x 11" at 72 DPI)
-    page_width = 612
-    page_height = 792
+    # Derive page dimensions from first source PDF instead of hard-coding
+    # This ensures combined pages match the source page size/orientation
+    first_pdf = pikepdf.open(BytesIO(pdf_bytes_list[0]))
+    if len(first_pdf.pages) == 0:
+        # Fallback to Letter portrait if first PDF is empty
+        page_width = 612.0
+        page_height = 792.0
+    else:
+        first_box = first_pdf.pages[0].mediabox
+        page_width = float(first_box[2]) - float(first_box[0])
+        page_height = float(first_box[3]) - float(first_box[1])
 
     # Use configured layers_per_page for consistent scaling across all pages
     # This ensures the last page with fewer layers maintains the same scale

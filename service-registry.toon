@@ -1,5 +1,5 @@
 meta:
-  generated: "2025-12-31T03:28:28.298562+00:00"
+  generated: "2025-12-31T03:49:53.678821+00:00"
   generator: scripts/generate_registries.py
   version: "1.0"
 modules[11]{name,path,description}:
