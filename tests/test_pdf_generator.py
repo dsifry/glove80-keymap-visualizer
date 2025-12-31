@@ -816,3 +816,49 @@ class TestPdfOrientation:
         width = float(mediabox[2]) - float(mediabox[0])
         height = float(mediabox[3]) - float(mediabox[1])
         assert width > height, f"Expected landscape, got {width}x{height}"
+
+    def test_apply_orientation_raises_runtime_error_on_failure(self):
+        """_apply_orientation raises RuntimeError when PDF transformation fails."""
+        from unittest.mock import patch
+
+        import pytest
+
+        from glove80_visualizer.config import VisualizerConfig
+        from glove80_visualizer.pdf_generator import _apply_orientation, svg_to_pdf
+
+        # Create a portrait SVG
+        portrait_svg = """<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="100" height="200" viewBox="0 0 100 200">
+<rect width="100" height="200" fill="white"/>
+</svg>"""
+        pdf_bytes = svg_to_pdf(portrait_svg)
+
+        # Request landscape to trigger transformation
+        config = VisualizerConfig(orientation="landscape")
+
+        # Mock pikepdf.open to raise an exception during transformation
+        with patch("glove80_visualizer.pdf_generator.pikepdf.open") as mock_open:
+            mock_open.side_effect = Exception("Mocked PDF error")
+            with pytest.raises(RuntimeError, match="Failed to apply orientation"):
+                _apply_orientation(pdf_bytes, config)
+
+    def test_combine_pdfs_on_page_raises_runtime_error_on_failure(self, sample_svg):
+        """_combine_pdfs_on_page raises RuntimeError when PDF combination fails."""
+        from unittest.mock import MagicMock, PropertyMock, patch
+
+        import pytest
+
+        from glove80_visualizer.config import VisualizerConfig
+        from glove80_visualizer.pdf_generator import _combine_pdfs_on_page, svg_to_pdf
+
+        pdf_bytes = svg_to_pdf(sample_svg)
+        config = VisualizerConfig(layers_per_page=2)
+
+        # Mock pikepdf.open to return a mock that raises when accessing pages
+        with patch("glove80_visualizer.pdf_generator.pikepdf.open") as mock_open:
+            mock_pdf = MagicMock()
+            # Make pages access raise an exception
+            type(mock_pdf).pages = PropertyMock(side_effect=Exception("Mocked PDF error"))
+            mock_open.return_value = mock_pdf
+            with pytest.raises(RuntimeError, match="Failed to combine PDFs"):
+                _combine_pdfs_on_page([pdf_bytes, pdf_bytes], config)
