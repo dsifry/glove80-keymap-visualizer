@@ -1654,6 +1654,53 @@ class TestFallbackBranches:
         result = _format_modifier_combo("Unknown+A", "mac")
         assert result == "UnkA"  # First 3 chars + key
 
+    def test_shift_number_returns_symbol_ls_format(self):
+        """LS(4) should return $ not ⇧4."""
+        from glove80_visualizer.svg_generator import format_key_label
+
+        assert format_key_label("LS(4)") == "$"
+        assert format_key_label("LS(3)") == "#"
+        assert format_key_label("LS(5)") == "%"
+        assert format_key_label("LS(1)") == "!"
+        assert format_key_label("LS(2)") == "@"
+
+    def test_shift_number_returns_symbol_rs_format(self):
+        """RS(4) should return $ (right shift works too)."""
+        from glove80_visualizer.svg_generator import format_key_label
+
+        assert format_key_label("RS(4)") == "$"
+        assert format_key_label("RS(6)") == "^"
+
+    def test_shift_zmk_code_returns_symbol(self):
+        """LS(SEMI) should return : (colon)."""
+        from glove80_visualizer.svg_generator import format_key_label
+
+        assert format_key_label("LS(SEMI)") == ":"
+        assert format_key_label("LS(SQT)") == '"'
+        assert format_key_label("LS(COMMA)") == "<"
+
+    def test_modifier_combo_shift_number_returns_symbol(self):
+        """Sft+4 should return $ not ⇧4."""
+        from glove80_visualizer.svg_generator import _format_modifier_combo
+
+        assert _format_modifier_combo("Sft+4", "mac") == "$"
+        assert _format_modifier_combo("Shift+3", "mac") == "#"
+        assert _format_modifier_combo("Sft+5", "windows") == "%"
+
+    def test_modifier_combo_shift_zmk_code_returns_symbol(self):
+        """Sft+SEMI should return : (colon)."""
+        from glove80_visualizer.svg_generator import _format_modifier_combo
+
+        assert _format_modifier_combo("Sft+SEMI", "mac") == ":"
+        assert _format_modifier_combo("Shift+SQT", "mac") == '"'
+
+    def test_shift_with_non_shiftable_key_falls_through(self):
+        """LS(LEFT) should still show ⇧← since LEFT has no shifted variant."""
+        from glove80_visualizer.svg_generator import format_key_label
+
+        result = format_key_label("LS(LEFT)")
+        assert "⇧" in result or "←" in result  # Should have modifier + arrow
+
     def test_behavior_with_args_but_empty_abbrev(self):
         """Behavior with empty abbreviation just shows the arg."""
         from glove80_visualizer.svg_generator import format_key_label
