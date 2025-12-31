@@ -13,7 +13,7 @@ from glove80_visualizer.parser import KeymapParseError, parse_mod_morph_behavior
 from glove80_visualizer.pdf_generator import generate_pdf_with_toc
 from glove80_visualizer.svg_generator import generate_layer_svg
 
-__version__ = "0.1.0"
+__version__ = "0.5.0"
 __all__ = [
     "KeyBinding",
     "Layer",
