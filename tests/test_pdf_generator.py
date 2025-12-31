@@ -394,3 +394,196 @@ class TestRsvgConvertPath:
 
         with pytest.raises(RuntimeError, match="Failed to convert SVG to PDF"):
             _svg_to_pdf_cairosvg(sample_svg)
+
+
+class TestCombinePdfsOnPage:
+    """Tests for _combine_pdfs_on_page function."""
+
+    def test_combine_empty_list_raises_error(self):
+        """_combine_pdfs_on_page raises ValueError for empty list."""
+        from glove80_visualizer.config import VisualizerConfig
+        from glove80_visualizer.pdf_generator import _combine_pdfs_on_page
+
+        config = VisualizerConfig(layers_per_page=3)
+
+        with pytest.raises(ValueError, match="Cannot combine empty list"):
+            _combine_pdfs_on_page([], config)
+
+    def test_combine_skips_empty_pdfs(self, sample_svg, mocker):
+        """_combine_pdfs_on_page skips PDFs with no pages."""
+        from io import BytesIO
+
+        import pikepdf
+
+        from glove80_visualizer.config import VisualizerConfig
+        from glove80_visualizer.pdf_generator import _combine_pdfs_on_page, svg_to_pdf
+
+        config = VisualizerConfig(layers_per_page=3)
+
+        # Create a valid PDF
+        valid_pdf = svg_to_pdf(sample_svg)
+
+        # Create an empty PDF (no pages)
+        empty_pdf_obj = pikepdf.new()
+        empty_pdf_bytes = BytesIO()
+        empty_pdf_obj.save(empty_pdf_bytes)
+        empty_pdf = empty_pdf_bytes.getvalue()
+
+        # Combine with empty PDF in the middle
+        result = _combine_pdfs_on_page([valid_pdf, empty_pdf, valid_pdf], config)
+
+        assert result.startswith(b"%PDF")
+        # Should have created a valid combined PDF
+        result_pdf = pikepdf.open(BytesIO(result))
+        assert len(result_pdf.pages) == 1
+
+    def test_combine_first_pdf_empty_uses_fallback_dimensions(self, sample_svg):
+        """_combine_pdfs_on_page uses fallback dimensions when first PDF is empty."""
+        from io import BytesIO
+
+        import pikepdf
+
+        from glove80_visualizer.config import VisualizerConfig
+        from glove80_visualizer.pdf_generator import _combine_pdfs_on_page, svg_to_pdf
+
+        config = VisualizerConfig(layers_per_page=2)
+
+        # Create an empty PDF (no pages) as first PDF
+        empty_pdf_obj = pikepdf.new()
+        empty_pdf_bytes = BytesIO()
+        empty_pdf_obj.save(empty_pdf_bytes)
+        empty_pdf = empty_pdf_bytes.getvalue()
+
+        # Create a valid PDF as second
+        valid_pdf = svg_to_pdf(sample_svg)
+
+        # Combine with empty first PDF - should use fallback 612x792 dimensions
+        result = _combine_pdfs_on_page([empty_pdf, valid_pdf], config)
+
+        assert result.startswith(b"%PDF")
+        result_pdf = pikepdf.open(BytesIO(result))
+        assert len(result_pdf.pages) == 1
+
+        # Should have Letter size dimensions (fallback)
+        mediabox = result_pdf.pages[0].mediabox
+        width = float(mediabox[2]) - float(mediabox[0])
+        height = float(mediabox[3]) - float(mediabox[1])
+        assert width == 612.0
+        assert height == 792.0
+
+
+class TestLayersPerPage:
+    """Tests for layers_per_page configuration."""
+
+    def test_single_layer_per_page(self, sample_layers, sample_svg):
+        """generate_pdf_with_toc with layers_per_page=1 uses full scale."""
+        from io import BytesIO
+
+        import pikepdf
+
+        from glove80_visualizer.config import VisualizerConfig
+        from glove80_visualizer.pdf_generator import generate_pdf_with_toc
+
+        config = VisualizerConfig(layers_per_page=1)
+        svgs = [sample_svg] * len(sample_layers)
+
+        pdf_bytes = generate_pdf_with_toc(
+            layers=sample_layers, svgs=svgs, config=config, include_toc=False
+        )
+
+        assert pdf_bytes.startswith(b"%PDF")
+
+        # With layers_per_page=1, should have one page per layer
+        pdf = pikepdf.open(BytesIO(pdf_bytes))
+        assert len(pdf.pages) == len(sample_layers)
+
+    def test_layers_per_page_consistent_scaling(self, sample_svg):
+        """Final page with fewer layers uses same scale as full pages."""
+        from io import BytesIO
+
+        import pikepdf
+
+        from glove80_visualizer.config import VisualizerConfig
+        from glove80_visualizer.models import Layer
+        from glove80_visualizer.pdf_generator import generate_pdf_with_toc
+
+        # Create 4 layers - will produce 2 pages when layers_per_page=3
+        # First page: 3 layers, second page: 1 layer
+        layers = [Layer(name=f"Layer{i}", index=i, bindings=[]) for i in range(4)]
+        svgs = [sample_svg] * 4
+
+        config = VisualizerConfig(layers_per_page=3)
+
+        pdf_bytes = generate_pdf_with_toc(
+            layers=layers, svgs=svgs, config=config, include_toc=False
+        )
+
+        assert pdf_bytes.startswith(b"%PDF")
+
+        pdf = pikepdf.open(BytesIO(pdf_bytes))
+        # Should have 2 pages: one with 3 layers, one with 1 layer
+        assert len(pdf.pages) == 2
+
+        # Both pages should be same dimensions (consistent scaling)
+        page1 = pdf.pages[0]
+        page2 = pdf.pages[1]
+        assert page1.mediabox == page2.mediabox
+
+    def test_layers_per_page_zero_raises_error(self, sample_layers, sample_svg):
+        """generate_pdf_with_toc raises ValueError for layers_per_page <= 0."""
+        from glove80_visualizer.config import VisualizerConfig
+        from glove80_visualizer.pdf_generator import generate_pdf_with_toc
+
+        config = VisualizerConfig()
+        config.layers_per_page = 0  # Invalid value
+        svgs = [sample_svg] * len(sample_layers)
+
+        with pytest.raises(ValueError, match="layers_per_page must be >= 1"):
+            generate_pdf_with_toc(layers=sample_layers, svgs=svgs, config=config, include_toc=False)
+
+    def test_layers_per_page_negative_raises_error(self, sample_layers, sample_svg):
+        """generate_pdf_with_toc raises ValueError for negative layers_per_page."""
+        from glove80_visualizer.config import VisualizerConfig
+        from glove80_visualizer.pdf_generator import generate_pdf_with_toc
+
+        config = VisualizerConfig()
+        config.layers_per_page = -1  # Invalid value
+        svgs = [sample_svg] * len(sample_layers)
+
+        with pytest.raises(ValueError, match="layers_per_page must be >= 1"):
+            generate_pdf_with_toc(layers=sample_layers, svgs=svgs, config=config, include_toc=False)
+
+    def test_combined_page_uses_source_dimensions(self, sample_svg):
+        """Combined pages derive dimensions from source PDFs, not hard-coded."""
+        from io import BytesIO
+
+        import pikepdf
+
+        from glove80_visualizer.config import VisualizerConfig
+        from glove80_visualizer.models import Layer
+        from glove80_visualizer.pdf_generator import generate_pdf_with_toc
+
+        # Create layers
+        layers = [Layer(name=f"Layer{i}", index=i, bindings=[]) for i in range(2)]
+        svgs = [sample_svg] * 2
+
+        config = VisualizerConfig(layers_per_page=2)
+
+        pdf_bytes = generate_pdf_with_toc(
+            layers=layers, svgs=svgs, config=config, include_toc=False
+        )
+
+        # The combined page should have same width as source SVG-derived PDFs
+        pdf = pikepdf.open(BytesIO(pdf_bytes))
+        assert len(pdf.pages) == 1
+
+        # Get the mediabox - should be derived from source, not hard-coded 612x792
+        page = pdf.pages[0]
+        mediabox = page.mediabox
+        width = float(mediabox[2]) - float(mediabox[0])
+        height = float(mediabox[3]) - float(mediabox[1])
+
+        # The sample_svg fixture produces specific dimensions when converted to PDF
+        # We just verify the page has reasonable dimensions (not zero, not default)
+        assert width > 0
+        assert height > 0

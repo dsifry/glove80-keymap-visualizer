@@ -43,18 +43,20 @@ def svg_to_pdf(
         svg_content = _add_header_to_svg(svg_content, header)
 
     # Try rsvg-convert first (better rendering for complex SVGs)
+    dpi = config.dpi
     if shutil.which("rsvg-convert"):
-        return _svg_to_pdf_rsvg(svg_content)
+        return _svg_to_pdf_rsvg(svg_content, dpi)
     else:
         # Fall back to CairoSVG
-        return _svg_to_pdf_cairosvg(svg_content)
+        return _svg_to_pdf_cairosvg(svg_content, dpi)
 
 
-def _svg_to_pdf_rsvg(svg_content: str) -> bytes:
+def _svg_to_pdf_rsvg(svg_content: str, dpi: int = 300) -> bytes:
     """Convert SVG to PDF using rsvg-convert.
 
     Args:
         svg_content: The SVG content as a string
+        dpi: Output resolution in dots per inch
 
     Returns:
         PDF content as bytes
@@ -69,7 +71,9 @@ def _svg_to_pdf_rsvg(svg_content: str) -> bytes:
             pdf_path = pdf_file.name
 
         result = subprocess.run(
-            ["rsvg-convert", "-f", "pdf", "-o", pdf_path, svg_path], capture_output=True, text=True
+            ["rsvg-convert", "-f", "pdf", "-d", str(dpi), "-p", str(dpi), "-o", pdf_path, svg_path],
+            capture_output=True,
+            text=True,
         )
 
         if result.returncode != 0:  # pragma: no cover
@@ -92,11 +96,12 @@ def _svg_to_pdf_rsvg(svg_content: str) -> bytes:
                 pass
 
 
-def _svg_to_pdf_cairosvg(svg_content: str) -> bytes:
+def _svg_to_pdf_cairosvg(svg_content: str, dpi: int = 300) -> bytes:
     """Convert SVG to PDF using CairoSVG (fallback).
 
     Args:
         svg_content: The SVG content as a string
+        dpi: Output resolution in dots per inch
 
     Returns:
         PDF content as bytes
@@ -111,7 +116,7 @@ def _svg_to_pdf_cairosvg(svg_content: str) -> bytes:
         ) from e
 
     try:
-        result: bytes = cairosvg.svg2pdf(bytestring=svg_content.encode("utf-8"))
+        result: bytes = cairosvg.svg2pdf(bytestring=svg_content.encode("utf-8"), dpi=dpi)
         return result
     except Exception as e:
         raise RuntimeError(
@@ -188,6 +193,9 @@ def generate_pdf_with_toc(
     """
     Generate a complete PDF with optional table of contents.
 
+    Supports multiple layers per page via config.layers_per_page (1, 2, or 3).
+    Layers are stacked vertically and scaled to fit the page.
+
     Args:
         layers: List of Layer objects (for names/metadata)
         svgs: List of SVG content strings (one per layer)
@@ -200,6 +208,10 @@ def generate_pdf_with_toc(
     if config is None:
         config = VisualizerConfig()
 
+    if config.layers_per_page < 1:
+        raise ValueError("layers_per_page must be >= 1")
+
+    layers_per_page = config.layers_per_page
     pdf_pages = []
 
     # Generate TOC pages if requested (may be multiple for many layers)
@@ -207,13 +219,25 @@ def generate_pdf_with_toc(
         toc_pdfs = _generate_toc_pages(layers, config)
         pdf_pages.extend(toc_pdfs)
 
-    # Convert each SVG to PDF
-    # Replace keymap-drawer's default label with our formatted header
-    for i, (layer, svg) in enumerate(zip(layers, svgs)):
+    # Prepare SVGs with headers and convert each to PDF
+    layer_pdfs = []
+    for layer, svg in zip(layers, svgs):
         header = config.layer_title_format.format(index=layer.index, name=layer.name)
         svg_with_header = _replace_layer_label(svg, header)
         pdf_bytes = svg_to_pdf(svg_with_header, config)
-        pdf_pages.append(pdf_bytes)
+        layer_pdfs.append(pdf_bytes)
+
+    # Group PDFs by layers_per_page and combine onto single pages
+    for i in range(0, len(layer_pdfs), layers_per_page):
+        chunk = layer_pdfs[i : i + layers_per_page]
+        if layers_per_page == 1:
+            # 1 layer per page - use original PDF at full scale
+            pdf_pages.append(chunk[0])
+        else:
+            # Multiple layers per page layout - always use combine for consistent scaling
+            # This ensures the last page (with fewer layers) maintains the same scale
+            combined_pdf = _combine_pdfs_on_page(chunk, config)
+            pdf_pages.append(combined_pdf)
 
     # Merge all pages
     if not pdf_pages:
@@ -221,6 +245,106 @@ def generate_pdf_with_toc(
         return _create_empty_pdf()
 
     return merge_pdfs(pdf_pages)
+
+
+def _combine_pdfs_on_page(
+    pdf_bytes_list: list[bytes],
+    config: VisualizerConfig,
+) -> bytes:
+    """
+    Combine multiple PDFs onto a single page, stacked vertically.
+
+    Converts each SVG to PDF first (preserving fonts), then scales and
+    positions the PDF content onto a single page using pikepdf.
+
+    Args:
+        pdf_bytes_list: List of PDF content as bytes (1-3 PDFs)
+        config: Configuration with page dimensions and layers_per_page
+
+    Returns:
+        Combined PDF content as bytes
+    """
+    if not pdf_bytes_list:
+        raise ValueError("Cannot combine empty list of PDFs")
+
+    # Derive page dimensions from first source PDF instead of hard-coding
+    # This ensures combined pages match the source page size/orientation
+    first_pdf = pikepdf.open(BytesIO(pdf_bytes_list[0]))
+    if len(first_pdf.pages) == 0:
+        # Fallback to Letter portrait if first PDF is empty
+        page_width = 612.0
+        page_height = 792.0
+    else:
+        first_box = first_pdf.pages[0].mediabox
+        page_width = float(first_box[2]) - float(first_box[0])
+        page_height = float(first_box[3]) - float(first_box[1])
+
+    # Use configured layers_per_page for consistent scaling across all pages
+    # This ensures the last page with fewer layers maintains the same scale
+    target_layers = config.layers_per_page
+    slot_height = page_height / target_layers
+
+    # Create output PDF and build the combined page manually
+    output_pdf = pikepdf.new()
+
+    # Create page dictionary with proper structure
+    xobject_dict = pikepdf.Dictionary()
+    content_streams = []
+
+    for i, pdf_bytes in enumerate(pdf_bytes_list):
+        src_pdf = pikepdf.open(BytesIO(pdf_bytes))
+        if len(src_pdf.pages) == 0:
+            continue
+
+        src_page = src_pdf.pages[0]
+
+        # Get source page dimensions
+        src_box = src_page.mediabox
+        src_width = float(src_box[2]) - float(src_box[0])
+        src_height = float(src_box[3]) - float(src_box[1])
+
+        # Calculate scale to fit in slot
+        scale_x = page_width / src_width
+        scale_y = slot_height / src_height
+        scale = min(scale_x, scale_y)
+
+        # Calculate positioning (center horizontally, stack from top)
+        scaled_width = src_width * scale
+        x_offset = (page_width - scaled_width) / 2
+        # PDF coordinates are from bottom, so we need to flip
+        y_offset = page_height - (i + 1) * slot_height
+
+        # Create Form XObject from source page
+        xobj_name = f"Layer{i}"
+        form_xobj = src_page.as_form_xobject()
+        # Copy to output PDF and add to XObject dictionary
+        xobject_dict[pikepdf.Name(f"/{xobj_name}")] = output_pdf.copy_foreign(form_xobj)
+
+        # Build content stream to place this XObject
+        # q = save state, cm = transformation matrix, Do = draw XObject, Q = restore
+        xf = f"{x_offset:.2f}"
+        yf = f"{y_offset:.2f}"
+        content = f"q {scale:.6f} 0 0 {scale:.6f} {xf} {yf} cm /{xobj_name} Do Q\n"
+        content_streams.append(content)
+
+    # Create the combined content stream
+    content_stream = output_pdf.make_stream("".join(content_streams).encode())
+
+    # Create page with all components
+    page_dict = pikepdf.Dictionary(
+        Type=pikepdf.Name.Page,
+        MediaBox=pikepdf.Array([0, 0, page_width, page_height]),
+        Resources=pikepdf.Dictionary(XObject=xobject_dict),
+        Contents=content_stream,
+    )
+
+    # Wrap in Page object and add to document
+    page = pikepdf.Page(page_dict)
+    output_pdf.pages.append(page)
+
+    output = BytesIO()
+    output_pdf.save(output)
+    return output.getvalue()
 
 
 def _replace_layer_label(svg_content: str, new_label: str) -> str:
@@ -337,11 +461,13 @@ def _generate_toc_pages(layers: list[Layer], config: VisualizerConfig) -> list[b
         lines.append(f'<text x="40" y="{title_y}" class="title">{title}</text>')
 
         # Layer entries for this page
+        layers_per_page = config.layers_per_page
         y = first_entry_y
         for i, layer in enumerate(page_layers):
-            # Calculate actual page number: TOC pages + layer index + 1
+            # Calculate page number: TOC pages + content page (with layers_per_page)
             actual_layer_idx = start_idx + i
-            page_num = num_toc_pages + actual_layer_idx + 1
+            content_page = actual_layer_idx // layers_per_page
+            page_num = num_toc_pages + content_page + 1
             entry_text = f"{layer.index}: {layer.name}"
             lines.append(f'<text x="60" y="{y}" class="entry">{entry_text}</text>')
             lines.append(f'<text x="700" y="{y}" class="entry" text-anchor="end">{page_num}</text>')

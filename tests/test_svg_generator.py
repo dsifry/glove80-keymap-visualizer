@@ -467,19 +467,19 @@ class TestKeyLabelAbbreviations:
 class TestSpecialLayerSymbols:
     """Tests for special layer and key symbols like emoji and world."""
 
-    def test_emoji_layer_uses_unicode_symbol(self):
-        """SPEC-S022: Emoji layer reference should use emoji symbol."""
+    def test_emoji_layer_uses_text(self):
+        """SPEC-S022: Emoji layer reference should use text for PDF compatibility."""
         from glove80_visualizer.svg_generator import format_key_label
 
-        # When a key activates "Emoji" layer, show emoji symbol
-        assert format_key_label("Emoji") in ["😀", "🙂", "😊", "🎉"]
+        # When a key activates "Emoji" layer, show text label
+        assert format_key_label("Emoji") == "Emoji"
 
-    def test_world_layer_uses_unicode_symbol(self):
-        """SPEC-S023: World layer reference should use globe symbol."""
+    def test_world_layer_uses_text(self):
+        """SPEC-S023: World layer reference should use text for PDF compatibility."""
         from glove80_visualizer.svg_generator import format_key_label
 
-        # When a key activates "World" layer, show globe symbol
-        assert format_key_label("World") in ["🌍", "🌎", "🌏", "🌐"]
+        # When a key activates "World" layer, show text label
+        assert format_key_label("World") == "World"
 
     def test_mouse_layer_uses_unicode_symbol(self):
         """SPEC-S024: Mouse layer reference should use mouse/pointer symbol."""
@@ -509,12 +509,12 @@ class TestSpecialLayerSymbols:
         # When a key activates "Function" layer, show function icon
         assert format_key_label("Function") in ["Fn", "ƒ", "F1-12"]
 
-    def test_cursor_layer_uses_unicode_symbol(self):
-        """SPEC-S028: Cursor layer reference should use cursor/arrow symbol."""
+    def test_cursor_layer_uses_text(self):
+        """SPEC-S028: Cursor layer reference should use text for PDF compatibility."""
         from glove80_visualizer.svg_generator import format_key_label
 
-        # When a key activates "Cursor" layer, show cursor icon
-        assert format_key_label("Cursor") in ["↔", "⇄", "🔀", "Nav"]
+        # When a key activates "Cursor" layer, show text label
+        assert format_key_label("Cursor") == "Cur"
 
     def test_system_layer_uses_unicode_symbol(self):
         """SPEC-S029: System layer reference should use gear/settings symbol."""
@@ -654,44 +654,44 @@ class TestArrowKeyIcons:
 
 
 class TestMediaKeyIcons:
-    """Tests for media key icon display."""
+    """Tests for media key icon display - now uses text for PDF compatibility."""
 
-    def test_play_pause_uses_symbol(self):
-        """SPEC-S042: Play/Pause key should display ⏯ or ▶⏸ symbol."""
+    def test_play_pause_uses_text(self):
+        """SPEC-S042: Play/Pause key should display Play text."""
         from glove80_visualizer.svg_generator import format_key_label
 
-        assert format_key_label("C_PP") in ["⏯", "▶⏸", "▶️⏸️", "⏵⏸"]
-        assert format_key_label("C_PLAY_PAUSE") in ["⏯", "▶⏸", "▶️⏸️", "⏵⏸"]
+        assert format_key_label("C_PP") == "Play"
+        assert format_key_label("C_PLAY_PAUSE") == "Play"
 
-    def test_play_uses_symbol(self):
-        """SPEC-S043: Play key should display ▶ symbol."""
+    def test_play_uses_text(self):
+        """SPEC-S043: Play key should display Play text."""
         from glove80_visualizer.svg_generator import format_key_label
 
-        assert format_key_label("C_PLAY") in ["▶", "▶️", "⏵"]
+        assert format_key_label("C_PLAY") == "Play"
 
-    def test_pause_uses_symbol(self):
-        """SPEC-S044: Pause key should display ⏸ symbol."""
+    def test_pause_uses_text(self):
+        """SPEC-S044: Pause key should display Pause text."""
         from glove80_visualizer.svg_generator import format_key_label
 
-        assert format_key_label("C_PAUSE") in ["⏸", "⏸️", "||"]
+        assert format_key_label("C_PAUSE") == "Pause"
 
-    def test_stop_uses_symbol(self):
-        """SPEC-S045: Stop key should display ⏹ symbol."""
+    def test_stop_uses_text(self):
+        """SPEC-S045: Stop key should display Stop text."""
         from glove80_visualizer.svg_generator import format_key_label
 
-        assert format_key_label("C_STOP") in ["⏹", "⏹️", "◼"]
+        assert format_key_label("C_STOP") == "Stop"
 
-    def test_next_track_uses_symbol(self):
-        """SPEC-S046: Next track key should display ⏭ symbol."""
+    def test_next_track_uses_text(self):
+        """SPEC-S046: Next track key should display Next text."""
         from glove80_visualizer.svg_generator import format_key_label
 
-        assert format_key_label("C_NEXT") in ["⏭", "⏭️", ">>|", "⏩"]
+        assert format_key_label("C_NEXT") == "Next"
 
-    def test_prev_track_uses_symbol(self):
-        """SPEC-S047: Previous track key should display ⏮ symbol."""
+    def test_prev_track_uses_text(self):
+        """SPEC-S047: Previous track key should display Prev text."""
         from glove80_visualizer.svg_generator import format_key_label
 
-        assert format_key_label("C_PREV") in ["⏮", "⏮️", "|<<", "⏪"]
+        assert format_key_label("C_PREV") == "Prev"
 
     def test_volume_up_uses_symbol(self):
         """SPEC-S048: Volume up key should display 🔊 or 🔉+ symbol."""
@@ -742,17 +742,17 @@ class TestMediaKeyIcons:
         result = format_key_label("C_BRI_MIN")
         assert result in ["🌑", "○", "🔅", "BriMin"]
 
-    def test_fast_forward_uses_symbol(self):
-        """SPEC-S055: Fast forward key should display ⏩ symbol."""
+    def test_fast_forward_uses_text(self):
+        """SPEC-S055: Fast forward key should display FF text."""
         from glove80_visualizer.svg_generator import format_key_label
 
-        assert format_key_label("C_FF") in ["⏩", ">>", "▶▶"]
+        assert format_key_label("C_FF") == "FF"
 
-    def test_rewind_uses_symbol(self):
-        """SPEC-S056: Rewind key should display ⏪ symbol."""
+    def test_rewind_uses_text(self):
+        """SPEC-S056: Rewind key should display Rew text."""
         from glove80_visualizer.svg_generator import format_key_label
 
-        assert format_key_label("C_RW") in ["⏪", "<<", "◀◀"]
+        assert format_key_label("C_RW") == "Rew"
 
     def test_eject_uses_symbol(self):
         """SPEC-S057: Eject key should display ⏏ symbol."""
@@ -768,70 +768,70 @@ class TestMediaKeyIcons:
 
 
 class TestMediaKeyTextToSymbol:
-    """Tests for converting keymap-drawer text labels to proper media symbols.
+    """Tests for converting keymap-drawer text labels to text for PDF compatibility.
 
     keymap-drawer transforms ZMK codes like C_PLAY_PAUSE into human-readable
-    text like "Play" or "PLAY". We need to convert these text labels back to proper symbols.
+    text like "Play" or "PLAY". We now return text labels for PDF compatibility.
     """
 
-    def test_play_text_becomes_symbol(self):
-        """SPEC-S059: 'Play' or 'PLAY' text should display ▶ symbol."""
+    def test_play_text_becomes_text(self):
+        """SPEC-S059: 'Play' or 'PLAY' text should display Play text."""
         from glove80_visualizer.svg_generator import format_key_label
 
-        assert format_key_label("Play") in ["▶", "▶️", "⏵", "⏯"]
-        assert format_key_label("PLAY") in ["▶", "▶️", "⏵", "⏯"]
+        assert format_key_label("Play") == "Play"
+        assert format_key_label("PLAY") == "Play"
 
-    def test_pause_text_becomes_symbol(self):
-        """SPEC-S060: 'Pause' text should display ⏸ symbol."""
+    def test_pause_text_becomes_text(self):
+        """SPEC-S060: 'Pause' text should display Pause text."""
         from glove80_visualizer.svg_generator import format_key_label
 
-        assert format_key_label("Pause") in ["⏸", "⏸️", "||"]
+        assert format_key_label("Pause") == "Pause"
 
-    def test_stop_text_becomes_symbol(self):
-        """SPEC-S061: 'Stop' or 'STOP' text should display ⏹ symbol."""
+    def test_stop_text_becomes_text(self):
+        """SPEC-S061: 'Stop' or 'STOP' text should display Stop text."""
         from glove80_visualizer.svg_generator import format_key_label
 
-        assert format_key_label("Stop") in ["⏹", "⏹️", "◼"]
-        assert format_key_label("STOP") in ["⏹", "⏹️", "◼"]
+        assert format_key_label("Stop") == "Stop"
+        assert format_key_label("STOP") == "Stop"
 
-    def test_next_text_becomes_symbol(self):
-        """SPEC-S062: 'Next' or 'NEXT' text should display ⏭ symbol."""
+    def test_next_text_becomes_text(self):
+        """SPEC-S062: 'Next' or 'NEXT' text should display Next text."""
         from glove80_visualizer.svg_generator import format_key_label
 
-        assert format_key_label("Next") in ["⏭", "⏭️", ">>|", "⏩"]
-        assert format_key_label("NEXT") in ["⏭", "⏭️", ">>|", "⏩"]
+        assert format_key_label("Next") == "Next"
+        assert format_key_label("NEXT") == "Next"
 
-    def test_prev_text_becomes_symbol(self):
-        """SPEC-S063: 'Prev', 'PREV', or 'Previous' text should display ⏮ symbol."""
+    def test_prev_text_becomes_text(self):
+        """SPEC-S063: 'Prev', 'PREV', or 'Previous' text should display Prev text."""
         from glove80_visualizer.svg_generator import format_key_label
 
-        assert format_key_label("Prev") in ["⏮", "⏮️", "|<<", "⏪"]
-        assert format_key_label("PREV") in ["⏮", "⏮️", "|<<", "⏪"]
-        assert format_key_label("Previous") in ["⏮", "⏮️", "|<<", "⏪"]
+        assert format_key_label("Prev") == "Prev"
+        assert format_key_label("PREV") == "Prev"
+        assert format_key_label("Previous") == "Prev"
 
-    def test_vol_up_text_becomes_symbol(self):
-        """SPEC-S064: 'Vol Up', 'VOL UP', or 'Volume Up' text should display 🔊 symbol."""
+    def test_vol_up_text_becomes_text(self):
+        """SPEC-S064: 'Vol Up', 'VOL UP', or 'Volume Up' text should display Vol+ text."""
         from glove80_visualizer.svg_generator import format_key_label
 
-        assert format_key_label("Vol Up") in ["🔊", "🔉+", "Vol+"]
-        assert format_key_label("VOL UP") in ["🔊", "🔉+", "Vol+"]
-        assert format_key_label("Volume Up") in ["🔊", "🔉+", "Vol+"]
+        assert format_key_label("Vol Up") == "Vol+"
+        assert format_key_label("VOL UP") == "Vol+"
+        assert format_key_label("Volume Up") == "Vol+"
 
-    def test_vol_dn_text_becomes_symbol(self):
-        """SPEC-S065: 'Vol Dn', 'VOL DN', or 'Volume Down' text should display 🔉 symbol."""
+    def test_vol_dn_text_becomes_text(self):
+        """SPEC-S065: 'Vol Dn', 'VOL DN', or 'Volume Down' text should display Vol- text."""
         from glove80_visualizer.svg_generator import format_key_label
 
-        assert format_key_label("Vol Dn") in ["🔉", "🔈-", "Vol-"]
-        assert format_key_label("VOL DN") in ["🔉", "🔈-", "Vol-"]
-        assert format_key_label("Vol Down") in ["🔉", "🔈-", "Vol-"]
-        assert format_key_label("Volume Down") in ["🔉", "🔈-", "Vol-"]
+        assert format_key_label("Vol Dn") == "Vol-"
+        assert format_key_label("VOL DN") == "Vol-"
+        assert format_key_label("Vol Down") == "Vol-"
+        assert format_key_label("Volume Down") == "Vol-"
 
-    def test_mute_text_becomes_symbol(self):
-        """SPEC-S066: 'Mute' or 'MUTE' text should display 🔇 symbol."""
+    def test_mute_text_becomes_text(self):
+        """SPEC-S066: 'Mute' or 'MUTE' text should display Mute text."""
         from glove80_visualizer.svg_generator import format_key_label
 
-        assert format_key_label("Mute") in ["🔇", "🔈✕", "🔈×"]
-        assert format_key_label("MUTE") in ["🔇", "🔈✕", "🔈×"]
+        assert format_key_label("Mute") == "Mute"
+        assert format_key_label("MUTE") == "Mute"
 
     def test_bri_up_text_becomes_symbol(self):
         """SPEC-S067: 'Bri Up', 'BRI UP', or 'Brightness Up' text should display 🔆 symbol."""
@@ -850,61 +850,61 @@ class TestMediaKeyTextToSymbol:
         assert format_key_label("Bri Down") in ["🔅", "☀-", "Bri-"]
         assert format_key_label("Brightness Down") in ["🔅", "☀-", "Bri-"]
 
-    def test_bri_max_text_becomes_symbol(self):
-        """SPEC-S069: 'Bri Max' or 'BRI MAX' text should display ☀ symbol."""
+    def test_bri_max_text_becomes_text(self):
+        """SPEC-S069: 'Bri Max' or 'BRI MAX' text should display BriMax text."""
         from glove80_visualizer.svg_generator import format_key_label
 
-        assert format_key_label("Bri Max") in ["☀", "☀️", "🔆"]
-        assert format_key_label("BRI MAX") in ["☀", "☀️", "🔆"]
+        assert format_key_label("Bri Max") == "BriMax"
+        assert format_key_label("BRI MAX") == "BriMax"
 
-    def test_bri_min_text_becomes_symbol(self):
-        """SPEC-S070: 'Bri Min' or 'BRI MIN' text should display dim symbol."""
+    def test_bri_min_text_becomes_text(self):
+        """SPEC-S070: 'Bri Min' or 'BRI MIN' text should display BriMin text."""
         from glove80_visualizer.svg_generator import format_key_label
 
-        assert format_key_label("Bri Min") in ["🌑", "○", "🔅"]
-        assert format_key_label("BRI MIN") in ["🌑", "○", "🔅"]
+        assert format_key_label("Bri Min") == "BriMin"
+        assert format_key_label("BRI MIN") == "BriMin"
 
-    def test_bri_auto_text_becomes_symbol(self):
-        """SPEC-S070b: 'Bri Auto' or 'BRI AUTO' text should display brightness auto symbol."""
+    def test_bri_auto_text_becomes_text(self):
+        """SPEC-S070b: 'Bri Auto' or 'BRI AUTO' text should display BriAuto text."""
         from glove80_visualizer.svg_generator import format_key_label
 
-        assert format_key_label("Bri Auto") in ["🔆A", "☀A", "Auto"]
-        assert format_key_label("BRI AUTO") in ["🔆A", "☀A", "Auto"]
+        assert format_key_label("Bri Auto") == "BriAuto"
+        assert format_key_label("BRI AUTO") == "BriAuto"
 
-    def test_fast_forward_text_becomes_symbol(self):
-        """SPEC-S071: 'FF' or 'Fast Forward' text should display ⏩ symbol."""
+    def test_fast_forward_text_becomes_text(self):
+        """SPEC-S071: 'FF' or 'Fast Forward' text should display FF text."""
         from glove80_visualizer.svg_generator import format_key_label
 
-        assert format_key_label("FF") in ["⏩", ">>", "▶▶"]
-        assert format_key_label("Fast Forward") in ["⏩", ">>", "▶▶"]
+        assert format_key_label("FF") == "FF"
+        assert format_key_label("Fast Forward") == "FF"
 
-    def test_rewind_text_becomes_symbol(self):
-        """SPEC-S072: 'RW' or 'Rewind' text should display ⏪ symbol."""
+    def test_rewind_text_becomes_text(self):
+        """SPEC-S072: 'RW' or 'Rewind' text should display Rew text."""
         from glove80_visualizer.svg_generator import format_key_label
 
-        assert format_key_label("RW") in ["⏪", "<<", "◀◀"]
-        assert format_key_label("Rewind") in ["⏪", "<<", "◀◀"]
+        assert format_key_label("RW") == "Rew"
+        assert format_key_label("Rewind") == "Rew"
 
-    def test_eject_text_becomes_symbol(self):
-        """SPEC-S073: 'Eject' or 'EJECT' text should display ⏏ symbol."""
+    def test_eject_text_becomes_text(self):
+        """SPEC-S073: 'Eject' or 'EJECT' text should display Eject text."""
         from glove80_visualizer.svg_generator import format_key_label
 
-        assert format_key_label("Eject") in ["⏏", "⏏️"]
-        assert format_key_label("EJECT") in ["⏏", "⏏️"]
+        assert format_key_label("Eject") == "Eject"
+        assert format_key_label("EJECT") == "Eject"
 
-    def test_record_text_becomes_symbol(self):
-        """SPEC-S074: 'Rec', 'REC', or 'Record' text should display ⏺ symbol."""
+    def test_record_text_becomes_text(self):
+        """SPEC-S074: 'Rec', 'REC', or 'Record' text should display Rec text."""
         from glove80_visualizer.svg_generator import format_key_label
 
-        assert format_key_label("Rec") in ["⏺", "⏺️", "●"]
-        assert format_key_label("REC") in ["⏺", "⏺️", "●"]
-        assert format_key_label("Record") in ["⏺", "⏺️", "●"]
+        assert format_key_label("Rec") == "Rec"
+        assert format_key_label("REC") == "Rec"
+        assert format_key_label("Record") == "Rec"
 
-    def test_pp_shorthand_becomes_symbol(self):
-        """SPEC-S075: 'PP' shorthand should display ⏯ symbol."""
+    def test_pp_shorthand_becomes_text(self):
+        """SPEC-S075: 'PP' shorthand should display Play text for PDF compatibility."""
         from glove80_visualizer.svg_generator import format_key_label
 
-        assert format_key_label("PP") == "⏯"
+        assert format_key_label("PP") == "Play"
 
 
 class TestModifierComboFormatting:
@@ -1234,77 +1234,78 @@ class TestMouseKeyDisplay:
 
 
 class TestEmojiMacroDisplay:
-    """Tests for emoji macro display - should show actual emoji."""
+    """Tests for emoji macro display - now shows text for PDF compatibility."""
 
-    def test_emoji_heart_shows_emoji(self):
-        """SPEC-S115: &emoji_heart_macro should show ❤ emoji."""
+    def test_emoji_heart_shows_text(self):
+        """SPEC-S115: &emoji_heart_macro should show Heart text."""
         from glove80_visualizer.svg_generator import format_key_label
 
         result = format_key_label("&emoji_heart_macro")
-        assert result == "❤" or result == "❤️"
+        assert result == "Heart"
 
-    def test_emoji_fire_shows_emoji(self):
-        """SPEC-S116: &emoji_fire_macro should show 🔥 emoji."""
+    def test_emoji_fire_shows_text(self):
+        """SPEC-S116: &emoji_fire_macro should show Fire text."""
         from glove80_visualizer.svg_generator import format_key_label
 
         result = format_key_label("&emoji_fire_macro")
-        assert result == "🔥"
+        assert result == "Fire"
 
-    def test_emoji_thumbs_up_shows_emoji(self):
-        """SPEC-S117: &emoji_thumbs_up_macro should show 👍 emoji."""
+    def test_emoji_thumbs_up_shows_text(self):
+        """SPEC-S117: &emoji_thumbs_up_macro should show ThuUp text."""
         from glove80_visualizer.svg_generator import format_key_label
 
         result = format_key_label("&emoji_thumbs_up_macro")
-        assert result == "👍"
+        assert result == "ThuUp"
 
-    def test_emoji_tada_shows_emoji(self):
-        """SPEC-S118: &emoji_tada_macro should show 🎉 emoji."""
+    def test_emoji_tada_shows_text(self):
+        """SPEC-S118: &emoji_tada_macro should show Tada text."""
         from glove80_visualizer.svg_generator import format_key_label
 
         result = format_key_label("&emoji_tada_macro")
-        assert result == "🎉"
+        assert result == "Tada"
 
-    def test_emoji_sunny_shows_emoji(self):
-        """SPEC-S119: &emoji_sunny_macro should show ☀ emoji."""
+    def test_emoji_sunny_shows_text(self):
+        """SPEC-S119: &emoji_sunny_macro should show Sunny text."""
         from glove80_visualizer.svg_generator import format_key_label
 
         result = format_key_label("&emoji_sunny_macro")
-        assert result in ["☀", "☀️"]
+        assert result == "Sunny"
 
-    def test_emoji_cloudy_shows_emoji(self):
-        """SPEC-S120: &emoji_cloudy_macro should show ☁ emoji."""
+    def test_emoji_cloudy_shows_text(self):
+        """SPEC-S120: &emoji_cloudy_macro should show Cloudy text."""
         from glove80_visualizer.svg_generator import format_key_label
 
         result = format_key_label("&emoji_cloudy_macro")
-        assert result in ["☁", "☁️"]
+        assert result == "Cloudy"
 
-    def test_emoji_rainbow_shows_emoji(self):
-        """SPEC-S121: &emoji_rainbow_macro should show 🌈 emoji."""
+    def test_emoji_rainbow_shows_text(self):
+        """SPEC-S121: &emoji_rainbow_macro should show Rainbo text."""
         from glove80_visualizer.svg_generator import format_key_label
 
         result = format_key_label("&emoji_rainbow_macro")
-        assert result == "🌈"
+        assert result == "Rainbo"
 
-    def test_emoji_muscle_shows_emoji(self):
-        """SPEC-S122: &emoji_muscle_macro should show 💪 emoji."""
+    def test_emoji_muscle_shows_text(self):
+        """SPEC-S122: &emoji_muscle_macro should show Muscle text."""
         from glove80_visualizer.svg_generator import format_key_label
 
         result = format_key_label("&emoji_muscle_macro")
-        assert result == "💪"
+        assert result == "Muscle"
 
-    def test_emoji_rocket_shows_emoji(self):
-        """SPEC-S123: &emoji_rocket_macro should show 🚀 emoji."""
+    def test_emoji_rocket_shows_text(self):
+        """SPEC-S123: &emoji_rocket_macro should show Rocket text."""
         from glove80_visualizer.svg_generator import format_key_label
 
         result = format_key_label("&emoji_rocket_macro")
-        assert result == "🚀"
+        assert result == "Rocket"
 
-    def test_emoji_moon_shows_emoji(self):
-        """SPEC-S124: &emoji_full_moon_macro should show 🌕 emoji."""
+    def test_emoji_moon_shows_text(self):
+        """SPEC-S124: &emoji_full_moon_macro should show text label."""
         from glove80_visualizer.svg_generator import format_key_label
 
         result = format_key_label("&emoji_full_moon_macro")
-        assert result in ["🌕", "🌝"]
+        # Now returns text: "FulMoo" (3 chars each from "full" and "moon")
+        assert result == "FulMoo"
 
 
 class TestWorldMacroDisplay:
@@ -1405,51 +1406,50 @@ class TestMouseLayerNames:
 class TestEmojiPresetMacros:
     """Tests for emoji preset/modifier macros."""
 
-    def test_skin_tone_preset_shows_symbol(self):
-        """SPEC-S137: &emoji_skin_tone_preset should show skin tone indicator."""
+    def test_skin_tone_preset_shows_text(self):
+        """SPEC-S137: &emoji_skin_tone_preset should show text label."""
         from glove80_visualizer.svg_generator import format_key_label
 
         result = format_key_label("&emoji_skin_tone_preset")
-        assert len(result) <= 4
-        assert result in ["🏻", "👤", "ST", "skin"]
+        assert result == "Skin"
 
-    def test_zwj_macro_shows_symbol(self):
-        """SPEC-S138: &emoji_zwj_macro should show ZWJ indicator."""
+    def test_zwj_macro_shows_text(self):
+        """SPEC-S138: &emoji_zwj_macro should show Zwj text."""
         from glove80_visualizer.svg_generator import format_key_label
 
         result = format_key_label("&emoji_zwj_macro")
-        assert len(result) <= 4
-        assert result in ["ZWJ", "⊕", "+"]
+        # "zwj" is a single word, so it gets capitalized first letter only
+        assert result == "Zwj"
 
-    def test_gender_sign_preset_shows_symbol(self):
-        """SPEC-S139: &emoji_gender_sign_preset should show gender indicator."""
+    def test_gender_sign_preset_shows_text(self):
+        """SPEC-S139: &emoji_gender_sign_preset should show text label."""
         from glove80_visualizer.svg_generator import format_key_label
 
         result = format_key_label("&emoji_gender_sign_preset")
-        assert len(result) <= 4
-        assert result in ["⚥", "♂♀", "Gen"]
+        assert result == "Gender"
 
-    def test_hair_style_preset_shows_symbol(self):
-        """SPEC-S140: &emoji_hair_style_preset should show hair style indicator."""
+    def test_hair_style_preset_shows_text(self):
+        """SPEC-S140: &emoji_hair_style_preset should show text label."""
         from glove80_visualizer.svg_generator import format_key_label
 
         result = format_key_label("&emoji_hair_style_preset")
-        assert len(result) <= 4
-        assert result in ["🦰", "Hair", "💇"]
+        assert result == "Hair"
 
-    def test_male_sign_shows_symbol(self):
-        """SPEC-S141: &emoji_male_sign_macro should show ♂."""
+    def test_male_sign_shows_text(self):
+        """SPEC-S141: &emoji_male_sign_macro should show text label."""
         from glove80_visualizer.svg_generator import format_key_label
 
         result = format_key_label("&emoji_male_sign_macro")
-        assert result == "♂"
+        # Converted from emoji macro: "male_sign" -> "MalSig"
+        assert result == "MalSig"
 
-    def test_female_sign_shows_symbol(self):
-        """SPEC-S142: &emoji_female_sign_macro should show ♀."""
+    def test_female_sign_shows_text(self):
+        """SPEC-S142: &emoji_female_sign_macro should show text label."""
         from glove80_visualizer.svg_generator import format_key_label
 
         result = format_key_label("&emoji_female_sign_macro")
-        assert result == "♀"
+        # Converted from emoji macro: "female_sign" -> "FemSig"
+        assert result == "FemSig"
 
 
 class TestHoldBehaviors:
@@ -1499,61 +1499,67 @@ class TestHoldBehaviors:
 
 
 class TestMoreEmojiMacros:
-    """Tests for additional emoji macros found in keymap."""
+    """Tests for additional emoji macros found in keymap - now returns text."""
 
-    def test_snap_fingers_shows_emoji(self):
-        """SPEC-S149: &emoji_snap_fingers_macro should show emoji."""
+    def test_snap_fingers_shows_text(self):
+        """SPEC-S149: &emoji_snap_fingers_macro should show text label."""
         from glove80_visualizer.svg_generator import format_key_label
 
         result = format_key_label("&emoji_snap_fingers_macro")
-        assert result in ["🫰", "👌", "✌"]
+        # "snap_fingers" -> "SnaFin"
+        assert result == "SnaFin"
 
-    def test_disappointed_shows_emoji(self):
-        """SPEC-S150: &emoji_disappointed_macro should show emoji."""
+    def test_disappointed_shows_text(self):
+        """SPEC-S150: &emoji_disappointed_macro should show text label."""
         from glove80_visualizer.svg_generator import format_key_label
 
         result = format_key_label("&emoji_disappointed_macro")
-        assert result in ["😞", "😔", "☹"]
+        # Single word "disappointed" -> "Disapp" (first 6 chars)
+        assert result == "Disapp"
 
-    def test_shocked_face_shows_emoji(self):
-        """SPEC-S151: &emoji_shocked_face_macro should show emoji."""
+    def test_shocked_face_shows_text(self):
+        """SPEC-S151: &emoji_shocked_face_macro should show text label."""
         from glove80_visualizer.svg_generator import format_key_label
 
         result = format_key_label("&emoji_shocked_face_macro")
-        assert result in ["😲", "😱", "😮"]
+        # "shocked_face" -> "ShoFac"
+        assert result == "ShoFac"
 
-    def test_face_joke_wink_shows_emoji(self):
-        """SPEC-S152: &emoji_face_joke_wink_macro should show emoji."""
+    def test_face_joke_wink_shows_text(self):
+        """SPEC-S152: &emoji_face_joke_wink_macro should show text label."""
         from glove80_visualizer.svg_generator import format_key_label
 
         result = format_key_label("&emoji_face_joke_wink_macro")
-        assert result in ["😜", "😉", "😏"]
+        # "face_joke_wink" -> "FacJokWin"
+        assert result == "FacJokW"
 
-    def test_face_fear_scared_shows_emoji(self):
-        """SPEC-S153: &emoji_face_fear_scared_macro should show emoji."""
+    def test_face_fear_scared_shows_text(self):
+        """SPEC-S153: &emoji_face_fear_scared_macro should show text label."""
         from glove80_visualizer.svg_generator import format_key_label
 
         result = format_key_label("&emoji_face_fear_scared_macro")
-        assert result in ["😨", "😰", "😱"]
+        # "face_fear_scared" -> "FacFeaSca"
+        assert result == "FacFeaS"
 
 
 class TestFallbackBranches:
     """Tests for fallback/default branches to achieve 100% coverage."""
 
     def test_emoji_macro_no_match_returns_default(self):
-        """Emoji macro without proper pattern returns default emoji."""
+        """Emoji macro without proper pattern returns default text."""
         from glove80_visualizer.svg_generator import _format_emoji_macro
 
         # Missing _macro suffix - won't match regex
         result = _format_emoji_macro("&emoji_heart")
-        assert result == "😀"
+        assert result == "Emoji"
 
-    def test_emoji_macro_unknown_name_returns_default(self):
-        """Unknown emoji name returns default emoji."""
+    def test_emoji_macro_unknown_name_returns_text(self):
+        """Unknown emoji name returns generated text label."""
         from glove80_visualizer.svg_generator import _format_emoji_macro
 
         result = _format_emoji_macro("&emoji_nonexistent_thing_macro")
-        assert result == "😀"
+        # "nonexistent_thing" -> "NonThi"
+        assert result == "NonThi"
 
     def test_world_macro_no_match_returns_default(self):
         """World macro without proper pattern returns ?."""
@@ -1571,46 +1577,46 @@ class TestFallbackBranches:
         assert result == "?"
 
     def test_mouse_scroll_no_args_returns_default(self):
-        """Mouse scroll without direction returns default symbol."""
+        """Mouse scroll without direction returns default text."""
         from glove80_visualizer.svg_generator import _format_mouse_scroll
 
         result = _format_mouse_scroll("&msc")
-        assert result == "⊘"
+        assert result == "Scroll"
 
     def test_mouse_scroll_unknown_direction_returns_default(self):
-        """Mouse scroll with unknown direction returns default."""
+        """Mouse scroll with unknown direction returns default text."""
         from glove80_visualizer.svg_generator import _format_mouse_scroll
 
         result = _format_mouse_scroll("&msc UNKNOWN_DIR")
-        assert result == "⊘"
+        assert result == "Scroll"
 
     def test_mouse_move_no_args_returns_default(self):
-        """Mouse move without direction returns default symbol."""
+        """Mouse move without direction returns default text."""
         from glove80_visualizer.svg_generator import _format_mouse_move
 
         result = _format_mouse_move("&mmv")
-        assert result == "🖱"
+        assert result == "Mouse"
 
     def test_mouse_move_unknown_direction_returns_default(self):
-        """Mouse move with unknown direction returns default."""
+        """Mouse move with unknown direction returns default text."""
         from glove80_visualizer.svg_generator import _format_mouse_move
 
         result = _format_mouse_move("&mmv UNKNOWN_DIR")
-        assert result == "🖱"
+        assert result == "Mouse"
 
     def test_mouse_click_no_args_returns_default(self):
-        """Mouse click without button returns default symbol."""
+        """Mouse click without button returns default text."""
         from glove80_visualizer.svg_generator import _format_mouse_click
 
         result = _format_mouse_click("&mkp")
-        assert result == "🖱"
+        assert result == "Mouse"
 
     def test_mouse_click_unknown_button_returns_default(self):
-        """Mouse click with unknown button returns default."""
+        """Mouse click with unknown button returns default text."""
         from glove80_visualizer.svg_generator import _format_mouse_click
 
         result = _format_mouse_click("&mkp UNKNOWN_BTN")
-        assert result == "🖱"
+        assert result == "Mouse"
 
     def test_select_behavior_unknown_returns_default(self):
         """Unknown select behavior returns Sel."""
@@ -1725,11 +1731,11 @@ class TestFallbackBranches:
         assert result == "kp"
 
     def test_emoji_preset_unknown_returns_default(self):
-        """Unknown emoji preset returns default emoji."""
+        """Unknown emoji preset returns default text."""
         from glove80_visualizer.svg_generator import _format_emoji_preset
 
         result = _format_emoji_preset("&emoji_unknown_preset")
-        assert result == "😀"
+        assert result == "Emoji"
 
     def test_generate_all_layer_svgs_uses_first_layer_as_base(self):
         """generate_all_layer_svgs uses first layer as base if no index 0."""
