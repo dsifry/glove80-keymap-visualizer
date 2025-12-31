@@ -7,10 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2025-12-31
+
 ### Added
 - **Page orientation control** (`--portrait`, `--landscape`): Choose page orientation for PDF output
 - Portrait orientation is now the default (changed from landscape)
 - TOC pages remain in portrait orientation regardless of content orientation
+- Error handling for PDF transformation operations with actionable error messages
 
 ## [0.5.0] - 2025-12-30
 

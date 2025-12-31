@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "glove80-keymap-visualizer"
-version = "0.5.0"
+version = "0.6.0"
 description = "Generate PDF visualizations of Glove80 keyboard layers from ZMK keymap files"
 readme = "README.md"
 license = {text = "MIT"}
