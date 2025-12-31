@@ -109,7 +109,7 @@ class TestVisualizerConfig:
         config = VisualizerConfig()
         assert config.keyboard == "glove80"
         assert config.page_size == "letter"
-        assert config.orientation == "landscape"
+        assert config.orientation == "portrait"
 
     def test_config_custom(self):
         """SPEC-M021: VisualizerConfig can be customized."""

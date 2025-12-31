@@ -231,8 +231,9 @@ def generate_pdf_with_toc(
     for i in range(0, len(layer_pdfs), layers_per_page):
         chunk = layer_pdfs[i : i + layers_per_page]
         if layers_per_page == 1:
-            # 1 layer per page - use original PDF at full scale
-            pdf_pages.append(chunk[0])
+            # 1 layer per page - apply orientation transform
+            oriented_pdf = _apply_orientation(chunk[0], config)
+            pdf_pages.append(oriented_pdf)
         else:
             # Multiple layers per page layout - always use combine for consistent scaling
             # This ensures the last page (with fewer layers) maintains the same scale
@@ -247,6 +248,87 @@ def generate_pdf_with_toc(
     return merge_pdfs(pdf_pages)
 
 
+def _apply_orientation(
+    pdf_bytes: bytes,
+    config: VisualizerConfig,
+) -> bytes:
+    """
+    Apply orientation transform to a single PDF page.
+
+    For portrait orientation, if the source is landscape, the content is
+    scaled and centered onto a portrait page.
+
+    Args:
+        pdf_bytes: PDF content as bytes
+        config: Configuration with orientation setting
+
+    Returns:
+        Transformed PDF content as bytes
+    """
+    src_pdf = pikepdf.open(BytesIO(pdf_bytes))
+    if len(src_pdf.pages) == 0:
+        return pdf_bytes
+
+    src_page = src_pdf.pages[0]
+    src_box = src_page.mediabox
+    src_width = float(src_box[2]) - float(src_box[0])
+    src_height = float(src_box[3]) - float(src_box[1])
+
+    # Check if orientation change is needed
+    is_src_landscape = src_width > src_height
+    want_portrait = config.orientation == "portrait"
+    want_landscape = config.orientation == "landscape"
+
+    # If source matches target orientation, return as-is
+    if (is_src_landscape and want_landscape) or (not is_src_landscape and want_portrait):
+        return pdf_bytes
+
+    # Need to transform: swap dimensions to match target orientation
+    # Since we're here, source doesn't match target, so swap
+    page_width = src_height
+    page_height = src_width
+
+    # Calculate scale to fit content in new orientation
+    scale_x = page_width / src_width
+    scale_y = page_height / src_height
+    scale = min(scale_x, scale_y)
+
+    # Calculate positioning to center content
+    scaled_width = src_width * scale
+    scaled_height = src_height * scale
+    x_offset = (page_width - scaled_width) / 2
+    y_offset = (page_height - scaled_height) / 2
+
+    # Create output PDF with new page dimensions
+    output_pdf = pikepdf.new()
+
+    # Create Form XObject from source page
+    form_xobj = src_page.as_form_xobject()
+    xobject_dict = pikepdf.Dictionary()
+    xobject_dict[pikepdf.Name("/Content")] = output_pdf.copy_foreign(form_xobj)
+
+    # Build content stream to place the XObject
+    xf = f"{x_offset:.2f}"
+    yf = f"{y_offset:.2f}"
+    content = f"q {scale:.6f} 0 0 {scale:.6f} {xf} {yf} cm /Content Do Q\n"
+    content_stream = output_pdf.make_stream(content.encode())
+
+    # Create page with transformed content
+    page_dict = pikepdf.Dictionary(
+        Type=pikepdf.Name.Page,
+        MediaBox=pikepdf.Array([0, 0, page_width, page_height]),
+        Resources=pikepdf.Dictionary(XObject=xobject_dict),
+        Contents=content_stream,
+    )
+
+    page = pikepdf.Page(page_dict)
+    output_pdf.pages.append(page)
+
+    output = BytesIO()
+    output_pdf.save(output)
+    return output.getvalue()
+
+
 def _combine_pdfs_on_page(
     pdf_bytes_list: list[bytes],
     config: VisualizerConfig,
@@ -257,9 +339,12 @@ def _combine_pdfs_on_page(
     Converts each SVG to PDF first (preserving fonts), then scales and
     positions the PDF content onto a single page using pikepdf.
 
+    For portrait orientation, the page is rotated to be taller than wide,
+    and content is scaled and centered appropriately.
+
     Args:
         pdf_bytes_list: List of PDF content as bytes (1-3 PDFs)
-        config: Configuration with page dimensions and layers_per_page
+        config: Configuration with page dimensions, layers_per_page, and orientation
 
     Returns:
         Combined PDF content as bytes
@@ -267,17 +352,35 @@ def _combine_pdfs_on_page(
     if not pdf_bytes_list:
         raise ValueError("Cannot combine empty list of PDFs")
 
-    # Derive page dimensions from first source PDF instead of hard-coding
-    # This ensures combined pages match the source page size/orientation
+    # Derive base dimensions from first source PDF
     first_pdf = pikepdf.open(BytesIO(pdf_bytes_list[0]))
     if len(first_pdf.pages) == 0:
         # Fallback to Letter portrait if first PDF is empty
-        page_width = 612.0
-        page_height = 792.0
+        src_width = 612.0
+        src_height = 792.0
     else:
         first_box = first_pdf.pages[0].mediabox
-        page_width = float(first_box[2]) - float(first_box[0])
-        page_height = float(first_box[3]) - float(first_box[1])
+        src_width = float(first_box[2]) - float(first_box[0])
+        src_height = float(first_box[3]) - float(first_box[1])
+
+    # Determine target page dimensions based on orientation
+    if config.orientation == "portrait":
+        # Portrait: ensure height >= width
+        # If source is landscape (width > height), swap dimensions
+        if src_width > src_height:
+            page_width = src_height
+            page_height = src_width
+        else:
+            page_width = src_width
+            page_height = src_height
+    else:
+        # Landscape: ensure width > height
+        if src_width > src_height:
+            page_width = src_width
+            page_height = src_height
+        else:
+            page_width = src_height
+            page_height = src_width
 
     # Use configured layers_per_page for consistent scaling across all pages
     # This ensures the last page with fewer layers maintains the same scale
@@ -414,6 +517,8 @@ def _generate_toc_pages(layers: list[Layer], config: VisualizerConfig) -> list[b
     """
     Generate table of contents pages (may be multiple if many layers).
 
+    TOC pages are always in portrait orientation regardless of content orientation.
+
     Args:
         layers: List of layers to include in TOC
         config: Configuration for styling
@@ -421,13 +526,13 @@ def _generate_toc_pages(layers: list[Layer], config: VisualizerConfig) -> list[b
     Returns:
         List of PDF content bytes for each TOC page
     """
-    # Layout constants
-    page_width = 800
-    page_height = 600
+    # Layout constants - TOC is always portrait
+    page_width = 600
+    page_height = 800
     title_y = 50
     first_entry_y = 100
     entry_height = 25
-    max_y = 550  # Leave room at bottom
+    max_y = 750  # Leave room at bottom
     entries_per_page = (max_y - first_entry_y) // entry_height
 
     # Calculate how many TOC pages we need

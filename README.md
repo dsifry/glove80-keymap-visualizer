@@ -116,6 +116,10 @@ glove80-viz keymap.keymap -o output.pdf --layers-per-page 2  # Two layers per pa
 glove80-viz keymap.keymap -o output.pdf --dpi 150  # Lower res, smaller file
 glove80-viz keymap.keymap -o output.pdf --dpi 600  # Higher res, larger file
 
+# Page orientation (portrait is default)
+glove80-viz keymap.keymap -o output.pdf --portrait   # Portrait orientation (default)
+glove80-viz keymap.keymap -o output.pdf --landscape  # Landscape orientation
+
 # Generate SVG files instead of PDF
 glove80-viz keymap.keymap -o ./svg-folder --format svg
 
@@ -170,6 +174,8 @@ glove80-viz keymap.keymap --list-layers
 | `--no-toc` | Disable table of contents in PDF |
 | `--layers-per-page` | Number of layers per PDF page: 1, 2, or 3 (default: 3) |
 | `--dpi` | Output resolution for PDF rendering (default: 300) |
+| `--portrait` | Use portrait page orientation (default) |
+| `--landscape` | Use landscape page orientation |
 | `--continue-on-error` | Continue if a layer fails to render |
 | `-v, --verbose` | Show detailed output |
 | `-q, --quiet` | Suppress all output except errors |
@@ -203,7 +209,7 @@ show_shifted: true     # show shifted chars (default: true)
 resolve_trans: false
 include_toc: true
 page_size: letter      # or "a4"
-orientation: landscape
+orientation: portrait  # "portrait" (default) or "landscape"
 layers_per_page: 3     # 1, 2, or 3 layers per PDF page
 dpi: 300               # output resolution (72-600 typical)
 ```
