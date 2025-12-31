@@ -35,7 +35,7 @@ class VisualizerConfig:
 
     # Page layout
     page_size: str = "letter"
-    orientation: str = "landscape"
+    orientation: str = "portrait"
 
     # Styling
     key_width: int = 60

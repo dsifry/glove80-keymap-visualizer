@@ -587,3 +587,278 @@ class TestLayersPerPage:
         # We just verify the page has reasonable dimensions (not zero, not default)
         assert width > 0
         assert height > 0
+
+
+class TestPdfOrientation:
+    """Tests for PDF orientation handling."""
+
+    def test_portrait_orientation_produces_portrait_page(self, sample_svg, sample_layers):
+        """SPEC-OR-007: Portrait orientation produces pages with height >= width."""
+        from io import BytesIO
+
+        import pikepdf
+
+        from glove80_visualizer.config import VisualizerConfig
+        from glove80_visualizer.pdf_generator import generate_pdf_with_toc
+
+        config = VisualizerConfig(orientation="portrait")
+        svgs = [sample_svg] * len(sample_layers)
+
+        pdf_bytes = generate_pdf_with_toc(
+            layers=sample_layers, svgs=svgs, config=config, include_toc=False
+        )
+
+        pdf = pikepdf.open(BytesIO(pdf_bytes))
+        page = pdf.pages[0]
+        mediabox = page.mediabox
+        width = float(mediabox[2]) - float(mediabox[0])
+        height = float(mediabox[3]) - float(mediabox[1])
+
+        assert height >= width, f"Expected portrait (height >= width), got {width}x{height}"
+
+    def test_landscape_orientation_produces_landscape_page(self, sample_svg, sample_layers):
+        """SPEC-OR-008: Landscape orientation produces pages with width > height."""
+        from io import BytesIO
+
+        import pikepdf
+
+        from glove80_visualizer.config import VisualizerConfig
+        from glove80_visualizer.pdf_generator import generate_pdf_with_toc
+
+        config = VisualizerConfig(orientation="landscape")
+        svgs = [sample_svg] * len(sample_layers)
+
+        pdf_bytes = generate_pdf_with_toc(
+            layers=sample_layers, svgs=svgs, config=config, include_toc=False
+        )
+
+        pdf = pikepdf.open(BytesIO(pdf_bytes))
+        page = pdf.pages[0]
+        mediabox = page.mediabox
+        width = float(mediabox[2]) - float(mediabox[0])
+        height = float(mediabox[3]) - float(mediabox[1])
+
+        assert width > height, f"Expected landscape (width > height), got {width}x{height}"
+
+    def test_default_orientation_is_portrait(self, sample_svg, sample_layers):
+        """SPEC-OR-009: Default orientation is portrait."""
+        from io import BytesIO
+
+        import pikepdf
+
+        from glove80_visualizer.config import VisualizerConfig
+        from glove80_visualizer.pdf_generator import generate_pdf_with_toc
+
+        config = VisualizerConfig()  # Default config
+        svgs = [sample_svg] * len(sample_layers)
+
+        pdf_bytes = generate_pdf_with_toc(
+            layers=sample_layers, svgs=svgs, config=config, include_toc=False
+        )
+
+        pdf = pikepdf.open(BytesIO(pdf_bytes))
+        page = pdf.pages[0]
+        mediabox = page.mediabox
+        width = float(mediabox[2]) - float(mediabox[0])
+        height = float(mediabox[3]) - float(mediabox[1])
+
+        # Default should be portrait
+        assert height >= width, f"Default should be portrait, got {width}x{height}"
+
+    def test_toc_always_portrait(self, sample_svg, sample_layers):
+        """SPEC-OR-010: TOC page is always portrait regardless of content orientation."""
+        from io import BytesIO
+
+        import pikepdf
+
+        from glove80_visualizer.config import VisualizerConfig
+        from glove80_visualizer.pdf_generator import generate_pdf_with_toc
+
+        # Use landscape for content
+        config = VisualizerConfig(orientation="landscape")
+        svgs = [sample_svg] * len(sample_layers)
+
+        pdf_bytes = generate_pdf_with_toc(
+            layers=sample_layers, svgs=svgs, config=config, include_toc=True
+        )
+
+        pdf = pikepdf.open(BytesIO(pdf_bytes))
+        # First page is TOC
+        toc_page = pdf.pages[0]
+        mediabox = toc_page.mediabox
+        width = float(mediabox[2]) - float(mediabox[0])
+        height = float(mediabox[3]) - float(mediabox[1])
+
+        # TOC should be portrait
+        assert height >= width, f"TOC should be portrait, got {width}x{height}"
+
+    def test_portrait_content_scaled_and_centered(self, sample_svg, sample_layers):
+        """SPEC-OR-011: Portrait mode scales and centers content on portrait page."""
+        from io import BytesIO
+
+        import pikepdf
+
+        from glove80_visualizer.config import VisualizerConfig
+        from glove80_visualizer.pdf_generator import generate_pdf_with_toc
+
+        config = VisualizerConfig(orientation="portrait", layers_per_page=1)
+        svgs = [sample_svg]
+
+        pdf_bytes = generate_pdf_with_toc(
+            layers=sample_layers[:1], svgs=svgs, config=config, include_toc=False
+        )
+
+        # Should produce a valid PDF
+        assert pdf_bytes.startswith(b"%PDF")
+
+        pdf = pikepdf.open(BytesIO(pdf_bytes))
+        assert len(pdf.pages) == 1
+
+    def test_config_orientation_default_is_portrait(self):
+        """SPEC-OR-012: VisualizerConfig default orientation is portrait."""
+        from glove80_visualizer.config import VisualizerConfig
+
+        config = VisualizerConfig()
+        assert config.orientation == "portrait"
+
+    def test_apply_orientation_empty_pdf(self):
+        """_apply_orientation returns unchanged PDF when source has no pages."""
+        from io import BytesIO
+
+        import pikepdf
+
+        from glove80_visualizer.config import VisualizerConfig
+        from glove80_visualizer.pdf_generator import _apply_orientation
+
+        # Create an empty PDF (no pages)
+        empty_pdf = pikepdf.new()
+        empty_bytes = BytesIO()
+        empty_pdf.save(empty_bytes)
+        empty_bytes = empty_bytes.getvalue()
+
+        config = VisualizerConfig(orientation="portrait")
+        result = _apply_orientation(empty_bytes, config)
+
+        # Should return unchanged
+        assert result == empty_bytes
+
+    def test_apply_orientation_already_matches(self, sample_svg):
+        """_apply_orientation returns unchanged when source matches target orientation."""
+        from io import BytesIO
+
+        import pikepdf
+
+        from glove80_visualizer.config import VisualizerConfig
+        from glove80_visualizer.pdf_generator import _apply_orientation, svg_to_pdf
+
+        # Create a PDF from sample SVG (typically landscape)
+        pdf_bytes = svg_to_pdf(sample_svg)
+
+        # Request landscape - should match and return as-is
+        config = VisualizerConfig(orientation="landscape")
+        result = _apply_orientation(pdf_bytes, config)
+
+        # Check that dimensions are unchanged (source was landscape)
+        src_pdf = pikepdf.open(BytesIO(pdf_bytes))
+        result_pdf = pikepdf.open(BytesIO(result))
+        assert src_pdf.pages[0].mediabox == result_pdf.pages[0].mediabox
+
+    def test_apply_orientation_portrait_to_landscape(self):
+        """_apply_orientation converts portrait source to landscape."""
+        from io import BytesIO
+
+        import pikepdf
+
+        from glove80_visualizer.config import VisualizerConfig
+        from glove80_visualizer.pdf_generator import _apply_orientation, svg_to_pdf
+
+        # Create a portrait SVG (taller than wide)
+        portrait_svg = """<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="100" height="200" viewBox="0 0 100 200">
+<rect width="100" height="200" fill="white"/>
+</svg>"""
+        pdf_bytes = svg_to_pdf(portrait_svg)
+
+        # Request landscape
+        config = VisualizerConfig(orientation="landscape")
+        result = _apply_orientation(pdf_bytes, config)
+
+        # Result should be landscape (width > height)
+        result_pdf = pikepdf.open(BytesIO(result))
+        mediabox = result_pdf.pages[0].mediabox
+        width = float(mediabox[2]) - float(mediabox[0])
+        height = float(mediabox[3]) - float(mediabox[1])
+        assert width > height, f"Expected landscape, got {width}x{height}"
+
+    def test_combine_portrait_source_to_landscape(self):
+        """_combine_pdfs_on_page handles portrait source with landscape orientation."""
+        from io import BytesIO
+
+        import pikepdf
+
+        from glove80_visualizer.config import VisualizerConfig
+        from glove80_visualizer.pdf_generator import _combine_pdfs_on_page, svg_to_pdf
+
+        # Create a portrait SVG (taller than wide)
+        portrait_svg = """<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="100" height="200" viewBox="0 0 100 200">
+<rect width="100" height="200" fill="white"/>
+</svg>"""
+        pdf_bytes = svg_to_pdf(portrait_svg)
+
+        # Request landscape output with multiple layers per page
+        config = VisualizerConfig(orientation="landscape", layers_per_page=2)
+        result = _combine_pdfs_on_page([pdf_bytes, pdf_bytes], config)
+
+        # Result page should be landscape (width > height)
+        result_pdf = pikepdf.open(BytesIO(result))
+        mediabox = result_pdf.pages[0].mediabox
+        width = float(mediabox[2]) - float(mediabox[0])
+        height = float(mediabox[3]) - float(mediabox[1])
+        assert width > height, f"Expected landscape, got {width}x{height}"
+
+    def test_apply_orientation_raises_runtime_error_on_failure(self):
+        """_apply_orientation raises RuntimeError when PDF transformation fails."""
+        from unittest.mock import patch
+
+        import pytest
+
+        from glove80_visualizer.config import VisualizerConfig
+        from glove80_visualizer.pdf_generator import _apply_orientation, svg_to_pdf
+
+        # Create a portrait SVG
+        portrait_svg = """<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="100" height="200" viewBox="0 0 100 200">
+<rect width="100" height="200" fill="white"/>
+</svg>"""
+        pdf_bytes = svg_to_pdf(portrait_svg)
+
+        # Request landscape to trigger transformation
+        config = VisualizerConfig(orientation="landscape")
+
+        # Mock pikepdf.open to raise an exception during transformation
+        with patch("glove80_visualizer.pdf_generator.pikepdf.open") as mock_open:
+            mock_open.side_effect = Exception("Mocked PDF error")
+            with pytest.raises(RuntimeError, match="Failed to apply orientation"):
+                _apply_orientation(pdf_bytes, config)
+
+    def test_combine_pdfs_on_page_raises_runtime_error_on_failure(self, sample_svg):
+        """_combine_pdfs_on_page raises RuntimeError when PDF combination fails."""
+        from unittest.mock import MagicMock, PropertyMock, patch
+
+        import pytest
+
+        from glove80_visualizer.config import VisualizerConfig
+        from glove80_visualizer.pdf_generator import _combine_pdfs_on_page, svg_to_pdf
+
+        pdf_bytes = svg_to_pdf(sample_svg)
+        config = VisualizerConfig(layers_per_page=2)
+
+        # Mock pikepdf.open to return a mock that raises when accessing pages
+        with patch("glove80_visualizer.pdf_generator.pikepdf.open") as mock_open:
+            mock_pdf = MagicMock()
+            # Make pages access raise an exception
+            type(mock_pdf).pages = PropertyMock(side_effect=Exception("Mocked PDF error"))
+            mock_open.return_value = mock_pdf
+            with pytest.raises(RuntimeError, match="Failed to combine PDFs"):
+                _combine_pdfs_on_page([pdf_bytes, pdf_bytes], config)

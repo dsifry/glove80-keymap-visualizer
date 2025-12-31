@@ -914,6 +914,103 @@ class TestCliKlePdfFormat:
         assert len(result.output.strip()) == 0 or "error" not in result.output.lower()
 
 
+class TestCliOrientationOptions:
+    """Tests for --landscape and --portrait CLI options."""
+
+    def test_cli_portrait_option(self, runner, simple_keymap_path, tmp_path):
+        """SPEC-OR-001: CLI accepts --portrait option for portrait orientation."""
+        from glove80_visualizer.cli import main
+
+        output = tmp_path / "output.pdf"
+        result = runner.invoke(main, [str(simple_keymap_path), "-o", str(output), "--portrait"])
+
+        assert result.exit_code == 0
+        assert output.exists()
+
+    def test_cli_landscape_option(self, runner, simple_keymap_path, tmp_path):
+        """SPEC-OR-002: CLI accepts --landscape option for landscape orientation."""
+        from glove80_visualizer.cli import main
+
+        output = tmp_path / "output.pdf"
+        result = runner.invoke(main, [str(simple_keymap_path), "-o", str(output), "--landscape"])
+
+        assert result.exit_code == 0
+        assert output.exists()
+
+    def test_cli_orientation_options_mutually_exclusive(self, runner, simple_keymap_path, tmp_path):
+        """SPEC-OR-003: --portrait and --landscape are mutually exclusive."""
+        from glove80_visualizer.cli import main
+
+        output = tmp_path / "output.pdf"
+        result = runner.invoke(
+            main, [str(simple_keymap_path), "-o", str(output), "--portrait", "--landscape"]
+        )
+
+        # Should fail when both options are given
+        assert result.exit_code != 0
+        assert "mutually exclusive" in result.output.lower() or "error" in result.output.lower()
+
+    def test_cli_default_is_portrait(self, runner, simple_keymap_path, tmp_path):
+        """SPEC-OR-004: Default orientation is portrait when no option specified."""
+        from io import BytesIO
+
+        import pikepdf
+
+        from glove80_visualizer.cli import main
+
+        output = tmp_path / "output.pdf"
+        # Use --no-toc to skip TOC page and check content page directly
+        result = runner.invoke(main, [str(simple_keymap_path), "-o", str(output), "--no-toc"])
+
+        assert result.exit_code == 0
+
+        # Check PDF dimensions - portrait means height > width
+        pdf = pikepdf.open(BytesIO(output.read_bytes()))
+        page = pdf.pages[0]  # First page is content (no TOC)
+        mediabox = page.mediabox
+        width = float(mediabox[2]) - float(mediabox[0])
+        height = float(mediabox[3]) - float(mediabox[1])
+
+        # Portrait orientation means height >= width
+        assert height >= width, f"Expected portrait (height >= width), got {width}x{height}"
+
+    def test_cli_landscape_produces_landscape_pdf(self, runner, simple_keymap_path, tmp_path):
+        """SPEC-OR-005: --landscape produces PDF with landscape orientation (width > height)."""
+        from io import BytesIO
+
+        import pikepdf
+
+        from glove80_visualizer.cli import main
+
+        output = tmp_path / "output.pdf"
+        # Use --no-toc to skip TOC page and check content page directly
+        result = runner.invoke(
+            main, [str(simple_keymap_path), "-o", str(output), "--landscape", "--no-toc"]
+        )
+
+        assert result.exit_code == 0
+
+        # Check PDF dimensions - landscape means width > height
+        pdf = pikepdf.open(BytesIO(output.read_bytes()))
+        page = pdf.pages[0]  # First page is content (no TOC)
+        mediabox = page.mediabox
+        width = float(mediabox[2]) - float(mediabox[0])
+        height = float(mediabox[3]) - float(mediabox[1])
+
+        # Landscape orientation means width > height
+        assert width > height, f"Expected landscape (width > height), got {width}x{height}"
+
+    def test_cli_orientation_in_help(self, runner):
+        """SPEC-OR-006: --portrait and --landscape options appear in help."""
+        from glove80_visualizer.cli import main
+
+        result = runner.invoke(main, ["--help"])
+
+        assert result.exit_code == 0
+        assert "--portrait" in result.output
+        assert "--landscape" in result.output
+
+
 class TestCliIntegration:
     """Integration tests for the CLI."""
 

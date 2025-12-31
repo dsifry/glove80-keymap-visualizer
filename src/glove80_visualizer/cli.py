@@ -186,6 +186,20 @@ class MutuallyExclusiveOption(click.Option):
     default=300,
     help="Output resolution for PDF rendering [default: 300]",
 )
+@click.option(
+    "--portrait",
+    is_flag=True,
+    cls=MutuallyExclusiveOption,
+    mutually_exclusive=["landscape"],
+    help="Use portrait page orientation (default)",
+)
+@click.option(
+    "--landscape",
+    is_flag=True,
+    cls=MutuallyExclusiveOption,
+    mutually_exclusive=["portrait"],
+    help="Use landscape page orientation",
+)
 @click.version_option(version=__version__)
 def main(
     keymap: Path,
@@ -210,6 +224,8 @@ def main(
     kle_color_scheme: str,
     layers_per_page: int,
     dpi: int,
+    portrait: bool,
+    landscape: bool,
 ) -> None:
     """
     Generate PDF/SVG visualizations of Glove80 keyboard layers.
@@ -273,6 +289,11 @@ def main(
     config.show_shifted = not no_shifted
     config.layers_per_page = layers_per_page
     config.dpi = dpi
+
+    # Set orientation (default is portrait in config)
+    if landscape:
+        config.orientation = "landscape"
+    # portrait flag is a no-op since portrait is the default
 
     # Parse keymap file
     log(f"Parsing keymap: {keymap}")
