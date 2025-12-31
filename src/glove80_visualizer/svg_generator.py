@@ -637,7 +637,24 @@ def format_key_label(key: str, os_style: str = "mac") -> str:
     combo_match = re.match(r"^([LR][SGAC])\((.+)\)$", key_normalized, re.IGNORECASE)
     if combo_match:
         modifier_code, inner_key = combo_match.groups()
-        modifier_label = _get_modifier_label(modifier_code.upper(), os_style)
+        modifier_code_upper = modifier_code.upper()
+
+        # For shift modifiers with single characters, return the shifted symbol directly
+        # e.g., LS(4) -> "$", LS(3) -> "#", LS(SEMI) -> ":"
+        if modifier_code_upper in ("LS", "RS"):
+            inner_label = format_key_label(inner_key, os_style)
+            # Check if there's a direct shifted equivalent
+            shifted = SHIFTED_KEY_PAIRS.get(inner_label)
+            if shifted:
+                return shifted
+            # Also check ZMK key codes for symbols like SEMI -> ;
+            zmk_char = ZMK_KEY_TO_CHAR.get(inner_key.upper())
+            if zmk_char:
+                shifted = SHIFTED_KEY_PAIRS.get(zmk_char)
+                if shifted:
+                    return shifted
+
+        modifier_label = _get_modifier_label(modifier_code_upper, os_style)
         inner_label = format_key_label(inner_key, os_style)
         return f"{modifier_label}{inner_label}"
 
@@ -1185,6 +1202,20 @@ def _format_modifier_combo(combo: str, os_style: str) -> str:
     # Last part is the key, rest are modifiers
     key = parts[-1]
     modifiers = parts[:-1]
+
+    # Special case: if only modifier is Shift and key has a shifted symbol,
+    # return the shifted symbol directly (e.g., "Sft+4" -> "$")
+    if len(modifiers) == 1 and modifiers[0].upper() in ("SFT", "SHIFT"):
+        key_label = format_key_label(key, os_style)
+        shifted = SHIFTED_KEY_PAIRS.get(key_label)
+        if shifted:
+            return shifted
+        # Also check if key is a ZMK code
+        zmk_char = ZMK_KEY_TO_CHAR.get(key.upper())
+        if zmk_char:
+            shifted = SHIFTED_KEY_PAIRS.get(zmk_char)
+            if shifted:
+                return shifted
 
     # Convert modifiers to symbols
     mod_symbols = []
