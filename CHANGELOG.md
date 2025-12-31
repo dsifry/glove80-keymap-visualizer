@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2025-12-30
+
+### Added
+- **Layers per page control** (`--layers-per-page`): Choose 1, 2, or 3 layers per PDF page (default: 3)
+- **Configurable DPI** (`--dpi`): Adjust output resolution from 72-600 DPI (default: 300)
+- Validation for `layers_per_page` parameter to prevent invalid configurations
+
+### Fixed
+- Consistent scaling for multi-layer pages: Final pages with fewer layers now maintain the same scale as full pages
+- Dynamic page dimension derivation from source PDFs instead of hard-coded Letter size
+- Replaced emoji/media symbols (⏯, 🔊, etc.) with text labels for better font compatibility
+
+### Changed
+- PDF compositing now uses pikepdf XObjects for proper font rendering in multi-layer layouts
+- Improved error messages for invalid configuration values
+
 ## [0.4.1] - 2025-12-02
 
 ### Fixed

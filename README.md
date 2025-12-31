@@ -108,6 +108,14 @@ glove80-viz keymap.keymap -o output.pdf --resolve-trans
 # Generate only specific layers
 glove80-viz keymap.keymap -o output.pdf --layers Base,Symbol,Cursor
 
+# Control layers per page (1, 2, or 3 - default is 3)
+glove80-viz keymap.keymap -o output.pdf --layers-per-page 1  # Full page per layer
+glove80-viz keymap.keymap -o output.pdf --layers-per-page 2  # Two layers per page
+
+# Custom DPI for higher/lower resolution output
+glove80-viz keymap.keymap -o output.pdf --dpi 150  # Lower res, smaller file
+glove80-viz keymap.keymap -o output.pdf --dpi 600  # Higher res, larger file
+
 # Generate SVG files instead of PDF
 glove80-viz keymap.keymap -o ./svg-folder --format svg
 
@@ -135,6 +143,8 @@ glove80-viz keymap.keymap --list-layers
 - **Held key indicators** — Fingerprint icon shows which key you hold to activate each layer
 - **MEH/HYPER expansion** — `MEH(K)` displays as `⌃⌥⇧K` on Mac
 - **Transparent key resolution** — Optionally show inherited keys instead of "trans" markers
+- **Layers per page** — Control PDF density with 1, 2, or 3 layers per page (default: 3)
+- **Configurable DPI** — Adjust PDF resolution for quality vs. file size tradeoff
 - **Table of contents** — PDF includes clickable TOC for easy navigation
 - **Layer filtering** — Generate only the layers you want
 - **KLE output** — Export to keyboard-layout-editor.com JSON or render via headless browser to PNG/PDF
@@ -158,6 +168,8 @@ glove80-viz keymap.keymap --list-layers
 | `--resolve-trans` | Show inherited keys instead of "trans" |
 | `--base-layer` | Base layer for `--resolve-trans` (default: first layer) |
 | `--no-toc` | Disable table of contents in PDF |
+| `--layers-per-page` | Number of layers per PDF page: 1, 2, or 3 (default: 3) |
+| `--dpi` | Output resolution for PDF rendering (default: 300) |
 | `--continue-on-error` | Continue if a layer fails to render |
 | `-v, --verbose` | Show detailed output |
 | `-q, --quiet` | Suppress all output except errors |
@@ -192,6 +204,8 @@ resolve_trans: false
 include_toc: true
 page_size: letter      # or "a4"
 orientation: landscape
+layers_per_page: 3     # 1, 2, or 3 layers per PDF page
+dpi: 300               # output resolution (72-600 typical)
 ```
 
 Then use it:
